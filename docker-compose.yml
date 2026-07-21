@@ -1,0 +1,140 @@
+services:
+  # === BLACKSTAR API ===
+  egregore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: egregore-api
+    restart: unless-stopped
+    ports:
+      - "${API_HOST_PORT:-18000}:8000"   # HTTP API (host port configurable via .env)
+      - "${METRICS_HOST_PORT:-19000}:9000"   # Prometheus metrics
+    environment:
+      - ENV=${ENV:-development}
+      - DEBUG=${DEBUG:-false}
+      # Service-to-service URLs are hard-coded to Docker service names so the
+      # container stack keeps working even when `.env` is configured for npm.
+      - BLACKSTAR_DB_URL=postgresql+asyncpg://egregore:egregore@postgres:5432/egregore
+      - REDIS_URL=redis://redis:6379/0
+      - NATS_URL=nats://nats:4222
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://jaeger:4317}
+      - PROMETHEUS_PORT=${PROMETHEUS_PORT:-9000}
+      - BLACKSTAR_SIGNING_KEY_PATH=/run/secrets/signing_key
+      - BLACKSTAR_CLUSTER_KEK_PATH=/run/secrets/cluster_kek
+      - NODE_ID=${NODE_ID:-pioneer1}
+      - CLUSTER_NAME=${CLUSTER_NAME:-egregore-local}
+    secrets:
+      - signing_key
+      - cluster_kek
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    networks:
+      - egregore-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # === POSTGRESQL ===
+  postgres:
+    image: postgres:16-alpine
+    container_name: egregore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: egregore
+      POSTGRES_PASSWORD: egregore
+      POSTGRES_DB: egregore
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${POSTGRES_HOST_PORT:-15432}:5432"   # host port configurable via .env
+    networks:
+      - egregore-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U egregore -d egregore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # === REDIS ===
+  redis:
+    image: redis:7-alpine
+    container_name: egregore-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_HOST_PORT:-16379}:6379"   # host port configurable via .env
+    networks:
+      - egregore-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # === NATS ===
+  nats:
+    image: nats:2-alpine
+    container_name: egregore-nats
+    restart: unless-stopped
+    command: "-js -m 8222"
+    ports:
+      - "${NATS_CLIENT_HOST_PORT:-14222}:4222"   # NATS client
+      - "${NATS_MONITOR_HOST_PORT:-18222}:8222"   # NATS monitoring
+    networks:
+      - egregore-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # === OPTIONAL: JAEGER (Observability Profile) ===
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: egregore-jaeger
+    profiles: ["observability"]
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    networks:
+      - egregore-net
+
+  # === OPTIONAL: PROMETHEUS (Observability Profile) ===
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: egregore-prometheus
+    profiles: ["observability"]
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - egregore-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+
+secrets:
+  signing_key:
+    file: ./secrets/signing_key.pem
+  cluster_kek:
+    file: ./secrets/cluster_kek.bin
+
+networks:
+  egregore-net:
+    driver: bridge

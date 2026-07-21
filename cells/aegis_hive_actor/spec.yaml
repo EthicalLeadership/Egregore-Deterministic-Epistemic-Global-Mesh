@@ -1,0 +1,109 @@
+cell_id: aegis_hive_actor
+version: 0.1.0
+taxonomy:
+  domain: investigation
+  subdomain: defense
+  function: response
+  tags: [aegis, hive, actor, actuator]
+owner: aegis_hive
+type: investigation
+tier: 3
+max_load: 0.70
+purpose: |
+  The AEGIS-HIVE actor executes approved defensive actions safely. It
+  supports tiered autonomy, forensic snapshots before action, rollback,
+  and immutable provenance logging of every response.
+
+inputs:
+  - name: proposed_actions
+    type: array
+    description: Scored actions from the reasoner cell.
+    schema: { type: array }
+    required: true
+  - name: require_approval
+    type: boolean
+    description: If true, only Tier 0 actions execute automatically.
+    schema: { type: boolean, default: true }
+    required: false
+
+outputs:
+  - name: executed_actions
+    type: array
+    description: Actions that were executed with results.
+    schema:
+      type: array
+      items: { type: object }
+  - name: pending_actions
+    type: array
+    description: Actions queued for human approval.
+
+output_format:
+  stream_type: aegis_response
+  claim_field: verdict
+  claim_map:
+    PASS: contained
+    FAIL: failed
+  schema:
+    type: object
+    properties:
+      executed_actions: { type: array }
+      pending_actions: { type: array }
+
+pipeline:
+  description: |
+    4-stage response pipeline: snapshot → approve → execute → log.
+  stages:
+    - stage_id: snapshot
+      name: Forensic Snapshot Before Action
+      tool: aegis_actor_stub
+      output_format: json
+    - stage_id: approve
+      name: Apply Governance and Approval Policy
+      tool: aegis_actor_stub
+      output_format: json
+      depends_on: [snapshot]
+    - stage_id: execute
+      name: Execute Approved Actions
+      tool: aegis_actor_stub
+      output_format: json
+      depends_on: [approve]
+    - stage_id: log
+      name: Log Response to Provenance Journal
+      tool: aegis_actor_stub
+      output_format: json
+      depends_on: [execute]
+
+models: []
+
+verification:
+  static_tools: []
+  dynamic_tools: []
+  rules:
+    - rule_id: snapshot_before_action
+      description: A forensic snapshot must be captured before any response action.
+      severity: critical
+    - rule_id: rollback_available
+      description: Every reversible action must have a rollback plan.
+      severity: high
+
+moral_compliance:
+  egregore_laws:
+    - law_id: aegis-004
+      description: Response actions must minimize operational harm and preserve evidence.
+      enforcement: fail_closed
+
+dependencies:
+  - aegis_hive_sensor
+  - aegis_hive_intel
+  - aegis_hive_reasoner
+
+artifacts:
+  stage_gates:
+    plan: cells/aegis_hive_actor/spec.yaml
+    draw: cells/aegis_hive_actor/artifacts/draw.json
+    layout: cells/aegis_hive_actor/artifacts/layout.json
+    erect: cells/aegis_hive_actor/artifacts/erect.json
+    build: cells/aegis_hive_actor/artifacts/build.json
+    finish: cells/aegis_hive_actor/artifacts/finish.json
+    inspect: cells/aegis_hive_actor/artifacts/inspect.json
+    deliver: cells/aegis_hive_actor/artifacts/deliver.json

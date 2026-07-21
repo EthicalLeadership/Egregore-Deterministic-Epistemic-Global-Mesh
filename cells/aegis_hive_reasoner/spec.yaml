@@ -1,0 +1,103 @@
+cell_id: aegis_hive_reasoner
+version: 0.1.0
+taxonomy:
+  domain: investigation
+  subdomain: defense
+  function: reasoning
+  tags: [aegis, hive, reasoner, attack_graph]
+owner: aegis_hive
+type: investigation
+tier: 3
+max_load: 0.75
+purpose: |
+  The AEGIS-HIVE reasoner consumes telemetry and intelligence findings,
+  reconstructs probable attack chains, scores attack paths, and proposes
+  tiered defensive actions with blast-radius estimates.
+
+inputs:
+  - name: telemetry_envelope
+    type: object
+    description: Normalized telemetry envelope.
+    schema: { type: object }
+    required: true
+  - name: findings
+    type: array
+    description: Intel findings from the intelligence cell.
+    schema: { type: array }
+    required: true
+
+outputs:
+  - name: proposed_actions
+    type: array
+    description: Scored, tiered defensive actions pending governance.
+    schema:
+      type: array
+      items: { type: object }
+  - name: attack_paths
+    type: array
+    description: Ranked probable attack paths.
+
+output_format:
+  stream_type: aegis_reasoning
+  claim_field: verdict
+  claim_map:
+    PASS: low_risk
+    FAIL: high_risk
+  schema:
+    type: object
+    properties:
+      proposed_actions: { type: array }
+      attack_paths: { type: array }
+
+pipeline:
+  description: |
+    3-stage reasoning pipeline: correlate → score → propose.
+  stages:
+    - stage_id: correlate
+      name: Correlate Events and Findings
+      tool: aegis_reasoner_stub
+      output_format: json
+    - stage_id: score
+      name: Score Attack Paths and Blast Radius
+      tool: aegis_reasoner_stub
+      output_format: json
+      depends_on: [correlate]
+    - stage_id: propose
+      name: Propose Tiered Actions
+      tool: aegis_reasoner_stub
+      output_format: json
+      depends_on: [score]
+
+models: []
+
+verification:
+  static_tools: []
+  dynamic_tools: []
+  rules:
+    - rule_id: dual_agent_consensus
+      description: Tier 3 autonomous actions require consensus between two independent reasoners.
+      severity: critical
+    - rule_id: blast_radius_known
+      description: Every proposed action must include a blast-radius estimate.
+      severity: high
+
+moral_compliance:
+  egregore_laws:
+    - law_id: aegis-003
+      description: Reasoner decisions must be explainable, reversible, and auditable.
+      enforcement: fail_closed
+
+dependencies:
+  - aegis_hive_sensor
+  - aegis_hive_intel
+
+artifacts:
+  stage_gates:
+    plan: cells/aegis_hive_reasoner/spec.yaml
+    draw: cells/aegis_hive_reasoner/artifacts/draw.json
+    layout: cells/aegis_hive_reasoner/artifacts/layout.json
+    erect: cells/aegis_hive_reasoner/artifacts/erect.json
+    build: cells/aegis_hive_reasoner/artifacts/build.json
+    finish: cells/aegis_hive_reasoner/artifacts/finish.json
+    inspect: cells/aegis_hive_reasoner/artifacts/inspect.json
+    deliver: cells/aegis_hive_reasoner/artifacts/deliver.json

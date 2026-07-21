@@ -1,0 +1,46 @@
+<div class="bs-panel">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-mono font-semibold text-bs-text-muted uppercase tracking-wider">Freeze Audit Log</h2>
+    <div class="spinner w-4 h-4 border-2 border-bs-accent border-t-transparent rounded-full animate-spin"></div>
+  </div>
+  <div class="overflow-x-auto max-h-96 overflow-y-auto">
+    <table class="bs-table">
+      <thead>
+        <tr>
+          <th class="font-mono">Time</th>
+          <th class="font-mono">Operator</th>
+          <th class="font-mono">Action</th>
+          <th class="font-mono">Reason</th>
+          <th class="font-mono">State</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr class="hover:bg-bs-surface-elevated transition-colors">
+          <td class="font-mono text-xs text-bs-text-muted">{{ fmt_ts(event.timestamp) }}</td>
+          <td class="font-mono text-xs">{{ event.operator }}</td>
+          <td>
+            {% if event.action == "FROZEN" %}
+              <span class="bs-badge bg-bs-frozen/20 text-bs-frozen">FROZEN</span>
+            {% elif event.action == "HEALTHY" %}
+              <span class="bs-badge bg-bs-unfrozen/20 text-bs-unfrozen">HEALTHY</span>
+            {% elif event.action == "RECONCILING" %}
+              <span class="bs-badge bg-bs-warning/20 text-bs-warning">RECONCILING</span>
+            {% else %}
+              <span class="bs-badge bg-bs-border text-bs-text-muted">{{ event.action }}</span>
+            {% endif %}
+          </td>
+          <td class="text-xs text-bs-text-muted max-w-xs truncate" title="{{ event.reason }}">{{ event.reason }}</td>
+          <td class="font-mono text-xs text-bs-text-muted">{{ event.new_state }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center text-bs-text-muted py-8 text-sm">
+            No freeze events recorded.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

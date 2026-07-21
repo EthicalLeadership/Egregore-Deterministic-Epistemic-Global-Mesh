@@ -1,0 +1,111 @@
+cell_id: aegis_hive_sensor
+version: 0.1.0
+taxonomy:
+  domain: investigation
+  subdomain: defense
+  function: telemetry
+  tags: [aegis, hive, sensor, endpoint]
+owner: aegis_hive
+type: investigation
+tier: 2
+max_load: 0.85
+purpose: |
+  The AEGIS-HIVE sensor cell ingests Linux endpoint telemetry (auditd/eBPF)
+  and normalizes it into the canonical AegisEvent schema. It is the eyes of
+  the autonomous cognitive defense mesh.
+
+inputs:
+  - name: backend
+    type: string
+    description: Telemetry backend to use.
+    schema: { type: string, enum: [auditd, ebpf], default: auditd }
+    required: false
+  - name: max_events
+    type: integer
+    description: Maximum events to collect in one poll cycle.
+    schema: { type: integer, minimum: 1, maximum: 10000, default: 1000 }
+    required: false
+
+outputs:
+  - name: telemetry_envelope
+    type: object
+    description: Normalized telemetry envelope ready for the mesh.
+    schema:
+      type: object
+      properties:
+        envelope_id: { type: string }
+        host_id: { type: string }
+        sensor_id: { type: string }
+        ts_ns: { type: integer }
+        events: { type: array }
+  - name: provenance_record
+    type: object
+    description: Hash-chained provenance record for the .zarc journal.
+
+output_format:
+  stream_type: aegis_telemetry
+  claim_field: verdict
+  claim_map:
+    PASS: benign
+    FAIL: anomaly
+  schema:
+    type: object
+    properties:
+      telemetry_envelope: { type: object }
+      provenance_record: { type: object }
+
+pipeline:
+  description: |
+    4-stage telemetry pipeline: collect → normalize → enrich → commit.
+  stages:
+    - stage_id: collect
+      name: Collect Raw Telemetry
+      tool: aegis_sensor_stub
+      output_format: json
+    - stage_id: normalize
+      name: Normalize to AegisEvent
+      tool: aegis_sensor_stub
+      output_format: json
+      depends_on: [collect]
+    - stage_id: enrich
+      name: Enrich Host and Identity Context
+      tool: aegis_sensor_stub
+      output_format: json
+      depends_on: [normalize]
+    - stage_id: commit
+      name: Commit to Provenance Journal
+      tool: aegis_sensor_stub
+      output_format: json
+      depends_on: [enrich]
+
+models: []
+
+verification:
+  static_tools: []
+  dynamic_tools: []
+  rules:
+    - rule_id: no_privilege_escalation
+      description: Sensor must never run with more privileges than required.
+      severity: critical
+    - rule_id: canonical_schema
+      description: All emitted events must validate against AegisEvent.
+      severity: high
+
+moral_compliance:
+  egregore_laws:
+    - law_id: aegis-001
+      description: Telemetry collection must respect host sovereignty and data-residency boundaries.
+      enforcement: fail_closed
+
+dependencies: []
+
+artifacts:
+  stage_gates:
+    plan: cells/aegis_hive_sensor/spec.yaml
+    draw: cells/aegis_hive_sensor/artifacts/draw.json
+    layout: cells/aegis_hive_sensor/artifacts/layout.json
+    erect: cells/aegis_hive_sensor/artifacts/erect.json
+    build: cells/aegis_hive_sensor/artifacts/build.json
+    finish: cells/aegis_hive_sensor/artifacts/finish.json
+    inspect: cells/aegis_hive_sensor/artifacts/inspect.json
+    deliver: cells/aegis_hive_sensor/artifacts/deliver.json

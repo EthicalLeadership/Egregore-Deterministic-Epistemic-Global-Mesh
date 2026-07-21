@@ -1,0 +1,151 @@
+cell_id: anchorum_forensic
+name: ANCHORUM Forensic Document Analyzer
+version: 1.0.0
+description: |
+  Extracts metadata, detects temporal anomalies, and builds investigation
+  timelines from PDF, OOXML, email, and image artifacts. CBI-0 governed.
+taxonomy:
+  domain: investigation
+  subdomain: forensic
+  function: document_analysis
+  tags: [metadata_extraction, anomaly_detection, timeline_reconstruction]
+owner: anchorum_investigations
+type: investigation
+tier: 1
+max_load: 0.9
+advisory_cells:
+  - law_contract_review
+  - sweng_python
+purpose: |
+  The anchorum_forensic cell wraps the ANCHORUM batch runner and produces a
+  structured investigation report suitable for the Reproducible Fusion Engine.
+  It inventories artifacts, extracts entities, reconstructs a master timeline,
+  and surfaces critical/high anomaly findings.
+
+inputs:
+  - name: input_path
+    type: string
+    description: Directory containing evidence artifacts.
+    required: true
+  - name: case_id
+    type: string
+    description: Case identifier for provenance and report naming.
+    required: true
+  - name: operator
+    type: string
+    description: Operator identifier.
+    required: false
+  - name: recursive
+    type: boolean
+    description: Whether to recurse into subdirectories.
+    required: false
+  - name: llm_model_id
+    type: string
+    description: Optional Egregore model ID for LLM-powered case narrative.
+    required: false
+
+outputs:
+  - name: investigation_report
+    type: object
+    description: Structured ANCHORUM investigation report.
+  - name: summary
+    type: object
+    description: Batch-run summary metrics.
+
+output_format:
+  stream_type: forensic_investigation
+  claim_field: highest_severity
+  claim_map:
+    critical: negative
+    high: negative
+    medium: neutral
+    low: positive
+    none: positive
+  schema:
+    type: object
+    properties:
+      case_id: { type: string }
+      report_id: { type: string }
+      artifact_count: { type: integer }
+      entity_count: { type: integer }
+      anomaly_count: { type: integer }
+      critical_count: { type: integer }
+      high_count: { type: integer }
+
+pipeline:
+  description: |
+    Single-stage pipeline that invokes the ANCHORUM forensic batch runner.
+  stages:
+    - stage_id: forensic_analysis
+      name: ANCHORUM Forensic Analysis
+      tool: anchorum_forensic
+      output_format: json
+      depends_on: []
+
+models:
+  - model_id: qwen2.5-1.5b-instruct
+    purpose: Generate optional case narrative / summary enrichment.
+    optional: true
+
+verification:
+  static_tools: []
+  dynamic_tools: []
+  rules:
+    - rule_id: output_is_valid_json
+      description: ANCHORUM must emit a valid JSON report.
+      severity: critical
+      check: json_schema
+
+moral_compliance:
+  egregore_laws:
+    - law_id: evidence_integrity
+      description: Source artifacts must be treated as read-only evidence.
+      enforcement: enforce_readonly
+    - law_id: auditability
+      description: Every batch run must record case_id, operator, and timestamp.
+      enforcement: provenance_logging
+
+dependencies:
+  - law_contract_review
+  - sweng_python
+
+# Extended metadata used by ANCHORUM frontend and tooling.
+load_profile:
+  max_concurrent: 1
+  cpu_weight: 0.3
+  memory_mb: 512
+  io_priority: high
+
+advisory:
+  allowlist:
+    - law_contract_review
+    - sweng_python
+  description: |
+    May consult law_contract_review for legal interpretation of anomalies,
+    or sweng_python for custom extraction script generation.
+
+rfe_output:
+  format: json
+  schema: anchorum_investigation_report_v1
+  includes:
+    - artifact_inventory
+    - entity_directory
+    - master_timeline
+    - anomaly_findings
+    - evidence_quality_assessment
+
+entrypoint:
+  type: python_callable
+  module: cells.anchorum_forensic.executor
+  function: run_forensic_analysis
+
+artifacts:
+  stage_gates:
+    plan: cells/anchorum_forensic/spec.yaml
+    draw: cells/anchorum_forensic/artifacts/draw.json
+    layout: cells/anchorum_forensic/artifacts/layout.json
+    erect: cells/anchorum_forensic/artifacts/erect.json
+    build: cells/anchorum_forensic/artifacts/build.json
+    finish: cells/anchorum_forensic/artifacts/finish.json
+    inspect: cells/anchorum_forensic/artifacts/inspect.json
+    deliver: cells/anchorum_forensic/artifacts/deliver.json

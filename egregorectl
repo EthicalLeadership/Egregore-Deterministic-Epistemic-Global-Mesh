@@ -1,0 +1,124 @@
+#!/bin/bash
+# BLACKSTARCTL — Main Power Switch
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_PATH="${REPO_ROOT}/.venv"
+ENV_FILE="${REPO_ROOT}/.env"
+PID_DIR="${REPO_ROOT}/.pids"
+LOG_DIR="${REPO_ROOT}/logs"
+
+APP_HOST="${BLACKSTAR_HOST:-0.0.0.0}"
+APP_PORT="${BLACKSTAR_PORT:-8000}"
+APP_MODULE="${BLACKSTAR_APP_MODULE:-egregore.http_api.http.app:create_app}"
+
+log_info()  { echo "[INFO] $*"; }
+log_warn()  { echo "[WARN] $*"; }
+log_error() { echo "[ERROR] $*"; }
+
+check_prerequisites() {
+    log_info "Checking prerequisites..."
+    if [ ! -d "$VENV_PATH" ]; then
+        log_error "Virtual env not found at $VENV_PATH"; exit 1
+    fi
+    if [ ! -f "${REPO_ROOT}/secrets/signing_key.pem" ]; then
+        log_error "Signing key not found. Run key rotation first."; exit 1
+    fi
+    log_info "Prerequisites OK"
+}
+
+start_postgres() {
+    if systemctl is-active --quiet postgresql 2>/dev/null; then
+        log_info "PostgreSQL already running"; return 0
+    fi
+    log_info "Starting PostgreSQL..."
+    sudo systemctl start postgresql 2>/dev/null || true
+    for i in {1..10}; do
+        pg_isready -q 2>/dev/null && { log_info "PostgreSQL ready"; return 0; }
+        sleep 1
+    done
+    log_warn "PostgreSQL may not be ready yet"
+}
+
+start_redis() {
+    if systemctl is-active --quiet redis-server 2>/dev/null; then
+        log_info "Redis already running"; return 0
+    fi
+    log_info "Starting Redis..."
+    sudo systemctl start redis-server 2>/dev/null || true
+    for i in {1..10}; do
+        redis-cli ping 2>/dev/null | grep -q PONG && { log_info "Redis ready"; return 0; }
+        sleep 1
+    done
+    log_warn "Redis may not be ready yet"
+}
+
+start_app() {
+    log_info "Starting Egregore app on ${APP_HOST}:${APP_PORT}..."
+    mkdir -p "$PID_DIR" "$LOG_DIR"
+    set -a; source "$ENV_FILE" 2>/dev/null || true; set +a
+    if [ -z "${BLACKSTAR_ZARC_SIGNING_KEY_HEX:-}" ] && [ -f "${REPO_ROOT}/secrets/signing_key.pem" ]; then
+        export BLACKSTAR_ZARC_SIGNING_KEY_HEX="$(cat "${REPO_ROOT}/secrets/signing_key.pem")"
+    fi
+    if [ -z "${BLACKSTAR_API_KEYS:-}" ] && [ -f "${REPO_ROOT}/secrets/signing_key.pem" ]; then
+        export BLACKSTAR_API_KEYS="$(cat "${REPO_ROOT}/secrets/signing_key.pem"):default:admin:admin"
+    fi
+    nohup "$VENV_PATH/bin/python" -m uvicorn "$APP_MODULE" \
+        --host "$APP_HOST" --port "$APP_PORT" --workers 1 \
+        --app-dir "${REPO_ROOT}/src" \
+        > "${LOG_DIR}/app.log" 2>&1 &
+    echo $! > "${PID_DIR}/app.pid"
+    for i in {1..15}; do
+        curl -s "http://${APP_HOST}:${APP_PORT}/ready" > /dev/null 2>&1 && { log_info "App ready"; return 0; }
+        sleep 1
+    done
+    log_warn "App may not be ready. Check logs: ${LOG_DIR}/app.log"
+}
+
+stop_app() {
+    if [ -f "${PID_DIR}/app.pid" ]; then
+        PID=$(cat "${PID_DIR}/app.pid")
+        if kill -0 "$PID" 2>/dev/null; then
+            log_info "Stopping app (PID $PID)..."
+            kill "$PID"
+        fi
+        rm -f "${PID_DIR}/app.pid"
+    fi
+}
+
+show_status() {
+    echo "=== BLACKSTAR STATUS ==="
+    systemctl is-active --quiet postgresql 2>/dev/null && echo "  PostgreSQL: RUNNING" || echo "  PostgreSQL: STOPPED"
+    systemctl is-active --quiet redis-server 2>/dev/null && echo "  Redis:      RUNNING" || echo "  Redis:      STOPPED"
+    if [ -f "${PID_DIR}/app.pid" ]; then
+        PID=$(cat "${PID_DIR}/app.pid")
+        kill -0 "$PID" 2>/dev/null && echo "  Egregore:  RUNNING (PID $PID, port $APP_PORT)" || echo "  Egregore:  STOPPED (stale PID)"
+    else
+        echo "  Egregore:  STOPPED"
+    fi
+    echo "  Logs: ${LOG_DIR}/app.log"
+}
+
+case "${1:-}" in
+    start)
+        check_prerequisites
+        start_postgres
+        start_redis
+        start_app
+        show_status
+        ;;
+    stop)
+        stop_app
+        log_info "App stopped"
+        ;;
+    restart)
+        $0 stop; sleep 2; $0 start
+        ;;
+    status)
+        show_status
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

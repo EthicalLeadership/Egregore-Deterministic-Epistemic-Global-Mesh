@@ -1,0 +1,143 @@
+---
+- name: Phase 01 | Base OS Hardening and SSH
+  hosts: pioneer
+  become: true
+  vars:
+    phase01_packages:
+      - openssh-server
+      - ufw
+      - fail2ban
+      - auditd
+      - wget
+      - curl
+      - git
+      - vim
+    aiops_groups: >-
+      {{
+        (aiops_enable_sudo | bool | ternary(['sudo'], []))
+        + (aiops_enable_docker_group | bool | ternary(['docker'], []))
+      }}
+
+  tasks:
+    - name: Update apt cache and upgrade base packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Install baseline security packages
+      ansible.builtin.apt:
+        name: "{{ phase01_packages }}"
+        state: present
+
+    - name: Ensure docker group exists when requested
+      ansible.builtin.group:
+        name: docker
+        state: present
+      when: aiops_enable_docker_group | bool
+
+    - name: Ensure service account exists
+      ansible.builtin.user:
+        name: "{{ aiops_user }}"
+        shell: "{{ aiops_shell }}"
+        create_home: true
+        groups: "{{ aiops_groups | join(',') if aiops_groups else omit }}"
+        append: true
+
+    - name: Validate that aiops public key has been configured
+      ansible.builtin.assert:
+        that:
+          - aiops_public_key is search('^ssh-ed25519 ')
+          - aiops_public_key is not search('REPLACE_WITH_REAL_KEY')
+        fail_msg: "Set aiops_public_key in group_vars/all/main.yml before running hardening."
+
+    - name: Install aiops SSH key
+      ansible.posix.authorized_key:
+        user: "{{ aiops_user }}"
+        key: "{{ aiops_public_key }}"
+        state: present
+
+    - name: Enforce SSH directory permissions
+      ansible.builtin.file:
+        path: "{{ aiops_home }}/.ssh"
+        owner: "{{ aiops_user }}"
+        group: "{{ aiops_user }}"
+        mode: "0700"
+        state: directory
+
+    - name: Deploy SSH hardening configuration
+      ansible.builtin.template:
+        src: templates/sshd_pioneer_hardening.conf.j2
+        dest: /etc/ssh/sshd_config.d/99-pioneer-hardening.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart ssh
+
+    - name: Ensure SSH service is enabled
+      ansible.builtin.systemd:
+        name: ssh
+        enabled: true
+        state: started
+
+    - name: Set UFW default incoming policy to deny
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Set UFW default outgoing policy to allow
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Apply baseline UFW allow rules
+      community.general.ufw:
+        rule: allow
+        src: "{{ pioneer_lan_cidr }}"
+        port: "{{ item.port }}"
+        proto: "{{ item.proto | default('tcp') }}"
+        comment: "{{ item.comment | default('Pioneer LAN access') }}"
+      loop: "{{ pioneer_ufw_allowed_ports + pioneer_ufw_additional_rules }}"
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+
+    - name: Configure fail2ban
+      ansible.builtin.template:
+        src: templates/fail2ban_jail.local.j2
+        dest: /etc/fail2ban/jail.local
+        owner: root
+        group: root
+        mode: "0644"
+      notify: restart fail2ban
+
+    - name: Ensure fail2ban is active
+      ansible.builtin.systemd:
+        name: fail2ban
+        enabled: true
+        state: started
+
+    - name: Install sysctl hardening profile
+      ansible.builtin.template:
+        src: templates/sysctl-security.conf.j2
+        dest: /etc/sysctl.d/99-security.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: apply sysctl
+
+  handlers:
+    - name: restart ssh
+      ansible.builtin.systemd:
+        name: ssh
+        state: restarted
+
+    - name: restart fail2ban
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: restarted
+
+    - name: apply sysctl
+      ansible.builtin.command: sysctl --system
+      changed_when: false

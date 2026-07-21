@@ -1,0 +1,5 @@
+tls_server_config:
+  cert_file: {{ pioneer_ssl_dir }}/{{ inventory_hostname }}.crt
+  key_file: {{ pioneer_ssl_dir }}/{{ inventory_hostname }}.key
+  client_ca_file: {{ pioneer_ssl_dir }}/ca.crt
+  client_auth_type: RequireAndVerifyClientCert

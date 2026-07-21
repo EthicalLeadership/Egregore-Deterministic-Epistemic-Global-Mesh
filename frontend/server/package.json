@@ -1,0 +1,11 @@
+{
+  "name": "egregore-control-center-api",
+  "version": "1.0.0",
+  "description": "Egregore Control Center Backend API — Zero dependency Node.js HTTP server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {}
+}

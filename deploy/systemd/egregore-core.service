@@ -1,0 +1,22 @@
+[Unit]
+Description=Egregore Python Core API
+Documentation=https://docs.egregore.edge
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore
+Environment=PYTHONPATH=src
+EnvironmentFile=-/opt/egregore/.env
+ExecStart=/opt/egregore/.venv/bin/python -m uvicorn egregore.http_api.http.main:app --host 0.0.0.0 --port 8002
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=egregore-core
+
+[Install]
+WantedBy=multi-user.target

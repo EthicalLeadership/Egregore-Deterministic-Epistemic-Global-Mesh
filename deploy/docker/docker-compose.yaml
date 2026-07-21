@@ -1,0 +1,86 @@
+services:
+  api:
+    image: tiangolo/uvicorn-gunicorn-fastapi:python3.11
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8000:9000
+    environment:
+      - PYTHONPATH=/app:/app/api
+      - BLACKSTAR_ENV=${BLACKSTAR_ENV:?BLACKSTAR_ENV is required}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      # cspell:disable-next-line
+      - DB_DSN=postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      # Egregore currently uses its own OTLP_ENDPOINT env var (see api/config.py)
+      # rather than the OTEL_EXPORTER_* standard variables.
+      - OTLP_ENDPOINT=http://otelcol:4318
+    volumes:
+      - ../../egregore/api:/app/api:rw
+    depends_on:
+      db:
+        condition: service_healthy
+      otelcol:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  kafka:
+    # NOTE: cspell:disable-next-line
+    # bitnami images / tags have been unstable for this repo. Prefer Confluent.
+    # cspell:disable-next-line
+    image: confluentinc/cp-kafka:7.6.1
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:9092:9092
+    environment:
+      # KRaft mode (no Zookeeper)
+      # Confluent images expect a "base64 UUID" style cluster id (22 chars),
+      # NOT a dashed UUID. Example: `kafka-storage random-uuid` output.
+      - CLUSTER_ID=J1E0PZQeQ6Kz4xwq1xqk8g
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.98.0
+    restart: unless-stopped
+    command: --config=/etc/otelcol/config.yaml
+    ports:
+      - 127.0.0.1:4318:4318 # OTLP/HTTP
+    volumes:
+      - ./otelcol.yaml:/etc/otelcol/config.yaml:ro
+
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?POSTGRES_USER is required} -d ${POSTGRES_DB:?POSTGRES_DB is required}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  db_data:
+  kafka_data:

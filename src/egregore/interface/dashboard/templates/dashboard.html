@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Egregore Operator Dashboard{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1 space-y-6">
+    <div id="status-card" hx-get="/dashboard/status" hx-trigger="load, every 5s">
+      {% include "fragments/status_card.html" with context %}
+    </div>
+    <div id="freeze-controls" hx-get="/dashboard/controls" hx-trigger="load">
+      {% include "fragments/freeze_controls.html" with context %}
+    </div>
+    <div id="key-health" hx-get="/dashboard/key-health" hx-trigger="load, every 30s">
+      <!-- loaded via HTMX only -->
+    </div>
+  </div>
+  <div class="lg:col-span-1 space-y-6">
+    <div id="audit-log" hx-get="/dashboard/audit" hx-trigger="load, every 10s">
+      <!-- loaded via HTMX only -->
+    </div>
+  </div>
+  <div class="lg:col-span-1 space-y-6">
+    <div id="ci-health" hx-get="/dashboard/ci-health" hx-trigger="load, every 60s">
+      <!-- loaded via HTMX only -->
+    </div>
+  </div>
+</div>
+{% endblock %}

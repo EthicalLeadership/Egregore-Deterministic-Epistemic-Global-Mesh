@@ -1,0 +1,529 @@
+# Quebec Civil Procedure & Evidence Rules
+# Source: Quebec Civil Procedure & Evidence — Final Procedure Booklet
+# WARNING: Article numbers reflect consolidated texts before the source knowledge
+# cut-off. Verify current consolidation on LégisQuébec before use in a proceeding.
+
+knowledge_base:
+  name: "Quebec Civil Procedure and Evidence"
+  jurisdiction: "Quebec"
+  applicable_forums:
+    - "Superior Court of Quebec"
+    - "Court of Quebec"
+    - "Court of Appeal of Quebec"
+    - "Tribunal administratif du Quebec"
+  disclaimer: |
+    Article numbers and regulatory references must be verified against the
+    current official consolidation on LégisQuébec and the current Court of
+    Appeal Regulation before any filing.
+
+rules:
+  - rule_id: qccp-018
+    domain: procedure
+    source: "C.C.P., art. 18"
+    title: "Proportionality"
+    rule_text: |
+      The parties must ensure that the proceedings they institute are
+      proportionate, in terms of the cost and time involved, to the nature and
+      complexity of the matter and to the foreseeable impact of the
+      proceedings.
+    obligation_holder: "all_parties"
+    triggers:
+      - proportionality
+      - cost
+      - time
+      - complexity
+      - excessive
+      - unreasonable
+    elements_to_prove: []
+    consequences:
+      - "Court may strike out or limit an unnecessary step"
+      - "Costs consequences for abusive or disproportionate conduct"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-148
+    domain: procedure
+    source: "C.C.P., art. 148"
+    title: "Protocol of the Instance"
+    rule_text: |
+      The parties must establish a protocol of the instance unless the law
+      provides otherwise or the court dispenses with it. The protocol addresses
+      the timetable for communicating exhibits and expert reports, the number
+      of witnesses, the possibility of a joint exhibit book, and the form of
+      written arguments.
+    obligation_holder: "all_parties"
+    triggers:
+      - protocol
+      - timetable
+      - exhibits
+      - expert report
+      - witnesses
+      - written arguments
+      - case management
+    elements_to_prove:
+      - "Existence of a protocol or court dispensation"
+      - "Compliance with agreed timetable"
+    consequences:
+      - "Court may modify the protocol at a case management conference"
+      - "Failure to comply may affect scheduling or costs"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-158
+    domain: procedure
+    source: "C.C.P., art. 158"
+    title: "Modification of Protocol"
+    rule_text: |
+      The court may modify the protocol of the instance at a case management
+      conference.
+    obligation_holder: "court"
+    triggers:
+      - modify protocol
+      - case management conference
+      - timetable change
+    elements_to_prove: []
+    consequences:
+      - "Revised deadlines and procedure"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-285
+    domain: evidence
+    source: "C.C.P., art. 285"
+    title: "Production and Marking of Exhibits"
+    rule_text: |
+      A party who intends to produce a document as evidence shall first show it
+      to the other party. The document is then filed in the record after it has
+      been marked by the clerk.
+    obligation_holder: "producing_party"
+    triggers:
+      - exhibit
+      - produce
+      - document
+      - marked
+      - clerk
+      - filed
+    elements_to_prove:
+      - "Document shown to other party"
+      - "Document marked by clerk"
+      - "Document filed in record"
+    consequences:
+      - "Document becomes part of the record"
+      - "Judge later rules on admissibility and probative value"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-286
+    domain: evidence
+    source: "C.C.P., art. 286"
+    title: "Recording of Exhibits"
+    rule_text: |
+      The clerk records the exhibit in the minutes.
+    obligation_holder: "clerk"
+    triggers:
+      - exhibit
+      - minutes
+      - record
+      - clerk
+    elements_to_prove:
+      - "Exhibit marked"
+      - "Exhibit recorded in minutes"
+    consequences:
+      - "Formal record of exhibit exists"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-admissibility
+    domain: evidence
+    source: "C.C.P., arts. 285-286; general principle"
+    title: "Admissibility and Probative Value"
+    rule_text: |
+      Although the clerk marks and records the exhibit, the judge alone
+      determines its admissibility and probative value. Marking is a procedural
+      step, not a ruling on admissibility.
+    obligation_holder: "court"
+    triggers:
+      - admissibility
+      - probative value
+      - marked
+      - exhibit
+      - relevance
+      - authenticity
+    elements_to_prove: []
+    consequences:
+      - "Marked exhibit may still be objected to"
+      - "Judge decides weight and admissibility"
+    confidence: 0.95
+    verification_required: false
+
+  - rule_id: qccp-280
+    domain: evidence
+    source: "C.C.P., art. 280"
+    title: "Direct and Cross-Examination"
+    rule_text: |
+      During direct examination, leading questions are prohibited except to put
+      the witness on track, identify persons or things, or deal with
+      non-contentious facts. During cross-examination, leading questions are
+      permitted to test testimony and obtain admissions, subject to the court's
+      general power to control the examination.
+    obligation_holder: "examining_party"
+    triggers:
+      - witness
+      - cross-examination
+      - direct examination
+      - leading question
+      - testimony
+      - admission
+    elements_to_prove: []
+    consequences:
+      - "Objection may be raised to improper questions"
+      - "Court controls harassment and irrelevance"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-282
+    domain: evidence
+    source: "C.C.P., art. 282"
+    title: "Contradiction by Prior Statement"
+    rule_text: |
+      A witness may be contradicted by a prior inconsistent statement, provided
+      the statement is put to the witness and the witness is given an
+      opportunity to explain.
+    obligation_holder: "cross_examining_party"
+    triggers:
+      - prior statement
+      - inconsistent
+      - contradiction
+      - discovery
+      - transcript
+      - explain
+    elements_to_prove:
+      - "Witness made prior statement"
+      - "Prior statement inconsistent with current testimony"
+      - "Statement put to witness"
+      - "Witness given opportunity to explain"
+    consequences:
+      - "Impeachment of credibility"
+      - "Prior statement may become evidence"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-170
+    domain: submissions
+    source: "C.C.P., art. 170"
+    title: "Written Arguments at Trial"
+    rule_text: |
+      The court may order the parties to file written arguments. In first
+      instance, these are called argumentation ecrite, plan d'argumentation, or
+      synthese. The term memoire is reserved primarily for appellate
+      proceedings.
+    obligation_holder: "all_parties"
+    triggers:
+      - written arguments
+      - argumentation
+      - memoire
+      - factum
+      - submissions
+      - first instance
+    elements_to_prove: []
+    consequences:
+      - "Court may order written arguments"
+      - "Different terminology applies at trial vs appeal"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2813
+    domain: evidence
+    source: "C.C.Q., art. 2813"
+    title: "Authentic Act"
+    rule_text: |
+      An authentic act is a writing received by a public officer in the place
+      where the writing is executory, with the required formalities.
+    obligation_holder: "producing_party"
+    triggers:
+      - authentic act
+      - notary
+      - public officer
+      - formalities
+    elements_to_prove:
+      - "Writing received by public officer"
+      - "Required formalities observed"
+    consequences:
+      - "Proves content without further evidence"
+      - "Can only be attacked by improbation"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2822
+    domain: evidence
+    source: "C.C.Q., art. 2822"
+    title: "Semi-Authentic Act"
+    rule_text: |
+      A semi-authentic act is a writing issued by a public officer in the
+      exercise of the officer's functions.
+    obligation_holder: "producing_party"
+    triggers:
+      - semi-authentic
+      - public officer
+      - certificate
+      - official document
+    elements_to_prove:
+      - "Writing issued by public officer"
+      - "Issued in exercise of functions"
+    consequences:
+      - "Presumed true until contrary proof"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2826
+    domain: evidence
+    source: "C.C.Q., art. 2826"
+    title: "Private Writing"
+    rule_text: |
+      A private writing is any writing other than an authentic or
+      semi-authentic act, signed by the party against whom it is invoked or by
+      that party's representative.
+    obligation_holder: "producing_party"
+    triggers:
+      - private writing
+      - signed
+      - contract
+      - letter
+      - email
+      - signature
+    elements_to_prove:
+      - "Writing not authentic/semi-authentic"
+      - "Signed by party against whom invoked or representative"
+      - "Origin proved if not acknowledged"
+    consequences:
+      - "Proves content once origin acknowledged or proved"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2831
+    domain: evidence
+    source: "C.C.Q., art. 2831"
+    title: "Writings in the Ordinary Course of Business"
+    rule_text: |
+      Writings made in the ordinary course of business may be admitted under a
+      particular evidentiary regime that eases their proof; however, this does
+      not create an automatic presumption of authenticity for all business
+      records.
+    obligation_holder: "producing_party"
+    triggers:
+      - business records
+      - ordinary course
+      - corporate records
+      - employment records
+      - medical records
+    elements_to_prove:
+      - "Writing made in ordinary course of business"
+      - "Relevance to matter in issue"
+    consequences:
+      - "May be admitted even if author unavailable"
+      - "Authenticity may still be challenged"
+    confidence: 0.90
+    verification_required: true
+
+  - rule_id: qccq-2839
+    domain: evidence
+    source: "C.C.Q., art. 2839"
+    title: "Electronic Documents"
+    rule_text: |
+      An electronic document has the same probative value as a writing on paper
+      if its integrity is assured.
+    obligation_holder: "producing_party"
+    triggers:
+      - electronic document
+      - email
+      - pdf
+      - digital
+      - integrity
+      - metadata
+    elements_to_prove:
+      - "Document is electronic"
+      - "Integrity is assured"
+    consequences:
+      - "Same probative value as paper writing"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2840
+    domain: evidence
+    source: "C.C.Q., art. 2840"
+    title: "Integrity of Electronic Documents"
+    rule_text: |
+      The integrity of an electronic document is assured if the document is
+      accessible and usable for consultation, and if it is capable of
+      identifying its source and destination and the date and time it was sent
+      or received.
+    obligation_holder: "producing_party"
+    triggers:
+      - electronic document
+      - integrity
+      - source
+      - destination
+      - timestamp
+      - metadata
+    elements_to_prove:
+      - "Document accessible and usable"
+      - "Source and destination identifiable"
+      - "Date and time of sending/receiving identifiable"
+    consequences:
+      - "Electronic document admissible as equivalent to paper"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2860
+    domain: evidence
+    source: "C.C.Q., art. 2860"
+    title: "Copy of a Writing"
+    rule_text: |
+      A true copy of a writing that is not contested is admissible. If the
+      original is demanded, it must be produced.
+    obligation_holder: "producing_party"
+    triggers:
+      - copy
+      - original
+      - reproduction
+      - conform
+      - true copy
+    elements_to_prove:
+      - "Copy is true copy of original"
+      - "Original available if demanded"
+    consequences:
+      - "Copy admissible if not contested"
+      - "Original may be required on demand"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccq-2857
+    domain: evidence
+    source: "C.C.Q., art. 2857"
+    title: "Relevance"
+    rule_text: |
+      Evidence is admissible only if it is relevant, that is, if it is useful
+      in proving or disproving a fact in issue.
+    obligation_holder: "court"
+    triggers:
+      - relevance
+      - pertinent
+      - material
+      - fact in issue
+    elements_to_prove: []
+    consequences:
+      - "Irrelevant evidence excluded"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-21
+    domain: procedure
+    source: "C.C.P., art. 21"
+    title: "Court Control of Proceedings"
+    rule_text: |
+      The court sees to the orderly conduct of the proceeding and the
+      expedition of the hearing. It must prevent harassment, irrelevance, and
+      needless repetition.
+    obligation_holder: "court"
+    triggers:
+      - harassment
+      - irrelevant
+      - repetition
+      - orderly conduct
+      - expedition
+    elements_to_prove: []
+    consequences:
+      - "Court may limit examination"
+      - "Objections may be sustained"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qccp-221
+    domain: procedure
+    source: "C.C.P., art. 221"
+    title: "Discovery (Interrogatoire prealable)"
+    rule_text: |
+      A party may examine the adverse party before trial on the facts relevant
+      to the issues in the proceeding. The examination is conducted in
+      accordance with the rules set out in the C.C.P.
+    obligation_holder: "examining_party"
+    triggers:
+      - discovery
+      - interrogatoire prealable
+      - examination
+      - adverse party
+      - transcript
+    elements_to_prove:
+      - "Adverse party examined"
+      - "Questions relevant to issues"
+    consequences:
+      - "Transcript may be used to impeach at trial"
+      - "Admissions may be binding"
+    confidence: 0.95
+    verification_required: true
+
+  - rule_id: qcta-j3
+    domain: procedure
+    source: "Act respecting administrative justice, CQLR c. J-3"
+    title: "TAQ Procedure Flexibility"
+    rule_text: |
+      The Tribunal administratif du Quebec adapts its procedure to the case,
+      emphasizing accessibility and fairness. Division-specific rules apply.
+    obligation_holder: "tribunal"
+    triggers:
+      - TAQ
+      - tribunal administratif
+      - administrative justice
+      - division
+      - flexibility
+    elements_to_prove: []
+    consequences:
+      - "Procedure may be less formal than court"
+      - "Specific division rules must be consulted"
+    confidence: 0.90
+    verification_required: true
+
+  - rule_id: qcoa-factum
+    domain: submissions
+    source: "Regulation of the Court of Appeal in civil matters"
+    title: "Court of Appeal Factum (Memoire)"
+    rule_text: |
+      The factum is mandatory in the Court of Appeal. It must contain Part I
+      Facts, Part II Issues, Part III Arguments, Part IV Conclusions, Part V
+      Authorities, and appendices including the judgment under appeal. Page
+      limits and format requirements apply.
+    obligation_holder: "appellant_respondent"
+    triggers:
+      - Court of Appeal
+      - factum
+      - memoire
+      - appeal
+      - standard of review
+      - palpable and overriding error
+    elements_to_prove: []
+    consequences:
+      - "Factum required for appeal"
+      - "Non-compliance may lead to rejection or costs"
+    confidence: 0.90
+    verification_required: true
+
+  - rule_id: qcoa-std-review
+    domain: submissions
+    source: "General appellate principle"
+    title: "Standards of Review on Appeal"
+    rule_text: |
+      On appeal, findings of fact are reviewed for palpable and overriding
+      error; questions of law are reviewed for correctness.
+    obligation_holder: "appellant_respondent"
+    triggers:
+      - appeal
+      - standard of review
+      - palpable and overriding error
+      - correctness
+      - question of law
+      - finding of fact
+    elements_to_prove: []
+    consequences:
+      - "Determines the standard applicable to each issue"
+    confidence: 0.95
+    verification_required: false

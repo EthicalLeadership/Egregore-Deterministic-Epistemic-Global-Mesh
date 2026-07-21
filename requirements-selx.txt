@@ -1,0 +1,7 @@
+# SEL-X closure runtime & test dependencies
+psycopg2-binary
+asn1crypto
+requests
+testing.postgresql
+pynacl
+cryptography

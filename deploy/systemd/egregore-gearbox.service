@@ -1,0 +1,34 @@
+[Unit]
+Description=Egregore Gearbox Adapter Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/egregore/venv/bin/python -m egregore.powertrain.gearbox
+WorkingDirectory=/opt/egregore
+User=egregore
+Group=egregore
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/egregore/logs /opt/egregore/data
+ReadOnlyPaths=/opt/egregore/venv /opt/egregore/src
+InaccessiblePaths=/root /home
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictRealtime=yes
+MemoryMax=256M
+TasksMax=20
+LimitNOFILE=2048
+UMask=0077
+EnvironmentFile=-/etc/egregore/env
+
+[Install]
+WantedBy=multi-user.target

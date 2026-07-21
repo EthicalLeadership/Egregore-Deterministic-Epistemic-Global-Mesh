@@ -1,0 +1,52 @@
+{
+  "system": {
+    "name": "ATGCA",
+    "version": "1.0.0",
+    "tick_rate_hz": 60,
+    "max_turbines": 16
+  },
+  "torque": {
+    "max_total": 1.0,
+    "min_alloc": 0.01,
+    "banking_enabled": true
+  },
+  "gear_ratios": {
+    "idle": 0.0,
+    "engage_soft": 0.33,
+    "cruise": 1.0,
+    "overdrive": 1.5,
+    "protection": 0.0
+  },
+  "hysteresis": {
+    "soft_to_cruise_frames": 10,
+    "cruise_to_overdrive_frames": 6,
+    "overdrive_to_cruise_frames": 16,
+    "protection_to_cruise_frames": 20,
+    "min_frames_between_changes": 10
+  },
+  "thermal": {
+    "warning_threshold_c": 80.0,
+    "protection_threshold_c": 85.0,
+    "recovery_threshold_c": 75.0
+  },
+  "turbines": {
+    "render": { "priority": 0.9, "critical": true },
+    "ai": { "priority": 0.8, "critical": false },
+    "io": { "priority": 0.7, "critical": true },
+    "physics": { "priority": 0.6, "critical": false },
+    "audio": { "priority": 0.5, "critical": false }
+  },
+  "telemetry": {
+    "csv_path": "./logs/metrics.csv",
+    "json_path": "./logs/metrics.json",
+    "live_port": 8080,
+    "buffer_size": 1000
+  },
+  "qa": {
+    "steady_duration_s": 30,
+    "surge_duration_s": 15,
+    "thermal_duration_s": 60,
+    "fault_duration_s": 20,
+    "predict_duration_s": 40
+  }
+}

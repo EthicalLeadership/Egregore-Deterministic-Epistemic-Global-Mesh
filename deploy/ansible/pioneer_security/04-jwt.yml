@@ -1,0 +1,50 @@
+---
+- name: Phase 04 | Generate and Distribute Shared JWT Secret
+  hosts: pioneer
+  become: true
+
+  tasks:
+    - name: Ensure pioneer config directory exists
+      ansible.builtin.file:
+        path: /etc/pioneer
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Generate JWT secret on pioneer-2 if missing
+      ansible.builtin.shell: "umask 077 && openssl rand -base64 32 > {{ pioneer_jwt_secret_path }}"
+      args:
+        creates: "{{ pioneer_jwt_secret_path }}"
+      delegate_to: pioneer-2
+      run_once: true
+
+    - name: Read JWT secret from pioneer-2
+      ansible.builtin.slurp:
+        src: "{{ pioneer_jwt_secret_path }}"
+      delegate_to: pioneer-2
+      register: jwt_secret_raw
+
+    - name: Distribute JWT secret to each node
+      ansible.builtin.copy:
+        content: "{{ jwt_secret_raw.content | b64decode }}"
+        dest: "{{ pioneer_jwt_secret_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Deploy authz policy file
+      ansible.builtin.template:
+        src: templates/authz-policy.yml.j2
+        dest: "{{ pioneer_authz_policy_path }}"
+        owner: root
+        group: root
+        mode: "0640"
+
+    - name: Allow FastAPI mTLS endpoint from LAN
+      community.general.ufw:
+        rule: allow
+        src: "{{ pioneer_lan_cidr }}"
+        port: "{{ pioneer_api_port }}"
+        proto: tcp
+        comment: "FastAPI over mTLS from LAN"

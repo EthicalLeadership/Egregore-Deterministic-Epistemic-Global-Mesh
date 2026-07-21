@@ -1,0 +1,312 @@
+name: Egregore CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Lint, Type Check, and Security Scan (non-negotiable gates)
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff black
+      - run: ruff check src/ tests/
+      - run: black --check src/ tests/
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install mypy
+      # --check-untyped-defs catches errors in our own code even without full annotations
+      - run: mypy src/ --check-untyped-defs --ignore-missing-imports
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install bandit pip-audit
+      # bandit blocks only on HIGH/CRITICAL — not LOW/MEDIUM noise
+      - run: bandit -r src/ -f json -o bandit-report.json --severity-level high
+      # pip-audit scans the LOCKED requirements.txt (hashed), not pyproject.toml
+      - run: pip-audit -r requirements.txt --desc --format=json > pip-audit-report.json || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
+
+  # ── 1. BUILD ───────────────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Cache Python venv
+        uses: actions/cache@v4
+        id: venv-cache
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pyproject.toml', 'requirements*.txt') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Python package
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          pip install -e ".[messaging,persistence,telemetry]"
+
+      - name: Capture provenance
+        run: |
+          mkdir -p provenance
+          echo "GIT_SHA=$(git rev-parse HEAD)" > provenance/build.env
+          echo "BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> provenance/build.env
+          echo "PYTHON_VERSION=${{ env.PYTHON_VERSION }}" >> provenance/build.env
+          echo "NODE_VERSION=${{ env.NODE_VERSION }}" >> provenance/build.env
+          cat provenance/build.env
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: egregore-build
+          path: |
+            .
+            !node_modules
+            !.venv/lib/python*/site-packages
+          retention-days: 30
+
+  # ── 2. GATE: Architecture purity ───────────────────────────────────────────
+  gate-architecture:
+    name: Gate / Architecture purity
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run architecture enforcement gate
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/test_arch_enforcement.py -q --tb=short
+
+  # ── 3. GATE: CBI-0 ─────────────────────────────────────────────────────────
+  gate-cbi0:
+    name: Gate / CBI-0
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run CBI-0 enforcement gate
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/test_cbi_0_enforcement.py -q --tb=short
+
+  # ── 4. GATE: Pipeline sandbox ──────────────────────────────────────────────
+  gate-pipeline-sandbox:
+    name: Gate / Pipeline sandbox
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run pipeline sandbox
+        env:
+          BLACKSTAR_SIGNING_KEY_HEX: ${{ secrets.BLACKSTAR_SIGNING_KEY_HEX }}
+        run: |
+          source .venv/bin/activate
+          make sandbox
+
+      - name: Upload sandbox artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-outputs
+          path: sandbox_outputs/
+          retention-days: 30
+
+  # ── 5. GATE: Gate 5 invariants ─────────────────────────────────────────────
+  gate-gate5:
+    name: Gate / Gate-5 invariants
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run Gate-5 invariant gate
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/test_gate5_invariants.py -q --tb=short
+
+  # ── 5. INTEGRATION ─────────────────────────────────────────────────────────
+  integration:
+    name: Integration tests
+    needs: [gate-architecture, gate-cbi0, gate-pipeline-sandbox, gate-gate5]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run integration suite
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/test_integration_adapters.py tests/test_nats_broker.py -q --tb=short
+
+  # ── 6. GATE: Language determinism ──────────────────────────────────────────
+  gate-determinism:
+    name: Gate / Language determinism
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: egregore-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run language determinism gate
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/test_lang_determinism.py -q --tb=short
+        # continue-on-error: REMOVED — determinism gate is non-negotiable
+
+  # ── 7a. DEPLOY: Pioneer 1 (systemd) ────────────────────────────────────────
+  deploy-pioneer1:
+    name: Deploy / Pioneer 1 (systemd)
+    needs: [integration, gate-determinism]
+    runs-on: [self-hosted, pioneer1]
+    environment: pioneer1-prod
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via systemd
+        run: |
+          sudo systemctl daemon-reload
+          sudo systemctl restart egregore-api
+          sudo systemctl status egregore-api --no-pager
+        env:
+          BLACKSTAR_DB_URL: ${{ secrets.PIONEER1_DB_URL }}
+          REDIS_URL: ${{ secrets.PIONEER1_REDIS_URL }}
+          NATS_URL: ${{ secrets.PIONEER1_NATS_URL }}
+          BLACKSTAR_SIGNING_KEY_PATH: ${{ secrets.PIONEER1_SIGNING_KEY_PATH }}
+          BLACKSTAR_CLUSTER_KEK_PATH: ${{ secrets.PIONEER1_CLUSTER_KEK_PATH }}
+          NODE_ID: pioneer1
+
+  # ── 7b. DEPLOY: Client Red Dart (Docker) ───────────────────────────────────
+  deploy-red-dart:
+    name: Deploy / Client Red Dart (Docker)
+    needs: [integration, gate-determinism]
+    runs-on: ubuntu-latest
+    environment: red-dart-prod
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Deploy Docker stack
+        run: docker compose up -d --wait
+
+  # ── 8. SMOKE ───────────────────────────────────────────────────────────────
+  smoke:
+    name: Smoke tests
+    needs: [deploy-pioneer1, deploy-red-dart]
+    runs-on: ubuntu-latest
+    if: (always() && needs.deploy-pioneer1.result == 'success') || needs.deploy-red-dart.result == 'success'
+    steps:
+      - name: Smoke /ready on Pioneer 1
+        if: needs.deploy-pioneer1.result == 'success'
+        run: |
+          curl -fsS http://${{ vars.PIONEER1_HOST }}:8002/ready | jq .
+
+      - name: Smoke /ready on Red Dart
+        if: needs.deploy-red-dart.result == 'success'
+        run: |
+          curl -fsS http://${{ vars.RED_DART_HOST }}:18000/ready | jq .
+
+      - name: Verify obs.pulse subject
+        if: needs.deploy-pioneer1.result == 'success'
+        run: |
+          nats --server ${{ secrets.PIONEER1_NATS_URL }} sub "obs.pulse.pioneer1" --count=1 --timeout=30s

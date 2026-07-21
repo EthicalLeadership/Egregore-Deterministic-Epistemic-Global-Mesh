@@ -1,0 +1,191 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "egregore"
+version = "0.6.0"
+description = "Egregore — Deterministic Epistemic Global Mesh. Sovereign, governed, replay-correct."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [
+    { name = "Egregore Edge", email = "ops@egregore.edge" },
+]
+keywords = ["deterministic", "governance", "execution", "runtime", "edge"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: Other/Proprietary License",
+    "Operating System :: POSIX :: Linux",
+]
+
+dependencies = [
+    # Core HTTP API
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "pydantic>=2.6.0",
+
+    # Document / data processing
+    "pdfplumber>=0.10",
+    "pikepdf>=8.0",
+    "python-docx>=1.1",
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "osqp>=0.6.3",
+
+    # Cryptography / provenance
+    "pynacl>=1.5",
+    "cryptography>=42.0",
+
+    # Structured logging and deterministic utilities
+    "canonicaljson>=2.0.0",
+    "structlog>=24.1.0",
+    "python-json-logger>=2.0.7",
+    "immutables>=0.20",
+    "orjson>=3.9.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.27.0",
+    "black>=24.0.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "bandit>=1.7.7",
+    "pip-tools>=7.0",
+]
+llm = [
+    "llama-cpp-python>=0.2.0",
+]
+messaging = [
+    "nats-py>=2.6.0",
+    "redis>=5.0.0",
+]
+persistence = [
+    "asyncpg>=0.29.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+]
+telemetry = [
+    "prometheus-client>=0.19.0",
+    "opentelemetry-api>=1.22.0",
+    "opentelemetry-sdk>=1.22.0",
+]
+all = ["egregore[dev,llm,messaging,persistence,telemetry]"]
+
+[project.scripts]
+egregore-admin = "egregore.cli.admin:main"
+
+[project.urls]
+Homepage = "https://egregore.dev"
+Documentation = "https://docs.egregore.dev"
+Repository = "https://github.com/EthicalLeadership/Egregore-Deterministic-Epistemic-Global-Mesh"
+Issues = "https://github.com/EthicalLeadership/Egregore-Deterministic-Epistemic-Global-Mesh/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["egregore*", "anchorum*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+egregore = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "strict"
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m not slow')",
+    "integration: marks tests as integration tests",
+    "arch: marks tests as architecture enforcement tests",
+    "redteam: marks adversarial red-team harness tests",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    | \.sixth
+    | \.aider
+    | __pycache__
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [
+    ".sixth",
+    ".aider",
+    "__pycache__",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM", "S", "C90", "ERA", "D"]
+ignore = [
+    "E501",
+    # Missing docstrings: ANCHORUM public API is documented in module docstrings.
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    # Style-only docstring formatting; not material to correctness or security.
+    "D200", "D205", "D212", "D213", "D400", "D401", "D415",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"tests/anchorum/**/*.py" = ["S101", "S106", "S306", "D"]
+"tests/test_anchorum_*.py" = ["S101", "D"]
+"tests/infrastructure/test_anthropic_client.py" = ["S101", "D"]
+"tests/infrastructure/test_deepseek_client.py" = ["S101", "D"]
+"tests/http/**/*.py" = ["S101", "D"]
+"tests/application/**/*.py" = ["S101", "D"]
+"tests/test_rfe_*.py" = ["S101"]
+"tests/redteam/**/*.py" = ["S101"]
+"tests/tooling/**/*.py" = ["S101", "D"]
+"tests/test_arch_enforcement.py" = ["S101", "SIM102", "ERA001", "C901"]
+"tests/test_architecture_policy_intent.py" = ["S101", "C901"]
+"src/egregore/rfe/**/*.py" = ["C901"]
+"src/egregore/http_api/http/v1/rfe.py" = ["C901"]
+"src/egregore/http_api/http/app.py" = ["C901"]
+"src/egregore/interface/bootstrap.py" = ["E402"]
+"tests/conftest.py" = ["E402"]
+"tests/infrastructure/test_postgresql_persistence_mocked.py" = ["E402"]
+"tests/interfaces/http/*.py" = ["E402"]
+"tests/test_document_intake.py" = ["E402"]
+"tests/test_dt1_kimik2_integration.py" = ["E402"]
+"tests/infrastructure/test_postgres_block_store.py" = ["E402"]
+"tests/integration/test_selx_*.py" = ["E402"]
+"tests/services/test_anchor_orchestrator.py" = ["E402"]
+"tests/test_postgresql_dossier_adapter.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = [
+    "tests/",
+    '.sixth/',
+    '.aider/',
+]
+
+
+[tool.bandit]
+exclude_dirs = ["tests", ".sixth", ".aider"]
+# B404/B603: ANCHORUM uses a single audited subprocess runner with an
+# explicit executable allow-list and absolute-path resolution.
+# B314: OOXML XML parts are parsed from ZIP packages in a controlled input path.
+skips = ["B101", "B311", "B314", "B404", "B603"]

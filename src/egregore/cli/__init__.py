@@ -1,0 +1,1 @@
+"""Egregore command-line interfaces."""

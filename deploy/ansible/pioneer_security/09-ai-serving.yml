@@ -1,0 +1,46 @@
+---
+- name: Phase 09 | Deploy Ops Copilot Serving Runtime on Pioneer-1
+  hosts: pioneer_orchestrator
+  become: true
+
+  tasks:
+    - name: Install Docker runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Ensure AI serving directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ aiops_user }}"
+        group: "{{ aiops_user }}"
+        mode: "0755"
+      loop:
+        - "{{ pioneer_ai_models_root }}"
+        - "{{ pioneer_ai_serving_dir }}"
+
+    - name: Ensure API AI interface environment file is present
+      ansible.builtin.copy:
+        dest: /etc/pioneer/ai-interface.env
+        owner: root
+        group: root
+        mode: "0640"
+        content: |
+          BLACKSTAR_AI_GPU_MODE=auto
+          BLACKSTAR_AI_GPU_GAME_PROTECT=1
+          BLACKSTAR_AI_GPU_PROTECT_UTIL_THRESHOLD=70
+          BLACKSTAR_AI_GPU_PROTECT_VRAM_THRESHOLD_MIB=5200
+          BLACKSTAR_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
+          BLACKSTAR_AI_TIMEOUT_SECONDS=8
+          BLACKSTAR_AI_MAX_PROMPT_CHARS=4096
+          BLACKSTAR_AI_DENYLIST_TERMS=private key,seed phrase,root token

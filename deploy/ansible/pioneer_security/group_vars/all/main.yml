@@ -1,0 +1,63 @@
+---
+ansible_become: true
+
+pioneer_lan_cidr: "192.168.2.0/24"
+aiops_user: "aiops"
+aiops_shell: "/bin/bash"
+aiops_home: "/home/aiops"
+aiops_enable_sudo: true
+aiops_enable_docker_group: true
+
+# Replace this placeholder with your real public key.
+aiops_public_key: "ssh-ed25519 REPLACE_WITH_REAL_KEY aiops@pioneer"
+
+pioneer_api_port: 8443
+pioneer_nfs_port: 2049
+pioneer_postgres_port: 5432
+pioneer_vault_port: 8200
+
+pioneer_jwt_secret_path: "/etc/pioneer/jwt_secret"
+pioneer_authz_policy_path: "/etc/pioneer/authz_policy.yml"
+pioneer_pki_base: "/etc/pioneer/pki"
+pioneer_ssl_dir: "/etc/pioneer/ssl"
+
+pioneer_nfs_export_root: "/mnt/pioneer_cluster"
+pioneer_nfs_server_host: "pioneer-2"
+pioneer_nfs_server_ip: "192.168.2.10"
+
+pioneer_ufw_allowed_ports:
+  - { port: 22, proto: "tcp", comment: "SSH from LAN" }
+
+pioneer_ufw_additional_rules: []
+
+node_exporter_version: "1.7.0"
+node_exporter_sha256: "a550cd5c05f760b7934a2d0afad66d2e92e681482f5f57a917465b1fba3b02a6"
+node_exporter_web_config: "/etc/pioneer/node_exporter_web.yml"
+
+# Pin to explicit tags or digests in production.
+presidio_analyzer_image: "mcr.microsoft.com/presidio-analyzer:latest"
+presidio_anonymizer_image: "mcr.microsoft.com/presidio-anonymizer:latest"
+pioneer_require_image_pinning: true
+
+vault_storage_path: "/var/lib/vault"
+vault_config_path: "/etc/vault.d/vault.hcl"
+vault_cluster_addr: "https://192.168.2.11:8201"
+vault_api_addr: "https://192.168.2.11:8200"
+
+pioneer_cert_valid_days: 365
+pioneer_ca_valid_days: 3650
+
+# AI interface + training pipeline defaults (2-week Pioneer-2 training window).
+pioneer_egregore_repo_path: "/opt/egregore/egregore_control_master_all_phases"
+pioneer_ai_data_root: "/mnt/pioneer_cluster/data"
+pioneer_ai_models_root: "/mnt/pioneer_cluster/models"
+pioneer_ai_dataset_path: "{{ pioneer_ai_data_root }}/training/curated_dataset.json"
+pioneer_ai_index_path: "{{ pioneer_ai_data_root }}/rag/index.json"
+pioneer_ai_checkpoints_dir: "{{ pioneer_ai_models_root }}/checkpoints"
+pioneer_ai_serving_dir: "{{ pioneer_ai_models_root }}/ops-copilot/serving"
+pioneer_ai_eval_min_score: 0.80
+
+pioneer_ai_training_enabled: true
+pioneer_ai_ingest_cron: "15 2 * * *"
+pioneer_ai_train_cron: "45 2 * * *"
+pioneer_ai_promote_cron: "15 4 * * *"

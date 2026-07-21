@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Egregore Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <script src="/static/js/htmx.min.js"></script>
+  <style>
+    .htmx-request .spinner { display: inline-block !important; }
+    .spinner { display: none; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-bs-bg text-bs-text">
+  <nav class="border-b border-bs-border bg-bs-surface">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14">
+        <div class="flex items-center gap-3">
+          <div class="w-3 h-3 rounded-full bg-bs-accent animate-pulse"></div>
+          <span class="font-mono font-bold text-lg tracking-tight">BLACKSTAR</span>
+          <span class="text-xs text-bs-text-muted border border-bs-border rounded px-2 py-0.5">PLANE 2</span>
+          <a href="/dashboard/anchorum" class="ml-4 text-sm text-bs-accent hover:underline">ANCHORUM</a>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-bs-text-muted">
+          <span id="nav-status">{{ state.system_status.value if state else "—" }}</span>
+          <span class="font-mono text-xs">{{ state.node_id if state else "unknown" }}</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="border-t border-bs-border mt-auto py-4">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-bs-text-muted font-mono">
+      BLACKSTAR OPERATOR DASHBOARD — FAIL-CLOSED — NO SILENT DEGRADATION
+    </div>
+  </footer>
+</body>
+</html>

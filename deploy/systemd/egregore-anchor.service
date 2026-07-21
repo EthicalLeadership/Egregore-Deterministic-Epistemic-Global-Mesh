@@ -1,0 +1,22 @@
+[Unit]
+Description=Egregore SEL-X Anchor Orchestrator
+Documentation=https://docs.egregore.edge
+After=network.target egregore-core.service
+Wants=egregore-core.service
+
+[Service]
+Type=simple
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore
+Environment=PYTHONPATH=src
+EnvironmentFile=-/opt/egregore/.env
+ExecStart=/opt/egregore/.venv/bin/python -m egregore.services.anchor_orchestrator.service
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=egregore-anchor
+
+[Install]
+WantedBy=multi-user.target

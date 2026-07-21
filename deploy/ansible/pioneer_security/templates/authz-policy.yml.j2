@@ -1,0 +1,20 @@
+version: 1
+default_decision: deny
+rules:
+  - name: inference-lane
+    methods: [POST]
+    patterns:
+      - /register
+      - /telemetry
+      - /federation/sync
+    scopes_any: [inference]
+
+  - name: read-default
+    methods: [GET]
+    patterns: ["/*"]
+    scopes_any: [status, read]
+
+  - name: write-default
+    methods: [POST, PUT, PATCH, DELETE]
+    patterns: ["/*"]
+    roles_any: [write, admin]

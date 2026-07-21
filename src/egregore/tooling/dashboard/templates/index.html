@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egregore Interface Synod · Module Governance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        :root { --pico-font-size: 90%; }
+        .badge { padding: 0.2em 0.6em; border-radius: 4px; font-weight: bold; font-size: 0.8em; white-space: nowrap; }
+        .badge-signed { background: #1b5e20; color: #e8f5e9; }
+        .badge-waiver { background: #e65100; color: #fff3e0; }
+        .badge-missing { background: #b71c1c; color: #fce4ec; }
+        .badge-not-terminal { background: #263238; color: #eceff1; }
+        .module-row { cursor: pointer; }
+        .module-row:hover { background: rgba(128, 128, 128, 0.08); }
+        #detail-panel { margin-top: 1.5rem; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+        .graph-container { border: 1px solid var(--pico-muted-border-color); border-radius: 4px; min-height: 300px; }
+        .violation-ERROR { color: #c62828; }
+        .violation-WARN { color: #ef6c00; }
+        .mono { font-family: monospace; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>⚙️ Interface Synod · Module Governance</h1>
+        <p class="mono"><small>Reading from <span id="report-path"></span></small></p>
+
+        <div id="summary-banner" style="display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem;"></div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+            <label for="filter-layer" style="margin: 0;">Layer:</label>
+            <select id="filter-layer" style="width: auto; margin: 0;">
+                <option value="">All layers</option>
+            </select>
+            <input type="search" id="search-name" placeholder="Search module name..." style="width: auto; margin: 0;">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Module</th>
+                    <th>Layer</th>
+                    <th>Class</th>
+                    <th>Terminal</th>
+                    <th>Attestation</th>
+                    <th>M4</th>
+                    <th>Violations</th>
+                </tr>
+            </thead>
+            <tbody id="module-table"></tbody>
+        </table>
+
+        <div id="detail-panel"></div>
+    </main>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // ---------- DATA ----------
+        let reportData = null;
+
+        async function fetchReport() {
+            const res = await fetch('/api/report');
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+            reportData = await res.json();
+            return reportData;
+        }
+
+        // ---------- HELPERS ----------
+        function attestationBadge(mod) {
+            const badge = mod.attestation_badge || 'NOT_TERMINAL';
+            const cls = {
+                'SIGNED': 'badge-signed',
+                'WAIVER': 'badge-waiver',
+                'MISSING': 'badge-missing',
+                'NOT_TERMINAL': 'badge-not-terminal'
+            }[badge] || 'badge-not-terminal';
+            let text = badge.replace('_', ' ');
+            if (badge === 'WAIVER' && mod.decom_manifest?.attestation?.bootstrap_waiver) {
+                text = mod.decom_manifest.attestation.bootstrap_waiver;
+            }
+            return `<span class="badge ${cls}">${text}</span>`;
+        }
+
+        function violationsSummary(mod) {
+            const vios = mod.violations || [];
+            if (vios.length === 0) return '—';
+            const errors = vios.filter(v => v.severity === 'ERROR').length;
+            const warns = vios.filter(v => v.severity !== 'ERROR').length;
+            const parts = [];
+            if (errors) parts.push(`<span class="violation-ERROR">🔴 ${errors}</span>`);
+            if (warns) parts.push(`<span class="violation-WARN">🟡 ${warns}</span>`);
+            return parts.join(' ');
+        }
+
+        function m4Status(mod) {
+            return (mod.m4 && mod.m4.status) ? mod.m4.status : 'NOT YET DEFINED';
+        }
+
+        function parseWaiverExpiry(waiverToken, buildTimestamp) {
+            // Token format: BOOTSTRAP-YYYY-NNN
+            const match = waiverToken && waiverToken.match(/^BOOTSTRAP-(\d{4,})-(\d{3,})$/);
+            if (!match) return null;
+            const year = parseInt(match[1], 10);
+            // Heuristic: expiry is the end of the waiver year + 1, or 365 days after build, whichever is sooner.
+            const endOfWaiverYear = new Date(Date.UTC(year + 1, 0, 1, 0, 0, 0, -1));
+            const base = buildTimestamp ? new Date(buildTimestamp) : new Date();
+            const oneYearFromBuild = new Date(base.getTime() + 365 * 24 * 60 * 60 * 1000);
+            return endOfWaiverYear < oneYearFromBuild ? endOfWaiverYear : oneYearFromBuild;
+        }
+
+        function daysUntil(date) {
+            if (!date) return null;
+            const ms = date.getTime() - Date.now();
+            return Math.ceil(ms / (24 * 60 * 60 * 1000));
+        }
+
+        // ---------- TABLE ----------
+        async function buildTable() {
+            const report = await fetchReport();
+            document.getElementById('report-path').textContent = window.location.origin + '/api/report';
+            const modules = report.module_results || [];
+
+            // Layer filter options
+            const layers = [...new Set(modules.map(m => m.layer).filter(Boolean))].sort();
+            const layerSelect = document.getElementById('filter-layer');
+            layers.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l;
+                opt.textContent = l;
+                layerSelect.appendChild(opt);
+            });
+
+            // Summary banner
+            const total = modules.length;
+            const terminal = modules.filter(m => m.terminal).length;
+            const signed = modules.filter(m => m.attestation_badge === 'SIGNED').length;
+            const waiver = modules.filter(m => m.attestation_badge === 'WAIVER').length;
+            const missing = modules.filter(m => m.attestation_badge === 'MISSING').length;
+            const expiringSoon = modules.filter(m => {
+                if (m.attestation_badge !== 'WAIVER' || !m.decom_manifest?.attestation?.bootstrap_waiver) return false;
+                const exp = parseWaiverExpiry(m.decom_manifest.attestation.bootstrap_waiver, m.build_timestamp);
+                const days = daysUntil(exp);
+                return days !== null && days <= 30;
+            }).length;
+
+            document.getElementById('summary-banner').innerHTML = `
+                <div><strong>Total modules:</strong> ${total}</div>
+                <div><strong>Terminal:</strong> ${terminal}</div>
+                <div><strong>Attested:</strong> ${signed}</div>
+                <div><strong>Waiver:</strong> ${waiver}</div>
+                <div><strong>Missing attestation:</strong> ${missing}</div>
+                ${expiringSoon ? `<div style="color:#e65100;"><strong>⚠ Waivers expiring ≤30d:</strong> ${expiringSoon}</div>` : ''}
+            `;
+
+            function filteredModules() {
+                const layer = layerSelect.value;
+                const q = document.getElementById('search-name').value.toLowerCase();
+                return modules.filter(m => {
+                    const layerOk = !layer || m.layer === layer;
+                    const nameOk = !q || (m.name || '').toLowerCase().includes(q);
+                    return layerOk && nameOk;
+                });
+            }
+
+            function renderRows() {
+                const tbody = document.getElementById('module-table');
+                tbody.innerHTML = '';
+                filteredModules().forEach(mod => {
+                    const row = document.createElement('tr');
+                    row.className = 'module-row';
+                    row.innerHTML = `
+                        <td><a href="#" onclick="showDetail('${mod.module_id}'); return false;">${mod.name || mod.module_id}</a></td>
+                        <td>${mod.layer || '—'}</td>
+                        <td>${mod.pipeline_class || '—'}</td>
+                        <td>${mod.terminal ? 'Yes' : 'No'}</td>
+                        <td>${attestationBadge(mod)}</td>
+                        <td>${m4Status(mod)}</td>
+                        <td>${violationsSummary(mod)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            layerSelect.addEventListener('change', renderRows);
+            document.getElementById('search-name').addEventListener('input', renderRows);
+            renderRows();
+        }
+
+        // ---------- DETAIL ----------
+        async function showDetail(moduleId) {
+            try {
+                const res = await fetch(`/api/modules/${encodeURIComponent(moduleId)}`);
+                if (!res.ok) throw new Error(await res.text());
+                const mod = await res.json();
+                const report = reportData || {};
+                const graph = report.graph && report.graph.graph ? report.graph.graph : {};
+
+                // Build local dependency graph data
+                const nodes = new Map();
+                const links = [];
+                function addNode(id, group) {
+                    if (!nodes.has(id)) nodes.set(id, { id, group });
+                }
+                addNode(mod.module_id, 'selected');
+                const selfDeps = (graph[mod.module_id] && graph[mod.module_id].dependencies) || [];
+                selfDeps.forEach(dep => {
+                    const target = dep.module;
+                    addNode(target, 'dependency');
+                    links.push({ source: mod.module_id, target, type: 'declared' });
+                });
+                // Incoming edges
+                Object.entries(graph).forEach(([otherId, otherMod]) => {
+                    if (otherId === mod.module_id) return;
+                    (otherMod.dependencies || []).forEach(dep => {
+                        if (dep.module === mod.module_id) {
+                            addNode(otherId, 'dependent');
+                            links.push({ source: otherId, target: mod.module_id, type: 'declared' });
+                        }
+                    });
+                });
+                // Undeclared edges from graph report
+                const undeclared = (report.graph && report.graph.undeclared_edges) || [];
+                undeclared.forEach(edge => {
+                    if (edge.source === mod.module_id) {
+                        addNode(edge.target, 'undeclared');
+                        links.push({ source: mod.module_id, target: edge.target, type: 'undeclared' });
+                    } else if (edge.target === mod.module_id) {
+                        addNode(edge.source, 'undeclared');
+                        links.push({ source: edge.source, target: mod.module_id, type: 'undeclared' });
+                    }
+                });
+
+                const panel = document.getElementById('detail-panel');
+                const decom = mod.decom_manifest;
+                const att = decom && decom.attestation ? decom.attestation : null;
+                const waiverExpiry = att && att.bootstrap_waiver ? parseWaiverExpiry(att.bootstrap_waiver, mod.build_timestamp) : null;
+                const daysLeft = daysUntil(waiverExpiry);
+
+                panel.innerHTML = `
+                    <article>
+                        <header><h2>${mod.name || mod.module_id}</h2></header>
+                        <div class="detail-grid">
+                            <div>
+                                <p><strong>Module ID:</strong> <span class="mono">${mod.module_id}</span></p>
+                                <p><strong>Layer:</strong> ${mod.layer || '—'}</p>
+                                <p><strong>Pipeline class:</strong> ${mod.pipeline_class || '—'}</p>
+                                <p><strong>Build:</strong> ${mod.build_timestamp || '—'}</p>
+                                <p><strong>M3 Terminal:</strong> ${mod.terminal ? 'Yes' : 'No'}</p>
+                                <p><strong>Attestation:</strong> ${attestationBadge(mod)}</p>
+                                <p><strong>M4:</strong> ${m4Status(mod)}</p>
+                            </div>
+                            <div>
+                                ${decom ? `
+                                <h3>Decommissioning Manifest</h3>
+                                <ul>
+                                    <li><strong>Dependencies:</strong> ${(decom.dependencies || []).join(', ') || 'None'}</li>
+                                    <li><strong>Procedure:</strong> ${decom.procedure ? `<a href="${decom.procedure}" target="_blank">${decom.procedure}</a>` : '—'}</li>
+                                    <li><strong>Test Log:</strong> ${decom.test_log ? `<a href="${decom.test_log}" target="_blank">${decom.test_log}</a>` : '—'}</li>
+                                    <li><strong>Attestation:</strong>
+                                        ${att && att.signature ? `Signed by <span class="mono">${att.signer_id || 'unknown'}</span> on ${att.timestamp || 'unknown'}` : ''}
+                                        ${att && att.bootstrap_waiver ? `Bootstrap Waiver <span class="mono">${att.bootstrap_waiver}</span>` : ''}
+                                        ${!att ? 'None' : ''}
+                                    </li>
+                                </ul>
+                                ${att && att.bootstrap_waiver ? `
+                                <div class="grid" style="margin-top:1rem;">
+                                    <div>
+                                        <strong>Waiver expiry (heuristic):</strong><br>
+                                        ${waiverExpiry ? waiverExpiry.toISOString().slice(0, 10) : 'unknown'}<br>
+                                        <span style="color:${daysLeft !== null && daysLeft <= 30 ? '#e65100' : 'inherit'};">
+                                            ${daysLeft !== null ? daysLeft + ' days remaining' : ''}
+                                        </span>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <button onclick="initiateReview('${mod.module_id}')">Initiate Review</button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                ` : '<p><em>No decommissioning manifest declared.</em></p>'}
+                            </div>
+                        </div>
+
+                        <h3>Dependency Graph</h3>
+                        <div id="graph-svg" class="graph-container"></div>
+
+                        <h3>Violations</h3>
+                        ${(mod.violations || []).length ? `
+                        <table>
+                            <thead><tr><th>Checkpoint</th><th>Rule</th><th>Detail</th></tr></thead>
+                            <tbody>
+                                ${mod.violations.map(v => `
+                                    <tr>
+                                        <td class="mono">${v.checkpoint || '—'}</td>
+                                        <td class="mono">${v.rule || '—'}</td>
+                                        <td>${v.detail || '—'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ` : '<p>None.</p>'}
+
+                        <h3>Full Manifest</h3>
+                        <pre class="mono">${JSON.stringify(mod.manifest || mod, null, 2)}</pre>
+                    </article>
+                `;
+
+                renderGraph(Array.from(nodes.values()), links);
+                panel.scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                alert('Error loading module details: ' + err.message);
+            }
+        }
+
+        function renderGraph(nodes, links) {
+            const container = document.getElementById('graph-svg');
+            if (!container) return;
+            container.innerHTML = '';
+            if (nodes.length === 0) {
+                container.innerHTML = '<p style="padding:1rem;">No graph data available. Ensure modules have committed manifests and run <code>make sandbox</code>.</p>';
+                return;
+            }
+
+            const width = container.clientWidth;
+            const height = 300;
+            const svg = d3.select('#graph-svg').append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', [0, 0, width, height]);
+
+            const color = d3.scaleOrdinal()
+                .domain(['selected', 'dependency', 'dependent', 'undeclared'])
+                .range(['#1565c0', '#2e7d32', '#7b1fa2', '#e65100']);
+
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+                .force('charge', d3.forceManyBody().strength(-200))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .join('line')
+                .attr('stroke', d => d.type === 'undeclared' ? '#e65100' : '#999')
+                .attr('stroke-width', d => d.type === 'undeclared' ? 2 : 1)
+                .attr('stroke-dasharray', d => d.type === 'undeclared' ? '4,2' : null);
+
+            const node = svg.append('g')
+                .selectAll('g')
+                .data(nodes)
+                .join('g')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            node.append('circle')
+                .attr('r', d => d.group === 'selected' ? 10 : 6)
+                .attr('fill', d => color(d.group));
+
+            node.append('text')
+                .attr('dx', 12)
+                .attr('dy', '.35em')
+                .text(d => d.id.split('.').pop() || d.id)
+                .style('font-size', '11px')
+                .style('font-family', 'monospace');
+
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        async function initiateReview(moduleId) {
+            const entry = {
+                event: 'review_initiated',
+                module_id: moduleId,
+                timestamp: new Date().toISOString(),
+                actor: 'Interface Synod (dashboard)',
+                note: 'Placeholder governance action; no backend mutation performed.'
+            };
+            // In v0.1 this only logs to the browser console. A future backend endpoint
+            // will append to a governance transparency log.
+            console.log('Governance action:', entry);
+            alert(`Review initiated for ${moduleId}. Logged to browser console (backend integration pending).`);
+        }
+
+        // ---------- STARTUP ----------
+        buildTable().catch(err => {
+            document.body.innerHTML = `<div class="container" style="color:red; margin-top:2rem;">
+                <h2>Dashboard failed to load</h2>
+                <p>${err.message}</p>
+                <p>Make sure you have run <code>make sandbox</code> and that <code>/api/report</code> is reachable.</p>
+            </div>`;
+        });
+    </script>
+</body>
+</html>

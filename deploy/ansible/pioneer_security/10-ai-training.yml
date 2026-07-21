@@ -1,0 +1,147 @@
+---
+- name: Phase 10 | Deploy Ops Copilot Training + Promotion Jobs on Pioneer-2
+  hosts: pioneer-2
+  become: true
+
+  tasks:
+    - name: Resolve Egregore repository path on Pioneer-2
+      ansible.builtin.shell: |
+        set -euo pipefail
+        for p in \
+          "{{ pioneer_egregore_repo_path }}" \
+          "/home/{{ aiops_user }}/egregore_control_master_all_phases" \
+          "/opt/egregore/egregore_control_master_all_phases"; do
+          if [ -f "$p/pyproject.toml" ] && [ -f "$p/launch_control.py" ]; then
+            echo "$p"
+            exit 0
+          fi
+        done
+        exit 1
+      args:
+        executable: /bin/bash
+      changed_when: false
+      register: pioneer_repo_path_probe
+
+    - name: Persist resolved repository path
+      ansible.builtin.set_fact:
+        pioneer_ai_repo_path_resolved: "{{ pioneer_repo_path_probe.stdout }}"
+
+    - name: Install training runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+        state: present
+        update_cache: true
+
+    - name: Ensure AI pipeline directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ aiops_user }}"
+        group: "{{ aiops_user }}"
+        mode: "0755"
+      loop:
+        - "{{ pioneer_ai_data_root }}"
+        - "{{ pioneer_ai_data_root }}/training"
+        - "{{ pioneer_ai_data_root }}/rag"
+        - "{{ pioneer_ai_models_root }}"
+        - "{{ pioneer_ai_checkpoints_dir }}"
+        - "{{ pioneer_ai_serving_dir }}"
+
+    - name: Deploy AI training environment config
+      ansible.builtin.copy:
+        dest: /etc/pioneer/ai-training.env
+        owner: root
+        group: root
+        mode: "0640"
+        content: |
+          BLACKSTAR_AI_DATASET_PATH={{ pioneer_ai_dataset_path }}
+          BLACKSTAR_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
+          BLACKSTAR_AI_CHECKPOINTS_DIR={{ pioneer_ai_checkpoints_dir }}
+          BLACKSTAR_AI_SERVING_DIR={{ pioneer_ai_serving_dir }}
+          PIONEER_PII_FAIL_CLOSED=1
+
+    - name: Deploy ingest+index runner
+      ansible.builtin.copy:
+        dest: /usr/local/bin/pioneer-ai-ingest-index.sh
+        owner: root
+        group: root
+        mode: "0755"
+        content: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          source /etc/pioneer/ai-training.env
+          cd {{ pioneer_ai_repo_path_resolved }}
+          /usr/bin/python3 tools/ai_ingest_and_index.py \
+            --docs-dir docs \
+            --dataset-path "$BLACKSTAR_AI_DATASET_PATH" \
+            --index-path "$BLACKSTAR_AI_RAG_INDEX_PATH"
+
+    - name: Deploy nightly training runner
+      ansible.builtin.copy:
+        dest: /usr/local/bin/pioneer-ai-train.sh
+        owner: root
+        group: root
+        mode: "0755"
+        content: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          source /etc/pioneer/ai-training.env
+          cd {{ pioneer_ai_repo_path_resolved }}
+          /usr/bin/python3 tools/ai_train_nightly.py \
+            --index-path "$BLACKSTAR_AI_RAG_INDEX_PATH" \
+            --checkpoints-dir "$BLACKSTAR_AI_CHECKPOINTS_DIR"
+
+    - name: Deploy promotion runner
+      ansible.builtin.copy:
+        dest: /usr/local/bin/pioneer-ai-promote.sh
+        owner: root
+        group: root
+        mode: "0755"
+        content: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          source /etc/pioneer/ai-training.env
+          cd {{ pioneer_ai_repo_path_resolved }}
+          /usr/bin/python3 tools/ai_promote_model.py \
+            --checkpoints-dir "$BLACKSTAR_AI_CHECKPOINTS_DIR" \
+            --serving-dir "$BLACKSTAR_AI_SERVING_DIR" \
+            --min-score {{ pioneer_ai_eval_min_score }}
+
+    - name: Schedule daily ingestion + index refresh
+      ansible.builtin.cron:
+        name: egregore-ai-ingest-index
+        user: root
+        job: "/usr/local/bin/pioneer-ai-ingest-index.sh >> /var/log/pioneer-ai-ingest.log 2>&1"
+        minute: "{{ pioneer_ai_ingest_cron.split()[0] }}"
+        hour: "{{ pioneer_ai_ingest_cron.split()[1] }}"
+        day: "{{ pioneer_ai_ingest_cron.split()[2] }}"
+        month: "{{ pioneer_ai_ingest_cron.split()[3] }}"
+        weekday: "{{ pioneer_ai_ingest_cron.split()[4] }}"
+        state: "{{ 'present' if pioneer_ai_training_enabled else 'absent' }}"
+
+    - name: Schedule nightly training
+      ansible.builtin.cron:
+        name: egregore-ai-train
+        user: root
+        job: "/usr/local/bin/pioneer-ai-train.sh >> /var/log/pioneer-ai-train.log 2>&1"
+        minute: "{{ pioneer_ai_train_cron.split()[0] }}"
+        hour: "{{ pioneer_ai_train_cron.split()[1] }}"
+        day: "{{ pioneer_ai_train_cron.split()[2] }}"
+        month: "{{ pioneer_ai_train_cron.split()[3] }}"
+        weekday: "{{ pioneer_ai_train_cron.split()[4] }}"
+        state: "{{ 'present' if pioneer_ai_training_enabled else 'absent' }}"
+
+    - name: Schedule promotion gate
+      ansible.builtin.cron:
+        name: egregore-ai-promote
+        user: root
+        job: "/usr/local/bin/pioneer-ai-promote.sh >> /var/log/pioneer-ai-promote.log 2>&1"
+        minute: "{{ pioneer_ai_promote_cron.split()[0] }}"
+        hour: "{{ pioneer_ai_promote_cron.split()[1] }}"
+        day: "{{ pioneer_ai_promote_cron.split()[2] }}"
+        month: "{{ pioneer_ai_promote_cron.split()[3] }}"
+        weekday: "{{ pioneer_ai_promote_cron.split()[4] }}"
+        state: "{{ 'present' if pioneer_ai_training_enabled else 'absent' }}"

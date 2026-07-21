@@ -1,0 +1,144 @@
+cell_id: electrical_wiring
+version: 1.0.0
+taxonomy:
+  root: guildhall
+  branch: building
+  leaf: electrical
+  specialty: wiring
+owner: guildhall_master_electrician
+type: guild
+tier: 4
+max_load: 0.65
+advisory_cells:
+  - carpentry_joinery
+purpose: |
+  The electrical_wiring cell produces code-aware residential wiring guidance:
+  circuit sizing, conductor selection, grounding, GFCI/AFCI requirements, and
+  safety warnings. It is advisory and always directs the user to consult a
+  licensed electrician and local code authority.
+
+inputs:
+  - name: input
+    type: string
+    description: Electrical project or circuit description.
+    schema: { type: string, minLength: 10, maxLength: 50000 }
+    required: true
+
+outputs:
+  - name: wiring_plan
+    type: object
+    description: Structured wiring guidance.
+    schema:
+      type: object
+      properties:
+        summary: { type: string }
+        circuit_size: { type: string }
+        conductor: { type: string }
+        protections: { type: array }
+        code_notes: { type: array }
+        safety_warnings: { type: array }
+        disclaimer: { type: string }
+
+output_format:
+  stream_type: trade_plan
+  claim_field: code_compliant
+  claim_map:
+    "true": positive
+    "false": negative
+    unknown: neutral
+  schema:
+    type: object
+    properties:
+      summary: { type: string }
+      circuit_size: { type: string }
+      conductor: { type: string }
+      protections: { type: array }
+      code_notes: { type: array }
+      safety_warnings: { type: array }
+      disclaimer: { type: string }
+
+pipeline:
+  description: |
+    2-stage pipeline: extract load and constraints, then generate a code-aware
+    wiring plan with safety warnings and disclaimer.
+  stages:
+    - stage_id: load_extraction
+      name: Load and Constraint Extraction
+      model: qwen_1.5b
+      system: |
+        You are an electrical-trade teaching assistant. Extract load and
+        constraints from the project description and return JSON with fields:
+        load_watts, voltage, circuit_type, location, special_requirements.
+        Output only JSON.
+      prompt: |
+        Project description:
+        {input}
+
+        Return JSON load/constraints only.
+      output_format: json
+      max_tokens: 512
+      temperature: 0.0
+
+    - stage_id: wiring_plan
+      name: Wiring Plan Generation
+      model: qwen_7b
+      system: |
+        You are a licensed-electrician educator. Produce a wiring guidance plan
+        as JSON with summary, circuit_size, conductor, protections, code_notes,
+        safety_warnings, and a disclaimer to consult a licensed electrician and
+        local code authority. Output only JSON.
+      prompt: |
+        Load/constraints:
+        {load_extraction_output}
+
+        Return JSON wiring plan only.
+      output_format: json
+      max_tokens: 1536
+      temperature: 0.0
+      depends_on: [load_extraction]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Load extraction.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+  - model_id: qwen_7b
+    purpose: Wiring plan generation.
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    required: true
+
+verification:
+  static_tools: [json_schema]
+  dynamic_tools: []
+  rules:
+    - rule_id: disclaimer_present
+      description: Output must contain an electrical-safety disclaimer.
+      severity: critical
+      check: contains_disclaimer
+    - rule_id: safety_warnings_present
+      description: Output must include safety warnings.
+      severity: critical
+      check: safety_warnings_nonempty
+
+moral_compliance:
+  egregore_laws:
+    - law_id: qualified_person_only
+      description: Electrical work must be performed by qualified persons.
+      enforcement: disclaimer
+    - law_id: code_compliance
+      description: Guidance must reference local electrical code compliance.
+      enforcement: code_notes
+
+dependencies:
+  - carpentry_joinery
+
+artifacts:
+  stage_gates:
+    plan: cells/electrical_wiring/spec.yaml
+    draw: cells/electrical_wiring/artifacts/draw.json
+    layout: cells/electrical_wiring/artifacts/layout.json
+    erect: cells/electrical_wiring/artifacts/erect.json
+    build: cells/electrical_wiring/artifacts/build.json
+    finish: cells/electrical_wiring/artifacts/finish.json
+    inspect: cells/electrical_wiring/artifacts/inspect.json
+    deliver: cells/electrical_wiring/artifacts/deliver.json

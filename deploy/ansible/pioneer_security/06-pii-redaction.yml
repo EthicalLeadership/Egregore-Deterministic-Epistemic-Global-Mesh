@@ -1,0 +1,51 @@
+---
+- name: Phase 06 | Deploy Presidio PII Redaction Services on Pioneer-1
+  hosts: pioneer_orchestrator
+  become: true
+
+  tasks:
+    - name: Enforce pinned Presidio image references
+      ansible.builtin.assert:
+        that:
+          - "'@sha256:' in presidio_analyzer_image or ':latest' not in presidio_analyzer_image"
+          - "'@sha256:' in presidio_anonymizer_image or ':latest' not in presidio_anonymizer_image"
+        fail_msg: >-
+          Pin presidio_analyzer_image and presidio_anonymizer_image to immutable digests
+          or at least non-latest tags before deployment.
+      when: pioneer_require_image_pinning | bool
+
+    - name: Install Docker runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Run Presidio analyzer service
+      community.docker.docker_container:
+        name: presidio-analyzer
+        image: "{{ presidio_analyzer_image }}"
+        pull: true
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        published_ports:
+          - "127.0.0.1:5001:3000"
+
+    - name: Run Presidio anonymizer service
+      community.docker.docker_container:
+        name: presidio-anonymizer
+        image: "{{ presidio_anonymizer_image }}"
+        pull: true
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        published_ports:
+          - "127.0.0.1:5002:3000"

@@ -1,0 +1,163 @@
+# === Python artifacts ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+wheels/
+*.whl
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === Virtual environments ===
+.venv/
+venv/
+ENV/
+env/
+
+# === IDE / editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.sixth/
+.aider*
+.aider.chat.history.md
+.aider.input.history
+
+# === Secrets ===
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.der
+
+# === Logs / data ===
+*.log
+logs/
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# === Test / coverage ===
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+.dockerignore
+
+# === Generated analysis outputs (regenerable; do not commit) ===
+project_info__*.md
+audit_*.json
+assault_report_*.json
+assault_summary_*.md
+all_files_folders.txt
+cluster_audit.log
+egregore_tree.txt
+trufflehog_secrets_report.json
+digital_twin_mpc_demo.png
+
+# === Transient run/cache directories ===
+runs/
+runs_smoke/
+ritual_cache/
+models_tmp/
+tmp_audit_disk.bin
+tmpfile
+tmp/
+
+# === JavaScript dependencies ===
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Wrangler / Cloudflare ===
+.wrangler/
+
+# === SECRETS — NEVER COMMIT ===
+secrets/*.pem
+secrets/*.bin
+secrets/*.key
+.env
+*.env
+!.env.example
+.secrets_backup_*
+
+# === Accidental artifact dumps ===
+/os
+/sys
+
+# === Runtime / operational artifacts ===
+.pids/
+.update_log
+sandbox_outputs/
+governance_log.jsonl
+
+# === Publication safety: sensitive/private directories ===
+ANCHORUM_reports/
+ANCHORUM_AUDIT_*.md
+output/
+report/molson_live_run_*/
+sandbox_outputs/
+.pids/
+.update_log
+rag/chroma_db/
+audit_cfca/
+external_from_usb_MODELS_2TB3/
+models/
+models_tmp/
+uploads/
+workspace.db
+.secrets_backup_*/
+cells/molson_self_rep/
+scripts/ingest_dossier_molson.py
+scripts/molson_self_rep_dossier.py
+scripts/anchorum_molson_workflow.py
+
+# === Operational helper scripts (contain personal paths) ===
+tools/cleanup/
+tools/fix_archive/
+tools/audit_architecture.py
+audit_egregore.py
+audit_filesystem.py
+audit_environment.py
+audit_consolidate.log
+audit_egregore.log
+audit_environment.log
+audit_filesystem.log
+
+# === Runtime caches ===
+.hypothesis/
+.continue/
+.sixth/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.aider*
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/

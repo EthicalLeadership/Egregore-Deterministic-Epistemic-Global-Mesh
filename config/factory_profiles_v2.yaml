@@ -1,0 +1,211 @@
+# Egregore Cognitive Factory v2 — Elite Hardened Architecture
+#
+# 7-stage assembly line for safety-critical code generation.
+# Every stage emits structured, auditable output.
+# coding_factory uses the full 7-stage pipeline.
+# general_assistant remains on the lighter 5-station wheel.
+
+models:
+  qwen_1.5b:
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    n_ctx: 8192
+    n_gpu_layers: -1
+    chat_format: qwen
+    family: qwen2
+
+  qwen_7b:
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    n_ctx: 8192
+    n_gpu_layers: -1
+    chat_format: qwen
+    family: qwen2
+
+  deepseek_coder_6.7b:
+    path: ${MODELS_DIR}/gguf/specialized/deepseek-coder-6.7b-instruct.Q4_K_M.gguf
+    n_ctx: 8192
+    n_gpu_layers: -1
+    chat_format: chatml
+    family: deepseek
+
+modes:
+  coding_factory:
+    name: "Coding Factory"
+    description: "Safety-critical code generation with formal specification, verification, and moral compliance."
+    default: true
+    pipeline_version: 2
+    stations:
+      spec_synthesis:
+        model: qwen_1.5b
+        max_tokens: 1024
+        temperature: 0.1
+        system: |
+          You are a formal specification writer for a safety-critical software factory.
+          Convert the user request into a single JSON spec object with exactly these fields:
+            task_type, language, components, security_requirements, quality_requirements,
+            output_format, edge_cases, egregore_law_constraints.
+          Be exhaustive. No requirement may be omitted. Do not add commentary outside the JSON.
+        prompt: |
+          User request:
+          {input}
+
+          Respond with the JSON specification object only.
+
+      scaffolding:
+        model: qwen_1.5b
+        max_tokens: 1536
+        temperature: 0.1
+        system: |
+          You are a code architect for a safety-critical factory.
+          Generate a Python skeleton that matches the specification exactly.
+          Do not implement any logic; use `raise NotImplementedError` in method bodies.
+          Include all imports, class and method signatures with full type hints, and docstring templates.
+          The skeleton must be syntactically correct and importable.
+          Output ONLY the Python source code, no markdown fences, no commentary.
+        prompt: |
+          Specification:
+          {spec_synthesis_output}
+
+          Generate the Python skeleton module only.
+
+      cnc:
+        model: qwen_7b
+        max_tokens: 6144
+        temperature: 0.2
+        system: |
+          You are an elite software engineer filling a pre-approved code skeleton with production logic.
+          You are NOT allowed to change the public API, imports, or signatures from the skeleton.
+          Implement all method bodies, add the pytest test file, and write the README.
+          Follow all security and quality requirements from the specification.
+          Output ONLY valid JSON with three string fields: module, test, readme.
+          No excuses, no placeholders, no commentary outside the JSON.
+        prompt: |
+          Specification:
+          {spec_synthesis_output}
+
+          Skeleton to fill:
+          {scaffolding_output}
+
+          Produce JSON in this exact shape:
+          {{
+            "module": "<complete Python module source>",
+            "test": "<complete pytest test file source>",
+            "readme": "<Markdown README source>"
+          }}
+
+      static_analysis:
+        model: qwen_1.5b
+        max_tokens: 1024
+        temperature: 0.1
+        system: |
+          You are a static analysis engine. Check the generated code against the specification.
+          Return ONLY valid JSON with fields: verdict ("PASS" or "FAIL") and issues (array of strings).
+          Be strict. If the code is incomplete, has syntax errors, or violates security rules, list every issue.
+        prompt: |
+          Specification:
+          {spec_synthesis_output}
+
+          Skeleton:
+          {scaffolding_output}
+
+          Generated module:
+          {module_code}
+
+          Return the static analysis report as JSON.
+
+      dynamic_test:
+        model: qwen_1.5b
+        max_tokens: 1024
+        temperature: 0.1
+        system: |
+          You are a test-coverage auditor. Evaluate the provided pytest file against the specification edge cases.
+          Return ONLY valid JSON with fields: verdict ("PASS" or "FAIL") and missing_coverage (array of strings).
+          A test file passes only if it explicitly exercises every edge case from the spec with real assertions.
+        prompt: |
+          Specification edge cases:
+          {edge_cases}
+
+          Test file:
+          {test_code}
+
+          Return the dynamic test audit report as JSON.
+
+      moral_compliance:
+        model: qwen_1.5b
+        max_tokens: 1024
+        temperature: 0.1
+        system: |
+          You enforce Egregore law on all generated artifacts. Laws include:
+          - No code may access or exfiltrate data outside designated paths.
+          - All file operations must be logged and auditable.
+          - No use of unapproved third-party libraries.
+          - Respect data sovereignty; no hardcoded credentials.
+          - Output must not contain profanity, hate speech, or unsafe instructions.
+          Return ONLY valid JSON with fields: verdict ("PASS" or "FAIL") and violations (array of strings).
+        prompt: |
+          Module:
+          {module_code}
+
+          Test:
+          {test_code}
+
+          README:
+          {readme_code}
+
+          Return the moral compliance report as JSON.
+
+      final_qc:
+        model: qwen_1.5b
+        max_tokens: 512
+        temperature: 0.1
+        system: |
+          You are the final gate of a safety-critical factory.
+          Aggregate the reports from static analysis, dynamic test, and moral compliance.
+          If all are PASS, the overall verdict is PASS; otherwise FAIL.
+          Return ONLY valid JSON with fields: verdict ("PASS" or "FAIL") and details (object).
+        prompt: |
+          Static analysis: {static_analysis_output}
+          Dynamic test: {dynamic_test_output}
+          Moral compliance: {moral_compliance_output}
+
+          Return the final QC report as JSON.
+
+  general_assistant:
+    name: "General Assistant"
+    description: "Conversational AI with intake routing and quality control."
+    pipeline_version: 1
+    stations:
+      intake:
+        model: qwen_1.5b
+        max_tokens: 12
+        temperature: 0.1
+        system: "You classify user intent. Reply with exactly one label."
+        prompt: "Classify the user's intent as one of: chat, factual, code, creative. Reply with only the label.\n\nUser: {input}\nLabel:"
+
+      parts_mfg:
+        model: qwen_1.5b
+        max_tokens: 256
+        temperature: 0.3
+        system: "You extract facts and constraints from user requests."
+        prompt: "Extract any named entities, topics, or constraints from the user request as a concise bulleted list. If none, write 'none'.\n\nUser: {input}\nEntities/Constraints:"
+
+      compression:
+        model: qwen_1.5b
+        max_tokens: 128
+        temperature: 0.2
+        threshold_chars: 500
+        system: "You compress long inputs while preserving intent and constraints."
+        prompt: "Summarize the following user request in one or two sentences, preserving all constraints.\n\n{input}\nSummary:"
+
+      cnc:
+        model: qwen_7b
+        max_tokens: 1024
+        temperature: 0.6
+        system: "You are a helpful, accurate general assistant. Answer concisely and clearly."
+        prompt: "{input}"
+
+      qc:
+        model: qwen_1.5b
+        max_tokens: 5
+        temperature: 0.1
+        system: "You are a safety and quality reviewer. Reply with one word."
+        prompt: "Review the assistant response. If it is unsafe, evasive, nonsensical, or empty, reply ONLY 'FAIL'. Otherwise reply ONLY 'PASS'.\n\nResponse: {cnc_output}\nVerdict:"

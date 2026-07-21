@@ -1,0 +1,22 @@
+# Build outputs
+build/
+*.o
+*.a
+atgca_test
+atgca_benchmark
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.csv
+*.json
+!config/config.json

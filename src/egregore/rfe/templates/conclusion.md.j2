@@ -1,0 +1,30 @@
+# Conclusion
+
+## Supported Conclusions
+
+{% for c in supported_conclusions %}
+- ✅ {{ c }}
+{% else %}
+- No supported conclusions.
+{% endfor %}
+
+## Opposed Conclusions
+
+{% for c in opposed_conclusions %}
+- ❌ {{ c }}
+{% else %}
+- No opposed conclusions.
+{% endfor %}
+
+## Methodology
+
+Conclusions are derived from the Maximum Expected Epistemic Value (MEEV) scoring
+function applied to each stream. The composite score weights:
+
+- **Impact:** {{ "%.2f"|format(weights.w_impact) }}
+- **Freshness:** {{ "%.2f"|format(weights.w_freshness) }}
+- **Reliability (confidence):** {{ "%.2f"|format(weights.w_reliability) }}
+- **Corroboration:** {{ "%.2f"|format(weights.w_corroboration) }}
+
+Authority tier weights multiply the composite score and are fixed per version;
+stream confidence cannot override tier weight.

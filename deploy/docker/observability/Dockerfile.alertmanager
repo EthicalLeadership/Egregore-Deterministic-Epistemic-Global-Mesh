@@ -1,0 +1,7 @@
+FROM prom/alertmanager:v0.27.0
+
+# Add security: run as non-root user
+USER 10001:10001
+
+# Expose port
+EXPOSE 9093

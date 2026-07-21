@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "========================================"
+echo "BLACKSTAR FULL AUDIT SUITE"
+echo "========================================"
+cd ~/egregore 2>/dev/null || cd ~
+OUTDIR="$(pwd)"
+echo "[1/4] Filesystem Audit..."
+python3 "$OUTDIR/audit_filesystem.py" 2>&1 | tee "$OUTDIR/audit_filesystem.log"
+echo ""
+echo "[2/4] Egregore Codebase Audit..."
+python3 "$OUTDIR/audit_egregore.py" 2>&1 | tee "$OUTDIR/audit_egregore.log"
+echo ""
+echo "[3/4] Environment Audit..."
+python3 "$OUTDIR/audit_environment.py" 2>&1 | tee "$OUTDIR/audit_environment.log"
+echo ""
+echo "[4/4] Consolidating..."
+python3 "$OUTDIR/audit_consolidate.py" 2>&1 | tee "$OUTDIR/audit_consolidate.log"
+echo ""
+echo "========================================"
+echo "ALL AUDITS COMPLETE"
+echo "========================================"
+ls -la "$OUTDIR"/AUDIT_*.md 2>/dev/null || echo "No .md reports found — check .log files"

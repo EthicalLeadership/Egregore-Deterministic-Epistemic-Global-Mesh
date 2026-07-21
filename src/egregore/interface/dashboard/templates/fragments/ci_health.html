@@ -1,0 +1,37 @@
+<div class="bs-panel">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-mono font-semibold text-bs-text-muted uppercase tracking-wider">CI Pipeline</h2>
+    {% if ci.status == CiStatus.PASS %}
+      <span class="bs-badge bg-bs-unfrozen/20 text-bs-unfrozen">PASS</span>
+    {% elif ci.status == CiStatus.FAIL %}
+      <span class="bs-badge bg-bs-danger/20 text-bs-danger">FAIL</span>
+    {% elif ci.status == CiStatus.RUNNING %}
+      <span class="bs-badge bg-bs-info/20 text-bs-info animate-pulse">RUNNING</span>
+    {% else %}
+      <span class="bs-badge bg-bs-border text-bs-text-muted">UNKNOWN</span>
+    {% endif %}
+  </div>
+  <div class="space-y-3">
+    <div class="flex justify-between text-sm">
+      <span class="text-bs-text-muted">Last run</span>
+      <span class="font-mono text-xs">{{ fmt_ts(ci.last_run) }}</span>
+    </div>
+    <div class="grid grid-cols-3 gap-2 text-center">
+      <div class="p-2 rounded bg-bs-surface-elevated border border-bs-border">
+        <div class="text-xs text-bs-text-muted mb-1">Lint</div>
+        {% if ci.lint_ok %}<span class="text-bs-unfrozen">✓</span>{% else %}<span class="text-bs-danger">✗</span>{% endif %}
+      </div>
+      <div class="p-2 rounded bg-bs-surface-elevated border border-bs-border">
+        <div class="text-xs text-bs-text-muted mb-1">Type</div>
+        {% if ci.type_ok %}<span class="text-bs-unfrozen">✓</span>{% else %}<span class="text-bs-danger">✗</span>{% endif %}
+      </div>
+      <div class="p-2 rounded bg-bs-surface-elevated border border-bs-border">
+        <div class="text-xs text-bs-text-muted mb-1">Security</div>
+        {% if ci.security_ok %}<span class="text-bs-unfrozen">✓</span>{% else %}<span class="text-bs-danger">✗</span>{% endif %}
+      </div>
+    </div>
+    <div class="text-xs text-bs-text-muted pt-2 border-t border-bs-border">
+      {{ ci.summary }}
+    </div>
+  </div>
+</div>

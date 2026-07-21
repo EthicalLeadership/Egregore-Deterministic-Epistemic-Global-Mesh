@@ -1,0 +1,14 @@
+[Unit]
+Description=Egregore Control Center REST API
+After=network.target
+
+[Service]
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore_control
+EnvironmentFile=-/etc/default/egregore
+ExecStart=/opt/egregore_control/venv/bin/python /opt/egregore_control/launch_control.py --mode rest
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

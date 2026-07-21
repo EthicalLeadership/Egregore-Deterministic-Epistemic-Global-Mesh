@@ -1,0 +1,55 @@
+<div class="bs-panel">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-mono font-semibold text-bs-text-muted uppercase tracking-wider">Controls</h2>
+    <span class="text-xs text-bs-text-muted font-mono">op: {{ operator }}</span>
+  </div>
+  {% if message %}
+  <div class="mb-4 p-3 rounded-md bg-bs-accent/10 border border-bs-accent/30 text-bs-accent text-sm">
+    {{ message }}
+  </div>
+  {% endif %}
+  <form class="space-y-3">
+    <div>
+      <label class="block text-xs text-bs-text-muted mb-1 font-mono">Reason / Attribution</label>
+      <input type="text" name="reason" id="control-reason" placeholder="Operator reason (min 3 chars)"
+             class="bs-input text-sm font-mono" required minlength="3">
+    </div>
+    <div class="grid grid-cols-3 gap-2">
+      <button type="button"
+              hx-post="/dashboard/freeze"
+              hx-include="#control-reason"
+              hx-target="#freeze-controls"
+              hx-swap="outerHTML"
+              class="bs-btn-danger text-xs"
+              {% if status == SystemStatus.FROZEN %}disabled{% endif %}>
+        FREEZE
+      </button>
+      <button type="button"
+              hx-post="/dashboard/unfreeze"
+              hx-include="#control-reason"
+              hx-target="#freeze-controls"
+              hx-swap="outerHTML"
+              class="bs-btn-warning text-xs"
+              {% if status != SystemStatus.FROZEN %}disabled{% endif %}>
+        UNFREEZE
+      </button>
+      <button type="button"
+              hx-post="/dashboard/reset"
+              hx-include="#control-reason"
+              hx-target="#freeze-controls"
+              hx-swap="outerHTML"
+              class="bs-btn-secondary text-xs">
+        RESET
+      </button>
+    </div>
+  </form>
+  <div class="mt-4 text-xs text-bs-text-muted">
+    {% if status == SystemStatus.FROZEN %}
+      <span class="text-bs-danger">●</span> Freeze active. Unfreeze required before normal operations.
+    {% elif status == SystemStatus.RECONCILING %}
+      <span class="text-bs-unfrozen">●</span> System thawed. Review audit log before resuming.
+    {% else %}
+      <span class="text-bs-normal">●</span> No active freeze.
+    {% endif %}
+  </div>
+</div>

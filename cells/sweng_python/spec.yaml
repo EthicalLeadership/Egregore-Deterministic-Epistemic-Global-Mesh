@@ -1,0 +1,239 @@
+cell_id: sweng_python
+version: 1.0.1
+taxonomy: university/engineering/software/python
+owner: guild_engineering
+type: university
+tier: 3
+max_load: 0.85
+advisory_cells:
+  - math_calculus
+purpose: |
+  The sweng_python cell is a safety-critical micro-factory that turns natural-language
+  Python module requests into complete, verifiable artifacts: a module file, a pytest
+  test file, and a README. It is the first demonstration cell of the Egregore
+  Cognitive Civilization Build Protocol and must prove that every stage can produce
+  concrete, inspectable outputs.
+
+inputs:
+  - name: request
+    type: string
+    description: Natural-language description of the desired Python module.
+    schema: { type: string, minLength: 10, maxLength: 50000 }
+    required: true
+  - name: max_tokens
+    type: integer
+    description: Optional per-stage token ceiling override.
+    schema: { type: integer, minimum: 1, maximum: 8192 }
+    required: false
+
+outputs:
+  - name: module
+    type: string
+    description: Complete Python module source code.
+    schema: { type: string }
+  - name: test
+    type: string
+    description: Complete pytest test file source code.
+    schema: { type: string }
+  - name: readme
+    type: string
+    description: Markdown README documenting usage.
+    schema: { type: string }
+  - name: verification_report
+    type: object
+    description: Structured report from static, dynamic, and moral gates.
+    schema:
+      type: object
+      properties:
+        static_analysis: { type: object }
+        dynamic_test: { type: object }
+        moral_compliance: { type: object }
+        final_qc: { type: object }
+
+output_format:
+  stream_type: code_factory_output
+  claim_field: verdict
+  claim_map:
+    PASS: positive
+    FAIL: negative
+  schema:
+    type: object
+    properties:
+      module: { type: string }
+      test: { type: string }
+      readme: { type: string }
+      verification_report: { type: object }
+
+pipeline:
+  description: |
+    7-stage hardened pipeline derived from the v2 factory architecture.
+  stages:
+    - stage_id: spec_synthesis
+      name: Specification Synthesis
+      model: qwen_1.5b
+      system: |
+        You are a formal specification writer. Convert the user's code request into a
+        JSON object with fields: task_type, language, components, security_requirements,
+        quality_requirements, output_format, edge_cases, egregore_law_constraints.
+        Be exhaustive. Output only JSON.
+      prompt: "User request:\n{input}\n\nReturn the JSON specification only."
+      output_format: json
+      max_tokens: 1024
+      temperature: 0.1
+
+    - stage_id: scaffolding
+      name: API Scaffolding
+      model: qwen_1.5b
+      system: |
+        Generate a Python skeleton matching the specification exactly. Do not implement
+        logic; use raise NotImplementedError in method bodies. Include type hints and
+        docstring templates. Output only Python source.
+      prompt: "Specification:\n{spec_synthesis_output}\n\nGenerate the Python skeleton."
+      output_format: code
+      max_tokens: 1536
+      temperature: 0.1
+      depends_on: [spec_synthesis]
+
+    - stage_id: cnc
+      name: Core Generation
+      model: qwen_7b
+      system: |
+        Fill the provided skeleton with production-quality logic. Do not change the
+        public API. Output ONLY valid JSON with module, test, and readme string fields.
+      prompt: |
+        Specification: {spec_synthesis_output}
+        Skeleton: {scaffolding_output}
+        Produce JSON with keys module, test, readme. Values must be complete source strings.
+      output_format: json
+      max_tokens: 6144
+      temperature: 0.2
+      depends_on: [scaffolding]
+
+    - stage_id: static_analysis
+      name: Static Analysis
+      model: qwen_1.5b
+      system: |
+        Static analysis engine. Check the module for syntax errors, security violations,
+        and API conformance. Return JSON: {"verdict": "PASS|FAIL", "issues": [...]}.
+      prompt: |
+        Spec: {spec_synthesis_output}
+        Skeleton: {scaffolding_output}
+        Module: {module_code}
+        Return JSON report.
+      output_format: json
+      max_tokens: 1024
+      temperature: 0.1
+      depends_on: [cnc]
+
+    - stage_id: dynamic_test
+      name: Dynamic Test Audit
+      model: qwen_1.5b
+      system: |
+        Evaluate the pytest file against the spec edge cases. Return JSON:
+        {"verdict": "PASS|FAIL", "missing_coverage": [...]}.
+      prompt: |
+        Edge cases: {edge_cases}
+        Test file: {test_code}
+        Return JSON report.
+      output_format: json
+      max_tokens: 1024
+      temperature: 0.1
+      depends_on: [cnc]
+
+    - stage_id: moral_compliance
+      name: Moral & Legal Compliance
+      model: qwen_1.5b
+      system: |
+        Enforce Egregore law. Check for unauthorized access, missing audit logging,
+        hardcoded secrets, and unsafe instructions. Return JSON:
+        {"verdict": "PASS|FAIL", "violations": [...]}.
+      prompt: |
+        Module: {module_code}
+        Test: {test_code}
+        README: {readme_code}
+        Return JSON report.
+      output_format: json
+      max_tokens: 1024
+      temperature: 0.1
+      depends_on: [cnc]
+
+    - stage_id: final_qc
+      name: Final QC Aggregation
+      model: qwen_1.5b
+      system: |
+        Aggregate static_analysis, dynamic_test, and moral_compliance reports. If all
+        PASS, overall verdict is PASS; otherwise FAIL. Return JSON:
+        {"verdict": "PASS|FAIL", "details": {...}}.
+      prompt: |
+        Static: {static_analysis_output}
+        Dynamic: {dynamic_test_output}
+        Moral: {moral_compliance_output}
+        Return JSON report.
+      output_format: json
+      max_tokens: 512
+      temperature: 0.1
+      depends_on: [static_analysis, dynamic_test, moral_compliance]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Specification, scaffolding, and all critic/audit stages.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+  - model_id: qwen_7b
+    purpose: Core code generation (CNC stage).
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    required: true
+
+verification:
+  static_tools: [ast, custom_regex]
+  dynamic_tools: [pytest]
+  rules:
+    - rule_id: no_eval_exec
+      description: Module must not use eval, exec, compile, or __import__ with dynamic input.
+      severity: critical
+      check: regex_forbidden_eval_exec
+    - rule_id: path_traversal_defense
+      description: Any file path derived from user input must be resolved and checked against base_path.
+      severity: critical
+      check: ast_path_resolve_check
+    - rule_id: type_hints_present
+      description: All public methods must have type hints.
+      severity: high
+      check: ast_type_hint_check
+    - rule_id: thread_pool_used
+      description: process_directory must use concurrent.futures.ThreadPoolExecutor or equivalent.
+      severity: high
+      check: ast_thread_pool_check
+    - rule_id: rollback_removes_transformed
+      description: rollback must remove the .transformed file, not just modify content.
+      severity: high
+      check: ast_rollback_check
+
+moral_compliance:
+  egregore_laws:
+    - law_id: data_sovereignty
+      description: No unauthorized network access or external API calls.
+      enforcement: static_regex + manual_audit
+    - law_id: auditability
+      description: All file operations and errors must be logged with timestamp.
+      enforcement: ast_logging_check
+    - law_id: no_malware
+      description: Cell must refuse requests to produce keyloggers, remote shells, or similar.
+      enforcement: prompt_refusal + output_scan
+    - law_id: no_hardcoded_secrets
+      description: No passwords, tokens, or keys embedded in generated code.
+      enforcement: regex_secret_scan
+
+dependencies:
+  - math_calculus
+
+artifacts:
+  stage_gates:
+    plan: cells/sweng_python/spec.yaml
+    draw: cells/sweng_python/architecture.dot
+    layout: cells/sweng_python/artifacts/layout.json
+    erect: cells/sweng_python/artifacts/health_evidence.json
+    build: cells/sweng_python/artifacts/test_report.json
+    finish: cells/sweng_python/artifacts/audit_certificate.json
+    inspect: cells/sweng_python/artifacts/acceptance_report.md
+    deliver: cells/sweng_python/artifacts/shelf_entry.json

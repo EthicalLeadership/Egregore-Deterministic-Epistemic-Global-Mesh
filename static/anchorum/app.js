@@ -1,0 +1,162 @@
+const sessionId = "anchorum-" + Math.random().toString(36).slice(2, 10);
+const caseListEl = document.getElementById("case-list");
+const caseDetailEl = document.getElementById("case-detail");
+const refreshBtn = document.getElementById("refresh-cases");
+const chatLogEl = document.getElementById("chat-log");
+const chatInput = document.getElementById("chat-input");
+const btnLegal = document.getElementById("btn-legal");
+const btnAsk = document.getElementById("btn-ask");
+
+let ws = null;
+let activeCaseId = null;
+
+function apiUrl(path) {
+  return `${window.location.protocol}//${window.location.host}${path}`;
+}
+
+async function apiGet(path) {
+  const res = await fetch(apiUrl(path), {
+    method: "GET",
+    credentials: "same-origin",
+    headers: { "Accept": "application/json" },
+  });
+  if (res.status === 401) {
+    window.location.href = "/dashboard/login";
+    return null;
+  }
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+async function loadCases() {
+  caseListEl.innerHTML = '<li class="empty">Loading cases…</li>';
+  try {
+    const cases = await apiGet("/api/v1/anchorum/cases");
+    if (!cases) return;
+    caseListEl.innerHTML = "";
+    if (!cases.length) {
+      caseListEl.innerHTML = '<li class="empty">No cases found.</li>';
+      return;
+    }
+    cases.forEach((id) => {
+      const li = document.createElement("li");
+      li.textContent = id;
+      li.dataset.caseId = id;
+      li.addEventListener("click", () => selectCase(id));
+      caseListEl.appendChild(li);
+    });
+  } catch (err) {
+    caseListEl.innerHTML = `<li class="empty error-text">Failed to load cases: ${escapeHtml(err.message)}</li>`;
+  }
+}
+
+async function selectCase(caseId) {
+  activeCaseId = caseId;
+  document.querySelectorAll(".case-list li").forEach((li) => li.classList.remove("active"));
+  const li = caseListEl.querySelector(`[data-case-id="${CSS.escape(caseId)}"]`);
+  if (li) li.classList.add("active");
+
+  caseDetailEl.innerHTML = '<p class="loading">Loading case summary…</p>';
+  try {
+    const summary = await apiGet(`/api/v1/anchorum/cases/${encodeURIComponent(caseId)}/summary`);
+    if (!summary) return;
+    const generated = summary.generated_at ? new Date(summary.generated_at).toLocaleString() : "N/A";
+    caseDetailEl.innerHTML = `
+      <div class="case-summary">
+        <p><strong>Case ID:</strong> ${escapeHtml(summary.case_id)}</p>
+        <p><strong>Generated:</strong> ${escapeHtml(generated)}</p>
+        <p><strong>Artifacts:</strong> ${summary.artifact_count} · <strong>Entities:</strong> ${summary.entity_count} · <strong>Anomalies:</strong> ${summary.anomaly_count}</p>
+        <p><strong>Severity counts:</strong>
+          Critical ${summary.critical_count} · High ${summary.high_count} · Medium ${summary.medium_count} · Low ${summary.low_count}
+        </p>
+      </div>
+    `;
+  } catch (err) {
+    caseDetailEl.innerHTML = `<p class="error-text">Failed to load case: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function escapeHtml(text) {
+  if (text == null) return "";
+  const div = document.createElement("div");
+  div.textContent = String(text);
+  return div.innerHTML;
+}
+
+function appendMessage(role, html, meta = "") {
+  const div = document.createElement("div");
+  div.className = `message ${role}`;
+  if (meta) div.innerHTML = `<div class="meta">${escapeHtml(meta)}</div>` + html;
+  else div.innerHTML = html;
+  chatLogEl.appendChild(div);
+  chatLogEl.scrollTop = chatLogEl.scrollHeight;
+}
+
+function ensureWebSocket() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const url = `${protocol}//${window.location.host}/ws/chat/${sessionId}`;
+  ws = new WebSocket(url);
+
+  ws.onopen = () => {
+    console.log("ANCHORUM WebSocket connected");
+  };
+
+  ws.onmessage = (event) => {
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      appendMessage("agent", escapeHtml(event.data), "Egregore");
+      return;
+    }
+    const command = data.command || "agent";
+    const ok = data.ok;
+    const summary = data.summary || "";
+    const detail = data.detail || {};
+
+    let html = escapeHtml(summary).replace(/\n/g, "<br>");
+
+    // Append source list when RAG results are present
+    if (detail.sources && detail.sources.length) {
+      const unique = [...new Set(detail.sources)];
+      html += `<br><br><span class="meta">Sources:</span> ${unique.map(escapeHtml).join(", ")}`;
+    }
+
+    appendMessage(ok ? "agent" : "error", html, `Egregore /${command}`);
+  };
+
+  ws.onerror = (err) => {
+    console.error("WebSocket error", err);
+    appendMessage("error", "Connection error. Please refresh the page.", "System");
+  };
+
+  ws.onclose = () => {
+    ws = null;
+  };
+}
+
+function sendChat(commandPrefix) {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  ensureWebSocket();
+  if (ws.readyState !== WebSocket.OPEN) {
+    appendMessage("error", "WebSocket is not connected yet. Wait a moment and try again.", "System");
+    return;
+  }
+  const message = `${commandPrefix} ${text}`;
+  appendMessage("user", escapeHtml(text), "You");
+  ws.send(message);
+  chatInput.value = "";
+}
+
+refreshBtn.addEventListener("click", loadCases);
+btnLegal.addEventListener("click", () => sendChat("/legal"));
+btnAsk.addEventListener("click", () => sendChat("/ask"));
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendChat("/legal");
+});
+
+loadCases();
+ensureWebSocket();

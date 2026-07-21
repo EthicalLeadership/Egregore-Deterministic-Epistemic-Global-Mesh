@@ -1,0 +1,241 @@
+{
+  "run_id": "egregore-20260524-001",
+  "version": "0.6.0",
+  "dossiers": [
+    {
+      "id": "DOSS-01",
+      "name": "Sentinel Telemetry Mesh",
+      "classification": "DATA",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_01_sentinel_telemetry/mesh.py"
+      ],
+      "dossier_classes": [
+        "SentinelTelemetryMesh",
+        "PulseSample",
+        "TelemetryCollector"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-01/test_doss01_mesh.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/infrastructure/telemetry/telemetry_collector.py",
+        "src/egregore/infrastructure/telemetry/phase0_pulse_agent.py",
+        "src/egregore/cortex/pulse_adapter.py"
+      ],
+      "upstream_tests": [
+        "tests/test_pulse_adapter.py"
+      ],
+      "dependencies": ["DOSS-03", "DOSS-06"]
+    },
+    {
+      "id": "DOSS-02",
+      "name": "Cognitive Core Engine",
+      "classification": "EXECUTION",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_02_cognitive_core/engine.py"
+      ],
+      "dossier_classes": [
+        "CognitiveCoreEngine",
+        "ChatRequest",
+        "ChatResponse"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-02/test_doss02_engine.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/application/inference_service.py",
+        "src/egregore/application/chat_inference_orchestrator.py",
+        "src/egregore/dt1/inference_work_unit.py"
+      ],
+      "upstream_tests": [
+        "tests/application/test_inference_service.py",
+        "tests/test_local_vertical_inference.py"
+      ],
+      "dependencies": ["DOSS-03", "DOSS-05", "DOSS-07"]
+    },
+    {
+      "id": "DOSS-03",
+      "name": "UCSG Knowledge Graph",
+      "classification": "DATA",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_03_ucsg_knowledge/graph.py"
+      ],
+      "dossier_classes": [
+        "UCSGKnowledgeGraph",
+        "FactStatement"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-03/test_doss03_graph.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/domain/semantics/",
+        "src/egregore/application/semantics_executor.py",
+        "src/egregore/application/constrained_semantic_engine.py"
+      ],
+      "upstream_tests": [
+        "tests/test_semantics_backbone.py",
+        "tests/test_constrained_semantic_engine.py"
+      ],
+      "dependencies": ["DOSS-02", "DOSS-06", "DOSS-07"]
+    },
+    {
+      "id": "DOSS-04",
+      "name": "Autonomous Response Engine",
+      "classification": "EXECUTION",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_04_autonomous_response/engine.py"
+      ],
+      "dossier_classes": [
+        "AutonomousResponseEngine",
+        "ExecutionBlock",
+        "ExecutionAuthority"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-04/test_doss04_engine.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/application/execution_guard.py",
+        "src/egregore/cells/executor.py",
+        "src/egregore/domain/execution_block.py"
+      ],
+      "upstream_tests": [
+        "tests/application/test_execution_guard.py",
+        "tests/test_execution_block.py",
+        "tests/test_execution_authority.py"
+      ],
+      "dependencies": ["DOSS-02"]
+    },
+    {
+      "id": "DOSS-05",
+      "name": "Identity & Trust Fabric",
+      "classification": "CONTROL",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_05_identity_trust/fabric.py"
+      ],
+      "dossier_classes": [
+        "Constitution",
+        "Article",
+        "PermissionRegistry"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-05/test_doss05_fabric.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/domain/federation_constitution.py",
+        "src/egregore/governance/permissions.py",
+        "src/egregore/http_api/http/middleware/identity.py"
+      ],
+      "upstream_tests": [
+        "tests/application/test_permissions.py",
+        "tests/test_key_management.py"
+      ],
+      "dependencies": ["DOSS-02"]
+    },
+    {
+      "id": "DOSS-06",
+      "name": "Threat Intelligence Fusion",
+      "classification": "DATA",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_06_threat_intelligence/fusion.py"
+      ],
+      "dossier_classes": [
+        "ThreatIntelligenceFusion",
+        "NodeTrustState",
+        "CrossSignMessage",
+        "InMemoryTrustMeshStore"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-06/test_doss06_fusion.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/application/federation_mesh.py",
+        "src/egregore/domain/legal_agent/",
+        "src/egregore/governance/anchorum_integrity_gate.py"
+      ],
+      "upstream_tests": [
+        "tests/test_federation_mesh.py",
+        "tests/test_anchorum_ingest_flow.py"
+      ],
+      "dependencies": ["DOSS-01", "DOSS-03"]
+    },
+    {
+      "id": "DOSS-07",
+      "name": "Deception & Countermeasures",
+      "classification": "EXECUTION",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_07_deception_countermeasures/guard.py"
+      ],
+      "dossier_classes": [
+        "DeceptionCountermeasures",
+        "GuardResult"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-07/test_doss07_guard.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/application/guarded_dossier_service.py",
+        "src/egregore/application/execution_guard.py",
+        "src/egregore/redteam/"
+      ],
+      "upstream_tests": [
+        "tests/redteam/test_redteam_harness.py",
+        "tests/test_reasoning_guard.py"
+      ],
+      "dependencies": ["DOSS-02", "DOSS-03"]
+    },
+    {
+      "id": "DOSS-08",
+      "name": "Governance & Compliance",
+      "classification": "CONTROL",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_08_governance_compliance/compliance.py"
+      ],
+      "dossier_classes": [
+        "GovernanceCompliance",
+        "CheckpointReport",
+        "Violation"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-08/test_doss08_compliance.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/governance/",
+        "src/egregore/domain/gearbox_policy.py",
+        "src/egregore/application/policy_versioning.py"
+      ],
+      "upstream_tests": [
+        "tests/test_cbi_0_enforcement.py",
+        "tests/test_gate5_invariants.py"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "DOSS-09",
+      "name": "Federation & Resilience",
+      "classification": "HYBRID",
+      "dossier_modules": [
+        "src/egregore/dossiers/DOSS_09_federation_resilience/resilience.py"
+      ],
+      "dossier_classes": [
+        "FederationResilience",
+        "Treaty",
+        "InMemoryTreatyStore"
+      ],
+      "dossier_tests": [
+        "tests/dossiers/DOSS-09/test_doss09_resilience.py"
+      ],
+      "upstream_modules": [
+        "src/egregore/application/federation_mesh.py",
+        "src/egregore/application/federation_treaty.py",
+        "src/egregore/patterns/circuit_breaker.py",
+        "src/egregore/patterns/bulkhead.py",
+        "src/egregore/patterns/fallback.py"
+      ],
+      "upstream_tests": [
+        "tests/test_federation_mesh.py",
+        "tests/dossiers/DOSS-09/test_doss09_resilience.py"
+      ],
+      "dependencies": ["DOSS-05", "DOSS-06"]
+    }
+  ]
+}

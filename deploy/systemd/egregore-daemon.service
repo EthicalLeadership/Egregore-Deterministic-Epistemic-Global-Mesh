@@ -1,0 +1,20 @@
+[Unit]
+Description=Egregore REST Server
+After=network.target
+
+[Service]
+Type=simple
+User=kark
+Group=kark
+WorkingDirectory=/opt/egregore
+Environment="PYTHONPATH=/opt/egregore/src"
+Environment="PORT=5001"
+Environment="HOME=/opt/egregore"
+Environment="ANCHORUM_REPORT_DIR=/var/lib/anchorum/reports"
+Environment="ANCHORUM_READ_ONLY_REPORT_DIRS="
+ExecStart=/opt/egregore/.venv/bin/python3 /opt/egregore/egregore_rest_server_v2.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

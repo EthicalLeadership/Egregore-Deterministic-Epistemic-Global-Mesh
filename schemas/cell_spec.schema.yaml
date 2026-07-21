@@ -1,0 +1,182 @@
+# Universal Cell Schema — Egregore Cognitive Civilization Build Protocol (BCCBP)
+# Every cell in the University must validate against this schema.
+
+$id: https://egregore.local/schemas/cell_spec.schema.yaml
+$schema: http://json-schema.org/draft-07/schema#
+title: Egregore Cell Specification
+type: object
+required:
+  - cell_id
+  - version
+  - taxonomy
+  - owner
+  - purpose
+  - inputs
+  - outputs
+  - pipeline
+  - models
+  - verification
+  - moral_compliance
+  - dependencies
+  - artifacts
+
+properties:
+  cell_id:
+    type: string
+    pattern: '^[a-z][a-z0-9_]*$'
+    description: Unique kebab-case identifier for the cell.
+
+  version:
+    type: string
+    pattern: '^\d+\.\d+\.\d+$'
+    description: Semver of the cell spec.
+
+  taxonomy:
+    type: string
+    description: University path, e.g. university/engineering/software/python.
+
+  owner:
+    type: string
+    description: Guild or individual responsible for the cell.
+
+  purpose:
+    type: string
+    minLength: 40
+    description: One-paragraph explanation of what the cell does and why it exists.
+
+  inputs:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [name, type, description, schema]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        schema: { type: object }
+        required: { type: boolean, default: true }
+
+  outputs:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [name, type, description, schema]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        description: { type: string }
+        schema: { type: object }
+
+  pipeline:
+    type: object
+    required: [stages]
+    properties:
+      description: { type: string }
+      stages:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [stage_id, name, model, prompt_template, output_format]
+          properties:
+            stage_id:
+              type: string
+              pattern: '^[a-z][a-z0-9_]*$'
+            name: { type: string }
+            model: { type: string }
+            system_prompt: { type: string }
+            prompt_template: { type: string }
+            output_format:
+              type: string
+              enum: [json, text, code, markdown]
+            max_tokens: { type: integer, minimum: 1 }
+            temperature: { type: number, minimum: 0, maximum: 2 }
+            depends_on:
+              type: array
+              items: { type: string }
+
+  models:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [model_id, purpose, path_or_alias]
+      properties:
+        model_id: { type: string }
+        purpose: { type: string }
+        path_or_alias: { type: string }
+        required: { type: boolean, default: true }
+
+  verification:
+    type: object
+    required: [rules]
+    properties:
+      static_tools:
+        type: array
+        items:
+          type: string
+          enum: [ast, bandit, mypy, ruff, custom_regex]
+      dynamic_tools:
+        type: array
+        items:
+          type: string
+          enum: [pytest, docker_sandbox, simulation]
+      rules:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [rule_id, description, severity]
+          properties:
+            rule_id: { type: string }
+            description: { type: string }
+            severity: { enum: [critical, high, medium, low] }
+            check: { type: string }
+
+  moral_compliance:
+    type: object
+    required: [egregore_laws]
+    properties:
+      egregore_laws:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [law_id, description]
+          properties:
+            law_id: { type: string }
+            description: { type: string }
+            enforcement: { type: string }
+
+  dependencies:
+    type: array
+    items:
+      type: object
+      required: [cell_id, relationship]
+      properties:
+        cell_id: { type: string }
+        relationship:
+          type: string
+          enum: [advises, requires, extends, monitors]
+
+  artifacts:
+    type: object
+    required: [stage_gates]
+    properties:
+      stage_gates:
+        type: object
+        required: [plan, draw, layout, erect, build, finish, inspect, deliver]
+        additionalProperties: false
+        properties:
+          plan:    { type: string, description: Path to validated spec.yaml }
+          draw:    { type: string, description: Path to architecture.dot }
+          layout:  { type: string, description: Path to deployment.yaml }
+          erect:   { type: string, description: Path to health check evidence }
+          build:   { type: string, description: Path to test_report.json }
+          finish:  { type: string, description: Path to audit_certificate.json }
+          inspect: { type: string, description: Path to acceptance_report.md }
+          deliver: { type: string, description: Git tag or shelf entry URL }
+
+additionalProperties: false

@@ -1,0 +1,21 @@
+[Unit]
+Description=Egregore ANCHORUM Plain-HTTP Site
+After=network.target
+
+[Service]
+Type=simple
+User=kark
+Group=kark
+WorkingDirectory=/opt/egregore
+ExecStart=/opt/egregore/scripts/start_anchorum_http.sh
+Restart=always
+RestartSec=5
+
+# Hardening
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/egregore
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

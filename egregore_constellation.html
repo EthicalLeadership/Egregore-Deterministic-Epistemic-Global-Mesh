@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egregore Constellation</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --sun: #f59e0b;
+    --sun-glow: rgba(245,158,11,0.25);
+    --planet-1: #3b82f6;
+    --planet-2: #10b981;
+    --planet-3: #8b5cf6;
+    --planet-4: #ef4444;
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Constellation canvas */
+  #constellation-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Sun glow */
+  .sun-glow {
+    position: absolute;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--sun-glow) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 0.9; }
+  }
+
+  /* Orbit rings */
+  .orbit-ring {
+    position: absolute;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* Planet nodes */
+  .planet {
+    position: absolute;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    z-index: 10;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+  .planet:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+  }
+  .planet.active {
+    transform: scale(1.2);
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 0 40px rgba(255,255,255,0.15);
+  }
+  .planet-label {
+    position: absolute;
+    bottom: -28px;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+  .planet:hover .planet-label, .planet.active .planet-label { color: var(--text); }
+
+  /* Sun */
+  .sun {
+    position: absolute;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 0 60px rgba(245,158,11,0.3), inset 0 0 20px rgba(255,255,255,0.1);
+    transition: transform 0.3s;
+  }
+  .sun:hover { transform: scale(1.1); }
+  .sun-label {
+    position: absolute;
+    bottom: -32px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sun);
+  }
+
+  /* Particle stars */
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Detail panel */
+  .detail-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+  }
+
+  /* Accordion */
+  .accordion-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .accordion-item:hover { border-color: rgba(255,255,255,0.1); }
+  .accordion-header {
+    padding: 14px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.02);
+    transition: background 0.2s;
+  }
+  .accordion-header:hover { background: rgba(255,255,255,0.04); }
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), padding 0.4s;
+  }
+  .accordion-content.open {
+    max-height: 2000px;
+    padding: 0 18px 18px;
+  }
+  .chevron { transition: transform 0.3s; }
+  .chevron.rotated { transform: rotate(180deg); }
+
+  /* Timeline */
+  .timeline-item {
+    position: relative;
+    padding-left: 32px;
+    padding-bottom: 24px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 6px; top: 6px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--planet-2);
+    border: 2px solid var(--bg);
+  }
+  .timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 10px; top: 18px;
+    width: 2px;
+    height: calc(100% - 10px);
+    background: linear-gradient(to bottom, var(--border), transparent);
+  }
+  .timeline-item:last-child::after { display: none; }
+
+  /* Phase table */
+  .phase-row { transition: all 0.2s; }
+  .phase-row:hover { background: rgba(255,255,255,0.03); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Tab buttons */
+  .tab-btn {
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+  }
+  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tab-btn.active {
+    color: var(--text);
+    background: rgba(255,255,255,0.06);
+    border-color: var(--border);
+  }
+
+  /* Flow arrow animation */
+  .flow-arrow {
+    stroke-dasharray: 8 4;
+    animation: dash 2s linear infinite;
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -24; }
+  }
+
+  /* Orphan nodes */
+  .orphan-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .orphan-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .status-unclaimed { color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+  .status-deprecated { color: #94a3b8; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); }
+  .status-inline { color: #3b82f6; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); }
+  .status-shared { color: #8b5cf6; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); }
+  .status-adopted { color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
+
+  .action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.02);
+  }
+  .action-btn:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+  }
+  .action-btn.primary {
+    color: #0a0a0f;
+    background: var(--text);
+    border-color: var(--text);
+  }
+  .action-btn.primary:hover { background: #cbd5e1; border-color: #cbd5e1; }
+  .action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .planet { width: 48px; height: 48px; }
+    .planet-label { font-size: 9px; bottom: -22px; }
+    .sun { width: 60px; height: 60px; }
+    .sun-label { font-size: 10px; bottom: -26px; }
+    .tab-btn { padding: 6px 12px; font-size: 12px; }
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 z-50 border-b border-[#1e1e2e] bg-[#0a0a0f]/80 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight">Egregore</h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest">Constellation Explorer</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="showView('constellation')" id="tab-constellation" class="tab-btn active">Constellation</button>
+      <button onclick="showView('components')" id="tab-components" class="tab-btn">Components</button>
+      <button onclick="showView('timeline')" id="tab-timeline" class="tab-btn">Timeline</button>
+      <button onclick="showView('orphans')" id="tab-orphans" class="tab-btn">Orphans</button>
+    </div>
+  </div>
+</header>
+
+<main class="pt-20">
+
+<!-- VIEW: Constellation -->
+<section id="view-constellation" class="min-h-screen relative flex items-center justify-center overflow-hidden">
+  <canvas id="constellation-canvas"></canvas>
+
+  <!-- Stars background -->
+  <div id="stars-container" class="absolute inset-0 pointer-events-none"></div>
+
+  <!-- Orbit rings -->
+  <div class="orbit-ring" style="width: 280px; height: 280px; top: 50%; left: 50%; transform: translate(-50%,-50%);"></div>
+  <div class="orbit-ring" style="width: 420px; height: 420px; top: 50%; left: 50%; transform: translate(-50%,-50%);"></div>
+
+  <!-- Sun (Core) -->
+  <div class="sun-glow" style="top: 50%; left: 50%; transform: translate(-50%,-50%);"></div>
+  <div class="sun" style="top: 50%; left: 50%; transform: translate(-50%,-50%);" onclick="selectPlanet('core')">
+    <svg class="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+    <span class="sun-label">Core</span>
+  </div>
+
+  <!-- Planet 1: Interface -->
+  <div class="planet" id="planet-interface" style="top: 15%; left: 50%; transform: translate(-50%,-50%); background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectPlanet('interface')">
+    <svg class="w-6 h-6 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <span class="planet-label">Interface</span>
+  </div>
+
+  <!-- Planet 2: Model Hub -->
+  <div class="planet" id="planet-modelhub" style="top: 50%; left: 15%; transform: translate(-50%,-50%); background: linear-gradient(135deg, #10b981, #059669);" onclick="selectPlanet('modelhub')">
+    <svg class="w-6 h-6 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <span class="planet-label">Model Hub</span>
+  </div>
+
+  <!-- Planet 3: Data -->
+  <div class="planet" id="planet-data" style="top: 50%; left: 85%; transform: translate(-50%,-50%); background: linear-gradient(135deg, #8b5cf6, #6d28d9);" onclick="selectPlanet('data')">
+    <svg class="w-6 h-6 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+    <span class="planet-label">Data</span>
+  </div>
+
+  <!-- Planet 4: Infrastructure -->
+  <div class="planet" id="planet-infra" style="top: 85%; left: 50%; transform: translate(-50%,-50%); background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="selectPlanet('infra')">
+    <svg class="w-6 h-6 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 01-2 2v4a2 2 0 012 2h14a2 2 0 012-2v-4a2 2 0 01-2-2m-2-4h.01M17 16h.01"/></svg>
+    <span class="planet-label">Infrastructure</span>
+  </div>
+
+  <!-- Detail Panel (bottom right) -->
+  <div id="detail-panel" class="detail-panel fixed bottom-6 right-6 w-80 max-h-[60vh] overflow-y-auto p-5 hidden md:block" style="z-index: 30;">
+    <div id="detail-content">
+      <p class="text-sm text-slate-500">Click a planet to explore its domain.</p>
+    </div>
+  </div>
+
+  <!-- Mobile detail sheet -->
+  <div id="mobile-detail" class="fixed bottom-0 left-0 right-0 detail-panel rounded-t-2xl p-5 md:hidden hidden" style="z-index: 30; max-height: 50vh; overflow-y: auto;">
+    <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-4"></div>
+    <div id="mobile-detail-content"></div>
+  </div>
+</section>
+
+<!-- VIEW: Components -->
+<section id="view-components" class="hidden max-w-4xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Component Tree</h2>
+    <p class="text-sm text-slate-500">Expand each domain to see its sub-modules, responsibilities, and outputs.</p>
+  </div>
+  <div id="accordion-container" class="space-y-3"></div>
+</section>
+
+<!-- VIEW: Timeline -->
+<section id="view-timeline" class="hidden max-w-4xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Timeline & Phases</h2>
+    <p class="text-sm text-slate-500">Operational flow per request, and development roadmap.</p>
+  </div>
+
+  <div class="flex gap-2 mb-6">
+    <button onclick="showTimeline('operational')" id="tl-tab-operational" class="tab-btn active">Operational</button>
+    <button onclick="showTimeline('development')" id="tl-tab-development" class="tab-btn">Development</button>
+  </div>
+
+  <!-- Operational Timeline -->
+  <div id="timeline-operational" class="space-y-0">
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">1. Boot</h3>
+      <p class="text-sm text-slate-400">Infrastructure starts, configuration loaded, compute devices probed.</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">2. Model Ready</h3>
+      <p class="text-sm text-slate-400">Local models warmed up, server connections authenticated.</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">3. Ingress</h3>
+      <p class="text-sm text-slate-400">Prompt arrives via UI/API → Auth check.</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">4. Orchestration</h3>
+      <p class="text-sm text-slate-400">Core selects model, assembles context (memory + RAG).</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">5. Inference</h3>
+      <p class="text-sm text-slate-400">Model Hub executes and streams tokens back.</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">6. Post-processing</h3>
+      <p class="text-sm text-slate-400">Response cached, logged, metrics recorded.</p>
+    </div>
+    <div class="timeline-item">
+      <h3 class="font-semibold text-sm mb-1">7. Display</h3>
+      <p class="text-sm text-slate-400">Interface renders final output to user.</p>
+    </div>
+  </div>
+
+  <!-- Development Phases -->
+  <div id="timeline-development" class="hidden">
+    <div class="detail-panel overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#1e1e2e]">
+            <th class="text-left p-4 font-semibold text-slate-400">Phase</th>
+            <th class="text-left p-4 font-semibold text-slate-400">Milestone</th>
+            <th class="text-left p-4 font-semibold text-slate-400">Key Deliverables</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="phase-row border-b border-[#1e1e2e]">
+            <td class="p-4 font-semibold text-amber-400">I – Foundation</td>
+            <td class="p-4 text-slate-300">Core engine runs a single local model</td>
+            <td class="p-4 text-slate-400">Orchestrator, local runtime, basic CLI</td>
+          </tr>
+          <tr class="phase-row border-b border-[#1e1e2e]">
+            <td class="p-4 font-semibold text-emerald-400">II – Multi-Model</td>
+            <td class="p-4 text-slate-300">Registry, server connectors, fallback</td>
+            <td class="p-4 text-slate-400">Model Hub, API gateway, plugin system</td>
+          </tr>
+          <tr class="phase-row border-b border-[#1e1e2e]">
+            <td class="p-4 font-semibold text-violet-400">III – Context & Memory</td>
+            <td class="p-4 text-slate-300">RAG, vector store, conversation persistence</td>
+            <td class="p-4 text-slate-400">Data layer, document pipeline, memory graph</td>
+          </tr>
+          <tr class="phase-row border-b border-[#1e1e2e]">
+            <td class="p-4 font-semibold text-blue-400">IV – Interface</td>
+            <td class="p-4 text-slate-300">Dashboard, Agent Studio, Prompt Lab</td>
+            <td class="p-4 text-slate-400">Full UX, workflow engine, observability</td>
+          </tr>
+          <tr class="phase-row">
+            <td class="p-4 font-semibold text-red-400">V – Production</td>
+            <td class="p-4 text-slate-300">Scaling, security, benchmarking</td>
+            <td class="p-4 text-slate-400">Auth, compute fabric, deployment manager, stable APIs</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW: Orphan Nodes -->
+<section id="view-orphans" class="hidden max-w-5xl mx-auto px-6 py-8">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold mb-2">Orphan Nodes</h2>
+    <p class="text-sm text-slate-500">Discovered connections and unclaimed modules detected by procedural analysis. Adopt, deprecate, or investigate.</p>
+  </div>
+
+  <div class="flex gap-2 mb-6">
+    <button onclick="filterOrphans('all')" id="orphan-filter-all" class="tab-btn active">All</button>
+    <button onclick="filterOrphans('unclaimed')" id="orphan-filter-unclaimed" class="tab-btn">Unclaimed</button>
+    <button onclick="filterOrphans('deprecated')" id="orphan-filter-deprecated" class="tab-btn">Deprecated</button>
+    <button onclick="filterOrphans('inline')" id="orphan-filter-inline" class="tab-btn">Inline</button>
+    <button onclick="filterOrphans('shared')" id="orphan-filter-shared" class="tab-btn">Shared</button>
+  </div>
+
+  <div id="orphans-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+</section>
+
+</main>
+
+<script>
+// ===================== DATA =====================
+const planetData = {
+  core: {
+    title: 'Egregore Core',
+    color: 'text-amber-400',
+    desc: 'The central nervous system. Every request flows through here.',
+    items: [
+      { name: 'Orchestrator', does: 'Routes every request, chooses model, handles fallbacks, parallelizes calls', provides: 'Intelligent load balancing, fail-safe execution' },
+      { name: 'Workflow Engine', does: 'State machine for multi-step processes', provides: 'Reliable, retry-able, traceable long-running tasks' },
+      { name: 'Event Bus', does: 'Internal pub/sub messaging backbone', provides: 'Decoupled, asynchronous communication' },
+      { name: 'Plugin Manager', does: 'Loads/unloads modules dynamically at runtime', provides: 'Unlimited extensibility without core changes' }
+    ]
+  },
+  interface: {
+    title: 'Interface & UX',
+    color: 'text-blue-400',
+    desc: 'The face of Egregore. Dashboards, CLI, Studio.',
+    items: [
+      { name: 'Dashboard', does: 'Web-based control panel monitoring all models, jobs, resources', provides: 'At-a-glance health, logs, alerts, manual overrides' },
+      { name: 'Command Center', does: 'Unified CLI and REST/WebSocket API', provides: 'Full programmatic access, automation, integration' },
+      { name: 'Agent Studio', does: 'Visual builder for AI agents/workflows', provides: 'Drag-and-drop agent design without code' },
+      { name: 'Prompt Laboratory', does: 'Interactive prompt testing & versioning', provides: 'Prompt engineering workspace with A/B testing' }
+    ]
+  },
+  modelhub: {
+    title: 'Model Hub & Admin',
+    color: 'text-emerald-400',
+    desc: 'Where AI lives. Local + server inference.',
+    items: [
+      { name: 'Local Model Runtime', does: 'On-device inference (llama.cpp, ONNX)', provides: 'Offline, low-latency, privacy-preserving inference' },
+      { name: 'Server Model Connector', does: 'Gateway to remote APIs (OpenAI, Anthropic, self-hosted)', provides: 'Unified interface for any hosted model' },
+      { name: 'Model Registry', does: 'Catalogue of all available models with metadata', provides: 'Single source of truth for model discovery' },
+      { name: 'Deployment Manager', does: 'Lifecycle: download, update, hot-swap, rollback', provides: 'Zero-downtime model updates and A/B traffic splitting' },
+      { name: 'Benchmark & Quality Suite', does: 'Automated evaluation harness', provides: 'Confidence scores before production release' }
+    ]
+  },
+  data: {
+    title: 'Data & Context',
+    color: 'text-violet-400',
+    desc: 'Memory and knowledge. RAG, vector store, document pipeline.',
+    items: [
+      { name: 'Context Window Manager', does: 'Token-aware assembly of conversation history', provides: 'Maximum usable context without overflow' },
+      { name: 'Vector Store', does: 'Embedding database for semantic search', provides: 'RAG (Retrieval-Augmented Generation) capability' },
+      { name: 'Document Pipeline', does: 'Ingestion engine for files (PDF, docx, html)', provides: 'Ready-to-query knowledge base from any document' },
+      { name: 'Memory Graph', does: 'Long-term relational memory (entities, facts, relationships)', provides: 'Personalised, stateful AI interactions' },
+      { name: 'Cache & Session Store', does: 'High-speed cache (Redis, in-memory)', provides: 'Sub-millisecond responses for repeated patterns' }
+    ]
+  },
+  infra: {
+    title: 'Infrastructure',
+    color: 'text-red-400',
+    desc: 'The engine room. Compute, network, auth, observability.',
+    items: [
+      { name: 'Compute Fabric', does: 'Abstraction over GPU/CPU/TPU resources', provides: 'Optimal hardware utilisation and dynamic scaling' },
+      { name: 'Network Layer', does: 'Secure HTTP/2, WebSocket, gRPC endpoints', provides: 'Fast, encrypted communication inside and outside' },
+      { name: 'Auth & Identity', does: 'Multi-tenant access control', provides: 'Secure, auditable access to all features' },
+      { name: 'Observability Stack', does: 'Logging, metrics, tracing (Prometheus, Grafana, OTel)', provides: 'Deep insight for debugging and performance tuning' },
+      { name: 'Configuration Engine', does: 'Centralised settings with hot-reload', provides: 'Zero-downtime tuning of the whole system' }
+    ]
+  }
+};
+
+const accordionData = [
+  {
+    id: 'iface',
+    icon: '🌐',
+    title: '1. Interface & User Experience',
+    subtitle: 'The face of Egregore',
+    color: 'blue',
+    items: planetData.interface.items
+  },
+  {
+    id: 'core',
+    icon: '🧠',
+    title: '2. Egregore Core (Orchestration Engine)',
+    subtitle: 'The central nervous system',
+    color: 'amber',
+    items: planetData.core.items
+  },
+  {
+    id: 'model',
+    icon: '🤖',
+    title: '3. Model Hub & Administration',
+    subtitle: 'Where AI lives',
+    color: 'emerald',
+    items: planetData.modelhub.items
+  },
+  {
+    id: 'data',
+    icon: '📚',
+    title: '4. Data & Context Management',
+    subtitle: 'Memory and knowledge',
+    color: 'violet',
+    items: planetData.data.items
+  },
+  {
+    id: 'infra',
+    icon: '⚙️',
+    title: '5. Infrastructure & Backend',
+    subtitle: 'The engine room',
+    color: 'red',
+    items: planetData.infra.items
+  }
+];
+
+const orphanNodes = [
+  {
+    id: 'telemetry-parser',
+    name: 'unclaimed-telemetry-parser',
+    status: 'unclaimed',
+    discovered: '2024-11-15',
+    notes: 'Referenced by Event Bus but not registered in any domain.',
+    suggest: 'infra'
+  },
+  {
+    id: 'legacy-auth',
+    name: 'legacy-auth-adapter',
+    status: 'deprecated',
+    discovered: '2024-10-28',
+    notes: 'Exists in codebase but superseded by Auth & Identity.',
+    suggest: null
+  },
+  {
+    id: 'gpu-pool',
+    name: 'gpu-memory-pool',
+    status: 'inline',
+    discovered: '2024-12-03',
+    notes: 'Used by Compute Fabric but declared as inline module.',
+    suggest: 'infra'
+  },
+  {
+    id: 'prompt-cache',
+    name: 'prompt-cache-layer',
+    status: 'shared',
+    discovered: '2024-12-10',
+    notes: 'Shared between Prompt Laboratory and Cache Store with no owner.',
+    suggest: 'data'
+  },
+  {
+    id: 'ws-broadcast',
+    name: 'websocket-broadcast',
+    status: 'shared',
+    discovered: '2024-12-12',
+    notes: 'Used by Dashboard and Command Center but lives in Network Layer.',
+    suggest: 'interface'
+  }
+];
+
+// ===================== CANVAS / CONSTELLATION =====================
+const canvas = document.getElementById('constellation-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let animId;
+
+function resizeCanvas() {
+  const section = document.getElementById('view-constellation');
+  canvas.width = section.offsetWidth;
+  canvas.height = section.offsetHeight;
+}
+
+function createParticles() {
+  particles = [];
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 1.5 + 0.5,
+      alpha: Math.random() * 0.5 + 0.1
+    });
+  }
+}
+
+function drawConstellation() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  // Draw faint connections between particles near each other
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 120) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Draw and update particles
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+    ctx.fill();
+  }
+
+  // Draw animated flow lines from each planet to the Core
+  const t = Date.now() / 1000;
+  const offset = (t * 40) % 40;
+  ctx.setLineDash([8, 12]);
+  ctx.lineDashOffset = -offset;
+  ctx.lineWidth = 1;
+
+  // Interface -> Core (top to center)
+  ctx.strokeStyle = 'rgba(59,130,246,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 140);
+  ctx.lineTo(cx, cy - 45);
+  ctx.stroke();
+
+  // Model Hub -> Core (left to center)
+  ctx.strokeStyle = 'rgba(16,185,129,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(cx - 210, cy);
+  ctx.lineTo(cx - 45, cy);
+  ctx.stroke();
+
+  // Data -> Core (right to center)
+  ctx.strokeStyle = 'rgba(139,92,246,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(cx + 210, cy);
+  ctx.lineTo(cx + 45, cy);
+  ctx.stroke();
+
+  // Infra -> Core (bottom to center)
+  ctx.strokeStyle = 'rgba(239,68,68,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 140);
+  ctx.lineTo(cx, cy + 45);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  animId = requestAnimationFrame(drawConstellation);
+}
+
+// ===================== STARS BACKGROUND =====================
+function createStars() {
+  const container = document.getElementById('stars-container');
+  container.innerHTML = '';
+  for (let i = 0; i < 80; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.opacity = Math.random() * 0.5 + 0.1;
+    container.appendChild(star);
+  }
+}
+
+// ===================== PLANET SELECTION =====================
+let selectedPlanet = null;
+
+function selectPlanet(key) {
+  // Reset all
+  document.querySelectorAll('.planet').forEach(p => p.classList.remove('active'));
+  if (selectedPlanet === key) {
+    selectedPlanet = null;
+    hideDetail();
+    return;
+  }
+  selectedPlanet = key;
+
+  // Highlight
+  const map = { interface: 'planet-interface', modelhub: 'planet-modelhub', data: 'planet-data', infra: 'planet-infra', core: null };
+  if (map[key]) document.getElementById(map[key]).classList.add('active');
+
+  showDetail(key);
+}
+
+function showDetail(key) {
+  const data = planetData[key];
+  const html = `
+    <h3 class="font-bold text-lg ${data.color} mb-2">${data.title}</h3>
+    <p class="text-sm text-slate-400 mb-4">${data.desc}</p>
+    <div class="space-y-3">
+      ${data.items.map(item => `
+        <div class="p-3 rounded-lg bg-white/5 border border-white/5">
+          <div class="font-semibold text-sm text-slate-200 mb-1">${item.name}</div>
+          <div class="text-xs text-slate-500 mb-1">${item.does}</div>
+          <div class="text-xs text-slate-600"><span class="text-slate-500">Provides:</span> ${item.provides}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('detail-content').innerHTML = html;
+  document.getElementById('detail-panel').classList.remove('hidden');
+
+  // Mobile
+  document.getElementById('mobile-detail-content').innerHTML = html;
+  document.getElementById('mobile-detail').classList.remove('hidden');
+}
+
+function hideDetail() {
+  document.getElementById('detail-panel').classList.add('hidden');
+  document.getElementById('mobile-detail').classList.add('hidden');
+}
+
+// ===================== VIEW SWITCHING =====================
+function showView(view) {
+  ['constellation', 'components', 'timeline', 'orphans'].forEach(v => {
+    document.getElementById('view-' + v).classList.add('hidden');
+    document.getElementById('tab-' + v).classList.remove('active');
+  });
+  document.getElementById('view-' + view).classList.remove('hidden');
+  document.getElementById('tab-' + view).classList.add('active');
+
+  if (view === 'constellation') {
+    resizeCanvas();
+    createParticles();
+    if (!animId) drawConstellation();
+  } else {
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+  }
+}
+
+// ===================== ACCORDION =====================
+function buildAccordion() {
+  const container = document.getElementById('accordion-container');
+  container.innerHTML = accordionData.map((section, idx) => `
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(${idx})">
+        <div class="flex items-center gap-3">
+          <span class="text-lg">${section.icon}</span>
+          <div>
+            <div class="font-semibold text-sm">${section.title}</div>
+            <div class="text-xs text-slate-500">${section.subtitle}</div>
+          </div>
+        </div>
+        <svg class="chevron w-4 h-4 text-slate-500" id="chevron-${idx}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+      </div>
+      <div class="accordion-content" id="acc-content-${idx}">
+        <div class="space-y-2 mt-2">
+          ${section.items.map(item => `
+            <div class="p-3 rounded-lg bg-white/[0.03] border border-white/5">
+              <div class="font-medium text-sm text-slate-200">${item.name}</div>
+              <div class="text-xs text-slate-500 mt-1">${item.does}</div>
+              <div class="text-xs text-slate-600 mt-1"><span class="text-slate-500">Provides:</span> ${item.provides}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAccordion(idx) {
+  const content = document.getElementById('acc-content-' + idx);
+  const chevron = document.getElementById('chevron-' + idx);
+  const isOpen = content.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('open'));
+  document.querySelectorAll('.chevron').forEach(c => c.classList.remove('rotated'));
+
+  if (!isOpen) {
+    content.classList.add('open');
+    chevron.classList.add('rotated');
+  }
+}
+
+// ===================== TIMELINE TABS =====================
+function showTimeline(type) {
+  document.getElementById('timeline-operational').classList.toggle('hidden', type !== 'operational');
+  document.getElementById('timeline-development').classList.toggle('hidden', type !== 'development');
+  document.getElementById('tl-tab-operational').classList.toggle('active', type === 'operational');
+  document.getElementById('tl-tab-development').classList.toggle('active', type === 'development');
+}
+
+// ===================== ORPHAN NODES =====================
+let orphanFilter = 'all';
+
+function getStatusBadge(status) {
+  const labels = {
+    unclaimed: 'Unclaimed',
+    deprecated: 'Deprecated',
+    inline: 'Inline',
+    shared: 'Shared',
+    adopted: 'Adopted'
+  };
+  return `<span class="status-badge status-${status}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>${labels[status] || status}</span>`;
+}
+
+function getSuggestDomain(suggest) {
+  if (!suggest) return '<span class="text-slate-600 text-xs">—</span>';
+  const map = {
+    infra: { label: 'Infrastructure', color: 'text-red-400' },
+    data: { label: 'Data & Context', color: 'text-violet-400' },
+    interface: { label: 'Interface & UX', color: 'text-blue-400' },
+    modelhub: { label: 'Model Hub', color: 'text-emerald-400' },
+    core: { label: 'Core', color: 'text-amber-400' }
+  };
+  const info = map[suggest] || { label: suggest, color: 'text-slate-400' };
+  return `<span class="text-xs ${info.color}">${info.label}</span>`;
+}
+
+function renderOrphans() {
+  const container = document.getElementById('orphans-container');
+  const filtered = orphanFilter === 'all'
+    ? orphanNodes
+    : orphanNodes.filter(o => o.status === orphanFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p class="text-sm text-slate-500 col-span-full">No orphan nodes match this filter.</p>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(node => `
+    <div class="orphan-card" id="orphan-card-${node.id}">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <div class="font-semibold text-sm text-slate-200 mono mb-1">${node.name}</div>
+          <div class="flex items-center gap-2">${getStatusBadge(node.status)}</div>
+        </div>
+        <div class="text-[10px] text-slate-600 mono">${node.discovered}</div>
+      </div>
+      <p class="text-xs text-slate-500 mb-3 leading-relaxed">${node.notes}</p>
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-xs text-slate-600">Suggest: ${getSuggestDomain(node.suggest)}</div>
+      </div>
+      <div class="flex gap-2">
+        ${node.status !== 'adopted' && node.status !== 'deprecated' ? `<button onclick="adoptOrphan('${node.id}')" class="action-btn primary">Adopt</button>` : ''}
+        ${node.status !== 'deprecated' ? `<button onclick="deprecateOrphan('${node.id}')" class="action-btn">Deprecate</button>` : ''}
+        <button onclick="investigateOrphan('${node.id}')" class="action-btn">Investigate</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function adoptOrphan(id) {
+  const node = orphanNodes.find(o => o.id === id);
+  if (!node) return;
+  node.status = 'adopted';
+  renderOrphans();
+}
+
+function deprecateOrphan(id) {
+  const node = orphanNodes.find(o => o.id === id);
+  if (!node) return;
+  node.status = 'deprecated';
+  renderOrphans();
+}
+
+function investigateOrphan(id) {
+  const node = orphanNodes.find(o => o.id === id);
+  if (!node) return;
+  alert(`Investigating ${node.name}\n\n${node.notes}\nSuggested domain: ${node.suggest || 'none'}`);
+}
+
+function filterOrphans(filter) {
+  orphanFilter = filter;
+  ['all', 'unclaimed', 'deprecated', 'inline', 'shared'].forEach(f => {
+    document.getElementById('orphan-filter-' + f).classList.toggle('active', f === filter);
+  });
+  renderOrphans();
+}
+
+// ===================== INIT =====================
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  createParticles();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  resizeCanvas();
+  createParticles();
+  drawConstellation();
+  buildAccordion();
+  renderOrphans();
+});
+</script>
+</body>
+</html>

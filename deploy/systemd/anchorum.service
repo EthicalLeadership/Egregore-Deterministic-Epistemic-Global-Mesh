@@ -1,0 +1,41 @@
+[Unit]
+Description=ANCHORUM Legal Intelligence Module (Egregore)
+After=network.target egregore-hardware.service
+Wants=egregore-hardware.service
+
+[Service]
+Type=simple
+User=kark
+WorkingDirectory=/opt/egregore
+Environment="PYTHONUNBUFFERED=1"
+Environment="ANCHORUM_HOST=127.0.0.1"
+Environment="ANCHORUM_PORT=8741"
+Environment="ANCHORUM_LOG_LEVEL=INFO"
+Environment="PYTHONPATH=/opt/egregore/src"
+Environment="ANCHORUM_REPORT_DIR=/var/lib/anchorum/reports"
+Environment="ANCHORUM_READ_ONLY_REPORT_DIRS="
+Environment="ANCHORUM_DOSSIER_ROOT=/var/lib/anchorum/evidence_snapshot"
+Environment="ANCHORUM_RUNS_DIR=/var/lib/anchorum/runs"
+Environment="ANCHORUM_ZARC_PATH=/var/lib/anchorum/reports/zarc"
+Environment="ANCHORUM_LLM_MODEL_ID=qwen2.5-7b-instruct"
+Environment="ANCHORUM_LLM_TEMPERATURE=0.0"
+Environment="ANCHORUM_LLM_TOP_P=0.95"
+Environment="ANCHORUM_LLM_SEED=42"
+Environment="ANCHORUM_LLM_REDACT_PII=true"
+# Override vault to cold storage when vol-hdd-b is mounted
+# Environment="ANCHORUM_VAULT_PATH=/mnt/egregore/vol-hdd-b/active_projects/anchorum_vault.db"
+ExecStart=/opt/egregore/.venv/bin/python3 -m anchorum.forensic.core.batch_runner \
+    --input /var/lib/anchorum/evidence_snapshot \
+    --output /var/lib/anchorum/reports/CASE-2026_report.json \
+    --case-id CASE-2026 \
+    --operator kark \
+    --llm-model-id qwen2.5-7b-instruct \
+    --llm-temperature 0.0 \
+    --llm-top-p 0.95 \
+    --llm-seed 42
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+---
+# Encrypt this file with ansible-vault before use.
+# ansible-vault encrypt group_vars/all/vault.yml
+
+vault_audit_writer_password: "REPLACE_WITH_STRONG_PASSWORD"
+vault_grafana_admin_password: "REPLACE_WITH_STRONG_PASSWORD"

@@ -1,0 +1,6 @@
+services:
+  api:
+    build:
+      context: ../../egregore
+      dockerfile: Dockerfile
+    image: egregore/api:local

@@ -1,0 +1,40 @@
+# The file is clean and does not require any changes.
+# Dockerfile.gbw
+FROM nvidia/cuda:12.2-devel-ubuntu22.04 as builder
+
+WORKDIR /app
+COPY src/ ./src/
+COPY CMakeLists.txt ./
+
+## Package versions are pinned below
+RUN apt-get update && apt-get install -y \
+    libnats-dev=0.11.0-1 nats.c=2.10.0-1 protobuf-compiler=3.12.4-1 \
+    libnccl2=2.18.1-1+cuda12.2 libnccl-dev=2.18.1-1+cuda12.2 \
+    numactl=2.0.14-1 libnuma-dev=2.0.14-1
+
+RUN mkdir build && cd build && \
+    cmake .. -DCMAKE_CUDA_ARCHITECTURES=80\;86\;89 && \
+    make -j"$(nproc)"
+
+FROM nvidia/cuda:12.2-runtime-ubuntu22.04
+
+# Create a non-root user
+RUN useradd -m -u 10001 appuser
+
+## Package versions are pinned below
+RUN apt-get update && apt-get install -y \
+    libnats0.11=0.11.0-1 libnccl2=2.18.1-1+cuda12.2 numactl=2.0.14-1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY --from=builder /app/build/gbw /usr/local/bin/
+COPY --from=builder /app/build/libdt1_kernels.so /usr/local/lib/
+
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+# HEALTHCHECK for container
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/usr/local/bin/gbw", "--healthcheck"]
+
+USER appuser
+
+ENTRYPOINT ["/usr/local/bin/gbw"]

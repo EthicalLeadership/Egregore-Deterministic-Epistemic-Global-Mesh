@@ -1,0 +1,22 @@
+[Unit]
+Description=Egregore Node.js Gateway + Dashboard
+Documentation=https://docs.egregore.edge
+After=network.target egregore-core.service
+Wants=egregore-core.service
+
+[Service]
+Type=simple
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore/frontend
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/egregore/.env
+ExecStart=/usr/bin/node gateway/server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=egregore-gateway
+
+[Install]
+WantedBy=multi-user.target

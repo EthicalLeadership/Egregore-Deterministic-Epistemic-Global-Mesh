@@ -1,0 +1,146 @@
+---
+- name: Phase 02 | Build Internal CA and Node Certificates on Pioneer-2
+  hosts: pioneer-2
+  become: true
+
+  tasks:
+    - name: Ensure OpenSSL is installed
+      ansible.builtin.apt:
+        name: openssl
+        state: present
+        update_cache: true
+
+    - name: Create PKI directory layout
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      loop:
+        - "{{ pioneer_pki_base }}"
+        - "{{ pioneer_pki_base }}/ca"
+        - "{{ pioneer_pki_base }}/issued"
+        - "{{ pioneer_pki_base }}/private"
+        - "{{ pioneer_pki_base }}/csr"
+        - "{{ pioneer_pki_base }}/ext"
+
+    - name: Generate CA private key
+      ansible.builtin.command: >-
+        openssl genrsa -out {{ pioneer_pki_base }}/ca/ca.key 4096
+      args:
+        creates: "{{ pioneer_pki_base }}/ca/ca.key"
+
+    - name: Generate CA certificate
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - req
+          - -new
+          - -x509
+          - -days
+          - "{{ pioneer_ca_valid_days | string }}"
+          - -key
+          - "{{ pioneer_pki_base }}/ca/ca.key"
+          - -out
+          - "{{ pioneer_pki_base }}/ca/ca.crt"
+          - -subj
+          - /CN=Pioneer Internal CA
+      args:
+        creates: "{{ pioneer_pki_base }}/ca/ca.crt"
+
+    - name: Generate node private keys
+      ansible.builtin.command: >-
+        openssl genrsa -out {{ pioneer_pki_base }}/private/{{ item }}.key 2048
+      args:
+        creates: "{{ pioneer_pki_base }}/private/{{ item }}.key"
+      loop: "{{ groups['pioneer'] }}"
+
+    - name: Generate node certificate signing requests
+      ansible.builtin.command: >-
+        openssl req -new
+        -key {{ pioneer_pki_base }}/private/{{ item }}.key
+        -out {{ pioneer_pki_base }}/csr/{{ item }}.csr
+        -subj /CN={{ item }}.local
+      args:
+        creates: "{{ pioneer_pki_base }}/csr/{{ item }}.csr"
+      loop: "{{ groups['pioneer'] }}"
+
+    - name: Create certificate SAN extension files
+      ansible.builtin.copy:
+        dest: "{{ pioneer_pki_base }}/ext/{{ item }}.ext"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          subjectAltName=DNS:{{ item }}.local,IP:{{ hostvars[item].ansible_host }}
+          extendedKeyUsage=serverAuth,clientAuth
+      loop: "{{ groups['pioneer'] }}"
+
+    - name: Sign node certificates with internal CA
+      ansible.builtin.command: >-
+        openssl x509 -req -days {{ pioneer_cert_valid_days }}
+        -in {{ pioneer_pki_base }}/csr/{{ item }}.csr
+        -CA {{ pioneer_pki_base }}/ca/ca.crt
+        -CAkey {{ pioneer_pki_base }}/ca/ca.key
+        -CAcreateserial
+        -out {{ pioneer_pki_base }}/issued/{{ item }}.crt
+        -extfile {{ pioneer_pki_base }}/ext/{{ item }}.ext
+      args:
+        creates: "{{ pioneer_pki_base }}/issued/{{ item }}.crt"
+      loop: "{{ groups['pioneer'] }}"
+
+- name: Phase 02 | Distribute mTLS Material to All Nodes
+  hosts: pioneer
+  become: true
+
+  tasks:
+    - name: Ensure runtime SSL directory exists
+      ansible.builtin.file:
+        path: "{{ pioneer_ssl_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Read CA certificate from pioneer-2
+      ansible.builtin.slurp:
+        src: "{{ pioneer_pki_base }}/ca/ca.crt"
+      delegate_to: pioneer-2
+      register: mtls_ca_cert
+
+    - name: Read node certificate from pioneer-2
+      ansible.builtin.slurp:
+        src: "{{ pioneer_pki_base }}/issued/{{ inventory_hostname }}.crt"
+      delegate_to: pioneer-2
+      register: mtls_node_cert
+
+    - name: Read node private key from pioneer-2
+      ansible.builtin.slurp:
+        src: "{{ pioneer_pki_base }}/private/{{ inventory_hostname }}.key"
+      delegate_to: pioneer-2
+      register: mtls_node_key
+
+    - name: Install CA certificate
+      ansible.builtin.copy:
+        content: "{{ mtls_ca_cert.content | b64decode }}"
+        dest: "{{ pioneer_ssl_dir }}/ca.crt"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install node certificate
+      ansible.builtin.copy:
+        content: "{{ mtls_node_cert.content | b64decode }}"
+        dest: "{{ pioneer_ssl_dir }}/{{ inventory_hostname }}.crt"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Install node private key
+      ansible.builtin.copy:
+        content: "{{ mtls_node_key.content | b64decode }}"
+        dest: "{{ pioneer_ssl_dir }}/{{ inventory_hostname }}.key"
+        owner: root
+        group: root
+        mode: "0600"

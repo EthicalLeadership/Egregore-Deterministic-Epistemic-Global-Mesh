@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  egregore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: egregore-core
+    restart: unless-stopped
+    environment:
+      - BLACKSTAR_ENV=production
+      - BLACKSTAR_LOG_LEVEL=INFO
+      - BLACKSTAR_DB_URL=postgresql://egregore:${DB_PASSWORD}@postgres:5432/egregore
+      - BLACKSTAR_REDIS_URL=redis://redis:6379/0
+      - BLACKSTAR_NATS_URL=nats://nats:4222
+    ports:
+      - "8001:8000"   # Changed from 8000 to 8001
+      - "8081:8080"   # Changed from 8080 to 8081
+    volumes:
+      - ./src:/app/src:ro
+      - egregore-data:/app/data
+      - egregore-zarc:/app/.zarc
+    depends_on:
+      - postgres
+      - redis
+      - nats
+    networks:
+      - egregore-net
+
+  postgres:
+    image: docker.io/postgres:16-alpine
+    container_name: egregore-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=egregore
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-egregore_dev_password_CHANGE_ME}
+      - POSTGRES_DB=egregore
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"   # Changed from 5432 to 5433
+    networks:
+      - egregore-net
+
+  redis:
+    image: docker.io/redis:7-alpine
+    container_name: egregore-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6380:6379"   # Changed from 6379 to 6380
+    networks:
+      - egregore-net
+
+  nats:
+    image: docker.io/nats:2-alpine
+    container_name: egregore-nats
+    restart: unless-stopped
+    command: "--js --store_dir /data/jetstream"
+    volumes:
+      - nats-data:/data/jetstream
+    ports:
+      - "4223:4222"   # Changed from 4222 to 4223
+      - "8223:8222"   # Changed from 8222 to 8223
+    networks:
+      - egregore-net
+
+volumes:
+  egregore-data:
+  egregore-zarc:
+  postgres-data:
+  redis-data:
+  nats-data:
+
+networks:
+  egregore-net:
+    driver: bridge

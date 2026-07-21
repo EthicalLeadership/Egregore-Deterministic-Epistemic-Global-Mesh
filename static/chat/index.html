@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Egregore Chat</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --fg: #e0e0e0;
+      --accent: #00c853;
+      --error: #ff1744;
+      --warn: #ffab00;
+      --surface: #2d2d2d;
+      --surface-hover: #3a3a3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0.05em;
+    }
+    #status {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+    #status-dot.connected { background: var(--accent); }
+    #status-dot.connecting { background: var(--warn); }
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .message {
+      max-width: 85%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: var(--surface);
+      border-bottom-right-radius: 0.25rem;
+    }
+    .message.assistant {
+      align-self: flex-start;
+      background: var(--surface-hover);
+      border-bottom-left-radius: 0.25rem;
+      width: 100%;
+      max-width: 85%;
+    }
+    .message.system {
+      align-self: center;
+      background: transparent;
+      color: #888;
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+    .assistant-header {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      margin-bottom: 0.35rem;
+    }
+    .assistant-summary { margin-bottom: 0.5rem; white-space: pre-wrap; }
+    .assistant-suggestion {
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+    .detail-toggle {
+      background: transparent;
+      border: 1px solid #555;
+      color: #aaa;
+      border-radius: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .detail-pre {
+      display: none;
+      background: #0d0d0d;
+      color: #ccc;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      margin-top: 0.5rem;
+    }
+    .detail-pre.open { display: block; }
+    footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #333;
+      display: flex;
+      gap: 0.75rem;
+    }
+    #input {
+      flex: 1;
+      background: var(--surface);
+      color: var(--fg);
+      border: 1px solid #444;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      outline: none;
+    }
+    #input:focus { border-color: var(--accent); }
+    #send {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #send:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    #help-panel {
+      position: fixed;
+      right: 1rem;
+      bottom: 5rem;
+      width: 320px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid #444;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-size: 0.85rem;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    #help-panel.open { display: block; }
+    #help-panel h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    #help-panel code {
+      background: #111;
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.2rem;
+      color: var(--accent);
+    }
+    #help-panel ul { margin: 0; padding-left: 1.2rem; }
+    #help-panel li { margin-bottom: 0.4rem; }
+    #help-toggle {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      background: var(--surface);
+      border: 1px solid #444;
+      color: var(--fg);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: var(--accent);
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BLACKSTAR CHAT</h1>
+    <div id="status"><span id="status-dot"></span><span id="status-text">Disconnected</span></div>
+  </header>
+  <main id="chat"></main>
+  <footer>
+    <input id="input" type="text" placeholder="Type a message or /help…" autocomplete="off" />
+    <button id="send">Send</button>
+  </footer>
+
+  <button id="help-toggle">Commands</button>
+  <div id="help-panel">
+    <h3>Available commands</h3>
+    <ul>
+      <li><code>/help</code> — show this help</li>
+      <li><code>/ask &lt;prompt&gt;</code> — ask the active AI model</li>
+      <li><code>/model</code> — show active model and available backends</li>
+      <li><code>/model &lt;name&gt;</code> — switch model (deepseek-chat, claude-3-5-sonnet-20241022, etc.)</li>
+      <li><code>/agents</code> — list discovered CLI agents</li>
+      <li><code>/agent &lt;name&gt; &lt;instruction&gt;</code> — dispatch a CLI agent (admin/operator only)</li>
+      <li><code>/ingest &lt;zarc&gt; [last_n=100]</code> — ingest .zarc tail into ANCHORUM</li>
+      <li><code>/compare &lt;left.zarc&gt; &lt;right.zarc&gt; [max_tail=50]</code> — compare two archives</li>
+      <li><code>/integrity</code> — run ANCHORUM integrity gate</li>
+      <li><code>/hold &lt;case_id&gt; &lt;reason&gt;</code> — litigation hold (admin/operator)</li>
+      <li><code>/dossier &lt;prompt&gt;</code> — generate deterministic dossier</li>
+    </ul>
+    <p>Plain text is automatically routed to the active AI model (/ask). Anchorum commands require admin/operator role.</p>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const helpToggle = document.getElementById('help-toggle');
+    const helpPanel = document.getElementById('help-panel');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session') ||
+                      'desktop-' + Math.random().toString(36).slice(2, 10);
+    let wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
+                window.location.host + '/ws/chat/' + sessionId;
+    const wsApiKey = urlParams.get('api_key') || '';
+    if (wsApiKey) {
+      wsUrl += '?api_key=' + encodeURIComponent(wsApiKey);
+    }
+
+    function addMessage(text, cls) {
+      const div = document.createElement('div');
+      div.className = 'message ' + cls;
+      if (typeof text === 'string') {
+        div.textContent = text;
+      } else {
+        div.appendChild(text);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    function setStatus(state, text) {
+      statusDot.className = '';
+      if (state) statusDot.classList.add(state);
+      statusText.textContent = text;
+    }
+
+    function renderAssistant(data) {
+      const container = document.createElement('div');
+      container.className = 'message assistant';
+
+      const header = document.createElement('div');
+      header.className = 'assistant-header';
+      header.textContent = (data.command || 'egregore').toUpperCase() + (data.ok === false ? ' — FAILED' : '');
+      container.appendChild(header);
+
+      const summary = document.createElement('div');
+      summary.className = 'assistant-summary';
+      summary.textContent = data.summary || '';
+      container.appendChild(summary);
+
+      if (data.detail !== undefined && data.detail !== null) {
+        const toggle = document.createElement('button');
+        toggle.className = 'detail-toggle';
+        toggle.textContent = 'Show details';
+        const pre = document.createElement('pre');
+        pre.className = 'detail-pre';
+        pre.textContent = JSON.stringify(data.detail, null, 2);
+        toggle.addEventListener('click', () => {
+          pre.classList.toggle('open');
+          toggle.textContent = pre.classList.contains('open') ? 'Hide details' : 'Show details';
+        });
+        container.appendChild(toggle);
+        container.appendChild(pre);
+      }
+
+      if (data.suggestion) {
+        const sug = document.createElement('div');
+        sug.className = 'assistant-suggestion';
+        sug.textContent = '💡 ' + data.suggestion;
+        container.appendChild(sug);
+      }
+
+      chat.appendChild(container);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    addMessage('Session: ' + sessionId, 'system');
+
+    let ws;
+    function connect() {
+      setStatus('connecting', 'Connecting…');
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        setStatus('connected', 'Connected');
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      };
+
+      ws.onmessage = (event) => {
+        sendBtn.disabled = false;
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'error') {
+            addMessage('Error: ' + data.error, 'system');
+          } else if (data.type === 'chat') {
+            renderAssistant(data);
+          } else {
+            renderAssistant({command: 'unknown', ok: true, summary: event.data});
+          }
+        } catch (e) {
+          renderAssistant({command: 'unknown', ok: true, summary: event.data});
+        }
+      };
+
+      ws.onclose = (event) => {
+        setStatus('', 'Disconnected');
+        sendBtn.disabled = true;
+        if (event.code === 1006) {
+          addMessage('Connection closed. If you are not logged in, open the dashboard login first:', 'system');
+          const loginUrl = (window.location.protocol === 'https:' ? 'https://' : 'http://') + window.location.host + '/dashboard/login';
+          const link = document.createElement('a');
+          link.href = loginUrl;
+          link.textContent = 'Egregore Dashboard Login';
+          link.style.color = 'var(--accent)';
+          const msg = document.createElement('div');
+          msg.className = 'message system';
+          msg.appendChild(link);
+          chat.appendChild(msg);
+          chat.scrollTop = chat.scrollHeight;
+        }
+      };
+
+      ws.onerror = (err) => {
+        setStatus('', 'Error');
+        addMessage('WebSocket error. Is the Egregore app running?', 'system');
+      };
+    }
+
+    function send() {
+      const text = input.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+      addMessage(text, 'user');
+      input.value = '';
+      sendBtn.disabled = true;
+      ws.send(text);
+    }
+
+    sendBtn.addEventListener('click', send);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+    helpToggle.addEventListener('click', () => helpPanel.classList.toggle('open'));
+
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+# Egregore domain root

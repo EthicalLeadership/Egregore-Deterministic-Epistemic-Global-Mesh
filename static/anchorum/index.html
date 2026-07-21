@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANCHORUM — Legal Dossier AI</title>
+  <link rel="stylesheet" href="/static/anchorum/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="logo">⬡</span>
+      <div>
+        <h1>ANCHORUM</h1>
+        <p class="tagline">Legal Dossier — AI Agent powered by Egregore</p>
+      </div>
+    </div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/dashboard/logout">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="cases-panel">
+      <h2>Cases</h2>
+      <button id="refresh-cases" class="btn secondary">Refresh</button>
+      <ul id="case-list" class="case-list">
+        <li class="empty">Loading cases…</li>
+      </ul>
+    </section>
+
+    <section class="detail-panel">
+      <h2>Case Details</h2>
+      <div id="case-detail" class="case-detail">
+        <p class="empty">Select a case to view its summary.</p>
+      </div>
+    </section>
+
+    <section class="chat-panel">
+      <h2>AI Agent</h2>
+      <div id="chat-log" class="chat-log"></div>
+      <div class="chat-controls">
+        <input id="chat-input" type="text" placeholder="Ask about the dossier…" autocomplete="off">
+        <button id="btn-legal" class="btn primary">Ask Legal Dossier</button>
+        <button id="btn-ask" class="btn secondary">Ask Egregore</button>
+      </div>
+      <p class="hint">The agent runs through Egregore. Use plain English; citations appear when RAG sources are found.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Served from this machine · Egregore Chat backend</span>
+  </footer>
+
+  <script src="/static/anchorum/app.js"></script>
+</body>
+</html>
