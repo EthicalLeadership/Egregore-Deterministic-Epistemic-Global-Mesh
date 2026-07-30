@@ -37,7 +37,7 @@ def _llama_cpp_available() -> bool:
 
 def _model_path_from_env() -> str:
     return os.path.expanduser(
-        os.environ.get("BLACKSTAR_LOCAL_LLM_MODEL_PATH", GGUF_DEFAULT_PATH)
+        os.environ.get("EGREGORE_LOCAL_LLM_MODEL_PATH", GGUF_DEFAULT_PATH)
     )
 
 
@@ -133,7 +133,7 @@ def build_compute_engine_policy(
 @pytest.mark.skipif(not _llama_cpp_available(), reason="llama-cpp-python not installed")
 @pytest.mark.skipif(
     not os.path.exists(_model_path_from_env()),
-    reason="GGUF model not present at BLACKSTAR_LOCAL_LLM_MODEL_PATH",
+    reason="GGUF model not present at EGREGORE_LOCAL_LLM_MODEL_PATH",
 )
 def test_local_llm_cse_end_to_end_governed_inference() -> None:
     model_path = _model_path_from_env()

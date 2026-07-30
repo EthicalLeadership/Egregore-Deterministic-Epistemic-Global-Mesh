@@ -30,7 +30,7 @@ class Kimik2LoaderAdapter(IKimik2Loader):
             raise Kimik2LoaderError(f"Model/tokenizer load failed: {exc}") from exc
 
     def _has_nonempty_shards(self) -> bool:
-        shards = [f"model-{i+1}-of-61.safetensors" for i in range(61)]
+        shards = [f"model-{i + 1}-of-61.safetensors" for i in range(61)]
         for shard in shards:
             shard_path = os.path.join(self.model_dir, shard)
             try:
@@ -51,7 +51,7 @@ class Kimik2LoaderAdapter(IKimik2Loader):
             raise Kimik2LoaderError(
                 f"Corrupt model.safetensors.index.json: {exc}"
             ) from exc
-        shards = [f"model-{i+1}-of-61.safetensors" for i in range(61)]
+        shards = [f"model-{i + 1}-of-61.safetensors" for i in range(61)]
         for shard in shards:
             if not os.path.isfile(os.path.join(self.model_dir, shard)):
                 raise Kimik2LoaderError(f"Missing shard: {shard}")

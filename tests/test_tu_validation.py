@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Validation Protocol
+EGREGORE LAW: Validation Protocol
 Formal tests for all 7 TU Laws + replay identity.
 """
 

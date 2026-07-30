@@ -1538,3 +1538,18 @@ websockets==16.0 \
 # pinned when the requirements file includes hashes and the requirement is not
 # satisfied by a package already installed. Consider using the --allow-unsafe flag.
 # setuptools
+
+# -----------------------------------------------------------------------------
+# Native LLM backend dependencies (managed via pyproject.toml [llm-native] extra)
+# -----------------------------------------------------------------------------
+# These packages are required for the Egregore native CoderBackend and are NOT
+# included in the hash-locked section above because they are large CUDA/ML
+# packages. Install them with:
+#
+#     pip install -e ".[llm-native]"
+#
+# Exact versions currently validated in the deployment venv:
+transformers==5.14.1
+torch==2.13.0
+bitsandbytes==0.50.0
+accelerate==1.14.0

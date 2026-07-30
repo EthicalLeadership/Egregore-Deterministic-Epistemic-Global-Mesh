@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Canonical execution record schema for SEL-X.
 
 Unifies identity, causality, policy, budget, and integrity metadata into a

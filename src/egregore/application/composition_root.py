@@ -109,7 +109,7 @@ class CompositionRoot:
 
     def _load_policy_cache(self):
         cache = {}
-        policy_dir = os.environ.get("BLACKSTAR_POLICY_DIR", "./policies")
+        policy_dir = os.environ.get("EGREGORE_POLICY_DIR", "./policies")
         if not os.path.exists(policy_dir):
             return cache
         for policy_file in Path(policy_dir).glob("*.json"):

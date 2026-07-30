@@ -1,4 +1,4 @@
-"""BLACKSTAR LAW: Lane Manager
+"""EGREGORE LAW: Lane Manager
 Dynamic worker pool for model inference. Plane 2 only.
 """
 

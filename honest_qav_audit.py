@@ -24,7 +24,7 @@ def run(cmd):
     except Exception:
         return ""
 
-print("=== BLACKSTAR QAV AUDIT (HONEST) ===")
+print("=== EGREGORE QAV AUDIT (HONEST) ===")
 print(f"Session: 2026-06-16")
 print(f"Target: {SRC}")
 print(f"Exists: {SRC.exists()}")

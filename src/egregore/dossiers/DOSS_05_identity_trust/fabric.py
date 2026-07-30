@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-05: Identity & Trust Fabric — Constitution, permissions, and identity management."""
 
 from __future__ import annotations

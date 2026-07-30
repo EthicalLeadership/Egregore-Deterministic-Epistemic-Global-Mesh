@@ -175,7 +175,7 @@ jobs:
 
       - name: Run pipeline sandbox
         env:
-          BLACKSTAR_SIGNING_KEY_HEX: ${{ secrets.BLACKSTAR_SIGNING_KEY_HEX }}
+          EGREGORE_SIGNING_KEY_HEX: ${{ secrets.EGREGORE_SIGNING_KEY_HEX }}
         run: |
           source .venv/bin/activate
           make sandbox
@@ -265,11 +265,11 @@ jobs:
           sudo systemctl restart egregore-api
           sudo systemctl status egregore-api --no-pager
         env:
-          BLACKSTAR_DB_URL: ${{ secrets.PIONEER1_DB_URL }}
+          EGREGORE_DB_URL: ${{ secrets.PIONEER1_DB_URL }}
           REDIS_URL: ${{ secrets.PIONEER1_REDIS_URL }}
           NATS_URL: ${{ secrets.PIONEER1_NATS_URL }}
-          BLACKSTAR_SIGNING_KEY_PATH: ${{ secrets.PIONEER1_SIGNING_KEY_PATH }}
-          BLACKSTAR_CLUSTER_KEK_PATH: ${{ secrets.PIONEER1_CLUSTER_KEK_PATH }}
+          EGREGORE_SIGNING_KEY_PATH: ${{ secrets.PIONEER1_SIGNING_KEY_PATH }}
+          EGREGORE_CLUSTER_KEK_PATH: ${{ secrets.PIONEER1_CLUSTER_KEK_PATH }}
           NODE_ID: pioneer1
 
   # ── 7b. DEPLOY: Client Red Dart (Docker) ───────────────────────────────────

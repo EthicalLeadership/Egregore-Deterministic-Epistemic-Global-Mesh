@@ -1,0 +1,34 @@
+{
+  "module_id": "egregore.shared",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "shared",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 81: with open(path, encoding=\"utf-8\") as f:"
+      ],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

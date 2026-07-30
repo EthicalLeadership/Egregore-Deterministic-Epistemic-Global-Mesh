@@ -596,7 +596,10 @@ if __name__ == "__main__":
         raise AssertionError
     if extracted.plane_content is None:
         raise AssertionError
-    if "john.smith@acme-corp.example.com" not in extracted.plane_content.email_addresses:
+    if (
+        "john.smith@acme-corp.example.com"
+        not in extracted.plane_content.email_addresses
+    ):
         raise AssertionError
     if "https://acme-corp.example.com" not in extracted.plane_content.embedded_urls:
         raise AssertionError

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Work Unit Abstraction
+EGREGORE LAW: Work Unit Abstraction
 """
 
 from __future__ import annotations

@@ -120,7 +120,7 @@ def _ensure_case_seeded_in_store(
 
 
 def _model_manifest_path() -> str | None:
-    manifest_path = os.environ.get("BLACKSTAR_LOCAL_MODEL_MANIFEST")
+    manifest_path = os.environ.get("EGREGORE_LOCAL_MODEL_MANIFEST")
     if not manifest_path:
         return None
     return os.path.expanduser(manifest_path)

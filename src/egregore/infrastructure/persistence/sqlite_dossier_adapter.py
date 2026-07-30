@@ -26,9 +26,9 @@ EVENT_COMMIT_GENERATE_T2 = "commit_generate_t2"
 
 
 def _default_signing_key_hex() -> str:
-    key = os.environ.get("BLACKSTAR_ZARC_SIGNING_KEY_HEX")
+    key = os.environ.get("EGREGORE_ZARC_SIGNING_KEY_HEX")
     if not key:
-        raise RuntimeError("BLACKSTAR_ZARC_SIGNING_KEY_HEX is not set")
+        raise RuntimeError("EGREGORE_ZARC_SIGNING_KEY_HEX is not set")
     return key
 
 
@@ -62,7 +62,7 @@ class SQLiteTransactionalPersistence(ITransactionalPersistence):
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
 
         zarc_path = (
-            self._zarc_dir / f"{os.environ.get('BLACKSTAR_NODE_ID', 'unknown')}.zarc"
+            self._zarc_dir / f"{os.environ.get('EGREGORE_NODE_ID', 'unknown')}.zarc"
         )
         self._provenance = Provenance(
             zarc_path,

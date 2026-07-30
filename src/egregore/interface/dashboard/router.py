@@ -125,7 +125,7 @@ async def dashboard_index(request: Request):
     """Main dashboard page."""
     fc = _get_freeze_controller(request)
     status = _freeze_status_to_system_status(fc)
-    timestamp = datetime.now(UTC).timestamp()
+    timestamp = time.time_ns() / 1e9
     health = KeyHealth(has_key=True, key_length=64, permissions="600")
     return templates.TemplateResponse(
         request,
@@ -144,7 +144,7 @@ async def status_card(request: Request):
     """HTMX fragment: status card."""
     fc = _get_freeze_controller(request)
     status = _freeze_status_to_system_status(fc)
-    timestamp = datetime.now(UTC).timestamp()
+    timestamp = time.time_ns() / 1e9
     return templates.TemplateResponse(
         request,
         "fragments/status_card.html",
@@ -180,7 +180,7 @@ async def freeze_action(
     fc.freeze(reason=reason, operator_id=operator)
     # Return updated controls + status fragments
     status = _freeze_status_to_system_status(fc)
-    timestamp = datetime.now(UTC).timestamp()
+    timestamp = time.time_ns() / 1e9
     status_html = templates.get_template("fragments/status_card.html").render(
         {"status": status, "timestamp": timestamp, "fmt_ts": _fmt_ts}
     )
@@ -199,7 +199,7 @@ async def unfreeze_action(
     fc = _get_freeze_controller(request)
     fc.unfreeze(reason=reason, operator_id=operator)
     status = _freeze_status_to_system_status(fc)
-    timestamp = datetime.now(UTC).timestamp()
+    timestamp = time.time_ns() / 1e9
     status_html = templates.get_template("fragments/status_card.html").render(
         {"status": status, "timestamp": timestamp, "fmt_ts": _fmt_ts}
     )
@@ -218,7 +218,7 @@ async def reset_action(
     fc = _get_freeze_controller(request)
     fc.reset(reason=reason, operator_id=operator)
     status = _freeze_status_to_system_status(fc)
-    timestamp = datetime.now(UTC).timestamp()
+    timestamp = time.time_ns() / 1e9
     status_html = templates.get_template("fragments/status_card.html").render(
         {"status": status, "timestamp": timestamp, "fmt_ts": _fmt_ts}
     )

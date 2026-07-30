@@ -101,7 +101,7 @@ class DNI2Atmosphere:
             self._quarantine[envelope.work_unit.wu_id.raw] = envelope
             self._ingress_log.append(
                 {
-                    "timestamp_ns": int(time.time() * 1e9),
+                    "timestamp_ns": time.time_ns(),
                     "action": "quarantine",
                     "wu_id": envelope.work_unit.wu_id.raw,
                     "threat_score": envelope.threat_score,
@@ -111,13 +111,13 @@ class DNI2Atmosphere:
 
         # 2. Energy budget check
         if self._energy:
-            status = self._energy.status(self._node_id, int(time.time() * 1e9))
+            status = self._energy.status(self._node_id, time.time_ns())
             if status.remaining_j < envelope.energy_cost_estimate_j and (
                 status.remaining_j / status.total_budget_j < self.ENERGY_DEFER_THRESHOLD
             ):
                 self._ingress_log.append(
                     {
-                        "timestamp_ns": int(time.time() * 1e9),
+                        "timestamp_ns": time.time_ns(),
                         "action": "defer",
                         "wu_id": envelope.work_unit.wu_id.raw,
                         "reason": "insufficient_energy",
@@ -128,7 +128,7 @@ class DNI2Atmosphere:
         # 3. Permit
         self._ingress_log.append(
             {
-                "timestamp_ns": int(time.time() * 1e9),
+                "timestamp_ns": time.time_ns(),
                 "action": "permit",
                 "wu_id": envelope.work_unit.wu_id.raw,
             }
@@ -145,7 +145,7 @@ class DNI2Atmosphere:
         ):
             self._egress_log.append(
                 {
-                    "timestamp_ns": int(time.time() * 1e9),
+                    "timestamp_ns": time.time_ns(),
                     "action": "reject",
                     "reason": "classified_to_external",
                 }
@@ -156,7 +156,7 @@ class DNI2Atmosphere:
         if len(envelope.provenance_chain) > 10:
             self._egress_log.append(
                 {
-                    "timestamp_ns": int(time.time() * 1e9),
+                    "timestamp_ns": time.time_ns(),
                     "action": "reject",
                     "reason": "provenance_chain_too_long",
                 }
@@ -165,7 +165,7 @@ class DNI2Atmosphere:
 
         self._egress_log.append(
             {
-                "timestamp_ns": int(time.time() * 1e9),
+                "timestamp_ns": time.time_ns(),
                 "action": "permit",
                 "destination": envelope.destination_node,
             }

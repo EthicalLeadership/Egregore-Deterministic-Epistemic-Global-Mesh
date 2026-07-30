@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Model Host Ports
+EGREGORE LAW: Model Host Ports
 AI inference abstraction. Plane 2 only — read-only derivatives.
 """
 

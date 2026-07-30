@@ -79,7 +79,7 @@ def _get_agent_registry(context: ChatContext) -> Any:
 
 def _default_chat_model() -> str:
     """Resolve default chat model from environment."""
-    return os.environ.get("BLACKSTAR_CHAT_MODEL", "qwen2.5-7b-instruct")
+    return os.environ.get("EGREGORE_CHAT_MODEL", "my-coder-ft")
 
 
 def _best_local_gguf_model() -> str:
@@ -111,11 +111,11 @@ def _active_model(context: ChatContext) -> str:
 
     Preference:
       1. Explicit CHAT_MODEL in session env
-      2. Explicit BLACKSTAR_CHAT_MODEL in process env
+      2. Explicit EGREGORE_CHAT_MODEL in process env
       3. Best available remote model (DeepSeek > Claude)
       4. Largest present local GGUF model
     """
-    explicit = context.env.get("CHAT_MODEL") or os.environ.get("BLACKSTAR_CHAT_MODEL")
+    explicit = context.env.get("CHAT_MODEL") or os.environ.get("EGREGORE_CHAT_MODEL")
     if explicit:
         return explicit
 
@@ -175,7 +175,7 @@ def _default_hold_api(**kwargs: Any) -> str:
 
 def _repo_root() -> Path:
     """Return the Egregore repo root."""
-    return Path(os.environ.get("BLACKSTAR_REPO_ROOT", "/opt/egregore"))
+    return Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore"))
 
 
 def _resolve_zarc_path(path_str: str) -> Path:
@@ -1051,7 +1051,7 @@ def _cmd_ask(args: list[str], context: ChatContext) -> dict[str, Any]:
         _append_history_turn(context, "assistant", result.text)
         return _format_ask(result)
 
-    # Multi-backend path: use InferenceService (Claude, DeepSeek, Ollama, local HF)
+    # Multi-backend path: use InferenceService (native Coder, Claude, DeepSeek, local HF)
     if inference_service is not None:
         request = ChatRequest(
             model=active_model,

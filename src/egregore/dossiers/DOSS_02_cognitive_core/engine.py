@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-02: Cognitive Core Engine — Inference routing and orchestration."""
 
 from __future__ import annotations

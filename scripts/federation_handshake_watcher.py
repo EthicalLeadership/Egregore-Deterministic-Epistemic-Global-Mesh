@@ -8,9 +8,9 @@ federation treaty + entropy exchange the moment the peer comes online.
 Environment variables:
   PIONEER2_HOST          Peer hostname/IP (default: 192.168.2.10)
   PIONEER2_PORT          Peer API port   (default: 8000)
-  BLACKSTAR_PORT         Local API port  (default: 18000)
-  BLACKSTAR_API_KEY      Hex API key     (default: first key from .env)
-  BLACKSTAR_NODE_ID      This node id    (default: pioneer1)
+  EGREGORE_PORT         Local API port  (default: 18000)
+  EGREGORE_API_KEY      Hex API key     (default: first key from .env)
+  EGREGORE_NODE_ID      This node id    (default: pioneer1)
   PEER_NODE_ID           Peer node id    (default: pioneer2)
   POLL_INTERVAL          Seconds         (default: 5)
 """
@@ -40,7 +40,7 @@ def _load_api_key_from_dotenv(repo_root: Path) -> str | None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
-        if key.strip() != "BLACKSTAR_API_KEYS":
+        if key.strip() != "EGREGORE_API_KEYS":
             continue
         value = value.strip().strip("\"'")
         for entry in value.split(","):
@@ -51,7 +51,7 @@ def _load_api_key_from_dotenv(repo_root: Path) -> str | None:
 
 
 def _default_api_key() -> str:
-    env_key = os.environ.get("BLACKSTAR_API_KEY", "").strip()
+    env_key = os.environ.get("EGREGORE_API_KEY", "").strip()
     if env_key:
         return env_key
     repo_root = Path(__file__).resolve().parents[1]
@@ -59,7 +59,7 @@ def _default_api_key() -> str:
     if key:
         return key
     logger.warning(
-        "No BLACKSTAR_API_KEY found; peer requests will be rejected by APIKeyMiddleware."
+        "No EGREGORE_API_KEY found; peer requests will be rejected by APIKeyMiddleware."
     )
     return ""
 
@@ -245,12 +245,12 @@ def main() -> int:
     parser.add_argument(
         "--local-port",
         type=int,
-        default=_env_int("BLACKSTAR_PORT", 18000),
+        default=_env_int("EGREGORE_PORT", 18000),
         help="Local Egregore API port",
     )
     args = parser.parse_args()
 
-    node_id = os.environ.get("BLACKSTAR_NODE_ID", "pioneer1")
+    node_id = os.environ.get("EGREGORE_NODE_ID", "pioneer1")
     peer_node_id = os.environ.get("PEER_NODE_ID", "pioneer2")
     api_key = _default_api_key()
     peer_url = f"http://{args.target}:{args.target_port}"

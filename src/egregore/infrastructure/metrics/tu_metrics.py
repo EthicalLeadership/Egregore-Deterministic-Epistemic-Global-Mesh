@@ -1,4 +1,4 @@
-"""BLACKSTAR LAW: TU Metrics. Plane 2 only."""
+"""EGREGORE LAW: TU Metrics. Plane 2 only."""
 
 from __future__ import annotations
 

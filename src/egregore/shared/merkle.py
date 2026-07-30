@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Merkle tree utilities for SEL-X block integrity."""
 
 from __future__ import annotations

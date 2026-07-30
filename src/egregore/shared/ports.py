@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Shared ports (protocols) used by application and infrastructure layers.
 
 Keeping interface protocols in ``shared`` lets infrastructure implementations

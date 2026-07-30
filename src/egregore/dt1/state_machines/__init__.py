@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 from __future__ import annotations
 
 from egregore.dt1.state_machines.pressure_aggregation_sm import (

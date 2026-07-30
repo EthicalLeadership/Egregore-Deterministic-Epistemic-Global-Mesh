@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Inter-Node Messenger
+EGREGORE LAW: Inter-Node Messenger
 NATS-based messaging for distributed scheduler coordination.
 """
 

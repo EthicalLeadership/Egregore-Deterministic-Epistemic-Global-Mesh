@@ -19,7 +19,14 @@ const PORT = process.env.GATEWAY_PORT || 3000;
 const CORE_URL = process.env.CORE_URL || 'http://localhost:8002';
 const CONTROL_URL = process.env.CONTROL_URL || 'http://localhost:3001';
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'upgrade-insecure-requests': null,
+    },
+  },
+}));
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.json());
@@ -55,6 +62,40 @@ app.all('/api/*', async (req, res) => {
       });
     }
   }
+});
+
+// Health check: gateway liveness + backend reachability
+app.get('/health', async (req, res) => {
+  const checks = {};
+  try {
+    await axios.get(CONTROL_URL + '/api/health', { timeout: 5000 });
+    checks.control_center = 'ok';
+  } catch (err) {
+    checks.control_center = 'unreachable';
+  }
+  // The Python core requires an API key even for /health.
+  let apiKey = process.env.EGREGORE_API_KEY;
+  if (!apiKey) {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const keyPath = path.join(__dirname, '../../secrets/api_key.hex');
+      apiKey = fs.readFileSync(keyPath, 'utf8').trim();
+    } catch {
+      apiKey = '';
+    }
+  }
+  try {
+    await axios.get(CORE_URL + '/health', {
+      timeout: 5000,
+      headers: apiKey ? { 'X-API-Key': apiKey } : {},
+    });
+    checks.core = 'ok';
+  } catch (err) {
+    checks.core = err.response ? `http_${err.response.status}` : 'unreachable';
+  }
+  const healthy = checks.control_center === 'ok' && checks.core === 'ok';
+  res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'degraded', checks });
 });
 
 // WebSocket

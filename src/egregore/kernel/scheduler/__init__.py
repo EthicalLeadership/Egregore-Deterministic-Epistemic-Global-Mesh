@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 from egregore.kernel.scheduler.dt_monitor import (
     DTMonitor,
     DTReading,

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: DI Container Test Matrix
+EGREGORE LAW: DI Container Test Matrix
 """
 
 from __future__ import annotations

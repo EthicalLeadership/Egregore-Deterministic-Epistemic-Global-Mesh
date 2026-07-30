@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# Load .env so uvicorn picks up BLACKSTAR_API_KEYS and other config even when
+# Load .env so uvicorn picks up EGREGORE_API_KEYS and other config even when
 # started directly (not through the desktop launcher).
 from pathlib import Path
 
@@ -251,7 +251,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     root = CompositionRoot(freeze_controller=freeze_controller)
     app.state.composition_root = root
 
-    # Build multi-backend inference service for chat (Ollama, Anthropic, DeepSeek)
+    # Build multi-backend inference service for chat (native Coder, Anthropic, DeepSeek)
     app.state.inference_service = build_inference_service_from_env()
 
     # Discover CLI agents for chat dispatch
@@ -263,7 +263,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.add_middleware(AuditLogMiddleware)
     app.add_middleware(APIKeyMiddleware)
     _trusted_hosts_raw = os.environ.get(
-        "BLACKSTAR_TRUSTED_HOSTS", "localhost,127.0.0.1,*.egregore.local,*"
+        "EGREGORE_TRUSTED_HOSTS", "localhost,127.0.0.1,*.egregore.local,*"
     )
     _trusted_hosts = [h.strip() for h in _trusted_hosts_raw.split(",") if h.strip()]
     if _trusted_hosts:
@@ -290,18 +290,18 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     @health_router.get("/ready", response_model=HealthResponse)
     async def ready() -> HealthResponse:
         return HealthResponse(
-            status="ready", plane="projection", timestamp=time.time(), checks={}
+            status="ready", plane="projection", timestamp=time.time_ns() / 1e9, checks={}
         )
 
     @health_router.get("/live", response_model=HealthResponse)
     async def live() -> HealthResponse:
         return HealthResponse(
-            status="alive", plane="projection", timestamp=time.time(), checks={}
+            status="alive", plane="projection", timestamp=time.time_ns() / 1e9, checks={}
         )
 
     def _parse_cluster_nodes() -> list[dict[str, Any]]:
         raw = os.environ.get(
-            "BLACKSTAR_CLUSTER_NODES",
+            "EGREGORE_CLUSTER_NODES",
             "pioneer1=127.0.0.1:8080,pioneer2=192.168.1.102:8000,pioneer3=192.168.1.103:8000",
         )
         nodes: list[dict[str, Any]] = []
@@ -333,10 +333,10 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
                 host = cfg["host"]
                 port = cfg["port"]
                 url = f"http://{host}:{port}/health/ready"
-                start = time.time()
+                start = time.monotonic()
                 try:
                     resp = await client.get(url)
-                    latency_ms = (time.time() - start) * 1000
+                    latency_ms = (time.monotonic() - start) * 1000
                     if resp.status_code == 200:
                         results.append(
                             NodeHealth(
@@ -346,7 +346,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
                                 port=port,
                                 healthy=True,
                                 latency_ms=round(latency_ms, 2),
-                                last_seen=time.time(),
+                                last_seen=time.time_ns() / 1e9,
                             )
                         )
                         online += 1
@@ -360,7 +360,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
                                 healthy=False,
                                 latency_ms=round(latency_ms, 2),
                                 error=f"HTTP {resp.status_code}",
-                                last_seen=time.time(),
+                                last_seen=time.time_ns() / 1e9,
                             )
                         )
                 except Exception as exc:
@@ -373,7 +373,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
                             port=port,
                             healthy=False,
                             error=msg,
-                            last_seen=time.time(),
+                            last_seen=time.time_ns() / 1e9,
                         )
                     )
         return NodesHealthResponse(

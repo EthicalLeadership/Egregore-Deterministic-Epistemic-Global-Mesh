@@ -308,7 +308,7 @@ def _stage_event(event: IngestionEvent) -> IngestReceipt:
 def _now_iso() -> str:
     from datetime import UTC, datetime
 
-    return datetime.now(UTC).isoformat()
+    return datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat()
 
 
 # ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Domain model for public anchor records."""
 
 from __future__ import annotations

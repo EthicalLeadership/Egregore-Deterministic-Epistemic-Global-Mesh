@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Threshold Signer Test Matrix
+EGREGORE LAW: Threshold Signer Test Matrix
 """
 
 from __future__ import annotations

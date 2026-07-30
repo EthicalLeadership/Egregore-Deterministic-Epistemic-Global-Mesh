@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: TU Budget
+EGREGORE LAW: TU Budget
 Epoch-bound allocation of Temporal Units.
 """
 

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 class DT1RuntimeController:
     def __init__(self, runner, composition_guard, pressure_gate, output_sink):
         self.runner = runner

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Deterministic stub tools for AEGIS-HIVE Ω cells.
 
 These tools are placeholders for Phase 0. Each will be replaced by real

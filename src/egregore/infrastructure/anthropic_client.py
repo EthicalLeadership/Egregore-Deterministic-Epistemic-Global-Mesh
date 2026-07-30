@@ -95,7 +95,7 @@ class AnthropicClient:
                 content += block.get("text", "")
 
         usage = data.get("usage", {})
-        created_at_ns = int(time.time() * 1e9)
+        created_at_ns = time.time_ns()
 
         return ChatResponse(
             message=ChatMessage(role="assistant", content=content),

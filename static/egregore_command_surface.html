@@ -40,7 +40,7 @@
     min-height: 100vh;
     overflow: hidden;
   }
-  .bs-container {
+  .eg-container {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -48,7 +48,7 @@
     gap: 8px;
     padding: 8px;
   }
-  .bs-toolbar {
+  .eg-toolbar {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -58,15 +58,15 @@
     background: var(--bg-panel);
     flex-shrink: 0;
   }
-  .bs-toolbar-title {
+  .eg-toolbar-title {
     font-size: 15px;
     font-weight: 500;
     color: var(--text-primary);
     flex: 1;
     letter-spacing: 0.3px;
   }
-  .bs-toolbar-title span { color: var(--text-tertiary); font-weight: 400; }
-  .bs-toolbar-btn {
+  .eg-toolbar-title span { color: var(--text-tertiary); font-weight: 400; }
+  .eg-toolbar-btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -80,25 +80,25 @@
     transition: all var(--t-fast) ease-out;
     font-family: var(--sans);
   }
-  .bs-toolbar-btn:hover {
+  .eg-toolbar-btn:hover {
     color: var(--text-primary);
     border-color: var(--border-hover);
     background: var(--bg-raised);
   }
-  .bs-toolbar-btn.active {
+  .eg-toolbar-btn.active {
     color: var(--text-primary);
     border-color: var(--accent-dim);
     background: rgba(74, 158, 255, 0.08);
   }
-  .bs-toolbar-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .bs-main {
+  .eg-toolbar-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .eg-main {
     display: flex;
     gap: 8px;
     flex: 1;
     min-height: 0;
     overflow: hidden;
   }
-  .bs-left {
+  .eg-left {
     width: 220px;
     display: flex;
     flex-direction: column;
@@ -106,14 +106,14 @@
     flex-shrink: 0;
     overflow: hidden;
   }
-  .bs-panel {
+  .eg-panel {
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px;
     background: var(--bg-panel);
     overflow: hidden;
   }
-  .bs-panel-title {
+  .eg-panel-title {
     font-size: 10px;
     font-weight: 500;
     color: var(--text-tertiary);
@@ -121,7 +121,7 @@
     letter-spacing: 1px;
     margin-bottom: 10px;
   }
-  .bs-layer-item {
+  .eg-layer-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -134,16 +134,16 @@
     margin-bottom: 2px;
     position: relative;
   }
-  .bs-layer-item:hover {
+  .eg-layer-item:hover {
     background: rgba(255,255,255,0.03);
     color: var(--text-primary);
   }
-  .bs-layer-item.active {
+  .eg-layer-item.active {
     background: rgba(74, 158, 255, 0.08);
     color: var(--text-primary);
     font-weight: 500;
   }
-  .bs-layer-item.active::before {
+  .eg-layer-item.active::before {
     content: '';
     position: absolute;
     left: 0; top: 4px; bottom: 4px;
@@ -151,19 +151,19 @@
     background: var(--accent);
     border-radius: 1px;
   }
-  .bs-layer-dot {
+  .eg-layer-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     border: 1px solid rgba(255,255,255,0.1);
   }
-  .bs-layer-lock {
+  .eg-layer-lock {
     margin-left: auto;
     color: var(--text-quaternary);
     font-size: 10px;
   }
-  .bs-layer-toggle {
+  .eg-layer-toggle {
     margin-left: auto;
     position: relative;
     width: 28px;
@@ -175,7 +175,7 @@
     transition: all var(--t-fast) ease-out;
     flex-shrink: 0;
   }
-  .bs-layer-toggle::after {
+  .eg-layer-toggle::after {
     content: '';
     position: absolute;
     top: 2px; left: 2px;
@@ -184,26 +184,26 @@
     background: var(--text-quaternary);
     transition: all var(--t-fast) ease-out;
   }
-  .bs-layer-toggle.open {
+  .eg-layer-toggle.open {
     background: var(--positive);
     border-color: var(--positive);
   }
-  .bs-layer-toggle.open::after {
+  .eg-layer-toggle.open::after {
     left: 14px;
     background: white;
   }
-  .bs-layer-band-status {
+  .eg-layer-band-status {
     cursor: pointer;
     padding: 1px 6px;
     border-radius: 4px;
     border: 1px solid transparent;
     transition: all var(--t-fast) ease-out;
   }
-  .bs-layer-band-status:hover {
+  .eg-layer-band-status:hover {
     border-color: var(--border-hover);
     background: rgba(255,255,255,0.05);
   }
-  .bs-layer-band-toggle {
+  .eg-layer-band-toggle {
     cursor: pointer;
     padding: 2px 8px;
     border-radius: 4px;
@@ -214,12 +214,12 @@
     font-family: var(--sans);
     transition: all var(--t-fast) ease-out;
   }
-  .bs-layer-band-toggle:hover {
+  .eg-layer-band-toggle:hover {
     border-color: var(--accent-dim);
     color: var(--accent);
     background: rgba(74, 158, 255, 0.08);
   }
-  .bs-node-row {
+  .eg-node-row {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -231,15 +231,15 @@
     margin-bottom: 2px;
     position: relative;
   }
-  .bs-node-row:hover {
+  .eg-node-row:hover {
     background: rgba(255,255,255,0.03);
   }
-  .bs-node-row.active {
+  .eg-node-row.active {
     background: rgba(74, 158, 255, 0.08);
     color: var(--text-primary);
     font-weight: 500;
   }
-  .bs-node-row.active::before {
+  .eg-node-row.active::before {
     content: '';
     position: absolute;
     left: 0; top: 4px; bottom: 4px;
@@ -247,22 +247,22 @@
     background: var(--accent);
     border-radius: 1px;
   }
-  .bs-node-status {
+  .eg-node-status {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .bs-node-status.online { background: var(--positive); box-shadow: 0 0 6px rgba(74,222,128,0.3); }
-  .bs-node-status.offline { background: var(--danger); }
-  .bs-node-status.standby { background: var(--warning); }
-  .bs-node-load {
+  .eg-node-status.online { background: var(--positive); box-shadow: 0 0 6px rgba(74,222,128,0.3); }
+  .eg-node-status.offline { background: var(--danger); }
+  .eg-node-status.standby { background: var(--warning); }
+  .eg-node-load {
     margin-left: auto;
     font-size: 11px;
     color: var(--text-tertiary);
     font-family: var(--mono);
   }
-  .bs-center {
+  .eg-center {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -270,7 +270,7 @@
     min-width: 0;
     overflow: hidden;
   }
-  .bs-viewport {
+  .eg-viewport {
     flex: 1;
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -279,7 +279,7 @@
     background: var(--bg-panel);
     min-height: 0;
   }
-  .bs-viewport-label {
+  .eg-viewport-label {
     position: absolute;
     top: 10px;
     left: 12px;
@@ -290,7 +290,7 @@
     z-index: 10;
     pointer-events: none;
   }
-  .bs-viewport-label .live-dot {
+  .eg-viewport-label .live-dot {
     display: inline-block;
     width: 6px;
     height: 6px;
@@ -303,20 +303,20 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
-  .bs-view-content {
+  .eg-view-content {
     width: 100%;
     height: 100%;
     position: absolute;
     top: 0; left: 0;
     display: none;
   }
-  .bs-view-content.active { display: block; }
-  .bs-cross-section {
+  .eg-view-content.active { display: block; }
+  .eg-cross-section {
     padding: 32px 12px 12px 12px;
     overflow-y: auto;
     height: 100%;
   }
-  .bs-layer-band {
+  .eg-layer-band {
     position: relative;
     width: 100%;
     border: 1px solid var(--border);
@@ -329,21 +329,21 @@
     align-items: center;
     padding: 0 16px;
   }
-  .bs-layer-band:hover {
+  .eg-layer-band:hover {
     border-color: var(--border-hover);
     background: rgba(255,255,255,0.02);
   }
-  .bs-layer-band.active {
+  .eg-layer-band.active {
     border-color: var(--accent-dim);
     background: rgba(74, 158, 255, 0.05);
   }
-  .bs-layer-band-inner {
+  .eg-layer-band-inner {
     display: flex;
     align-items: center;
     width: 100%;
     gap: 12px;
   }
-  .bs-layer-band-name {
+  .eg-layer-band-name {
     font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -352,7 +352,7 @@
     white-space: nowrap;
     min-width: 120px;
   }
-  .bs-layer-band-bar {
+  .eg-layer-band-bar {
     flex: 1;
     height: 4px;
     background: var(--border);
@@ -360,12 +360,12 @@
     overflow: hidden;
     position: relative;
   }
-  .bs-layer-band-bar-fill {
+  .eg-layer-band-bar-fill {
     height: 100%;
     border-radius: 2px;
     transition: width var(--t-slow) ease-out;
   }
-  .bs-layer-band-meta {
+  .eg-layer-band-meta {
     display: flex;
     gap: 16px;
     margin-left: auto;
@@ -374,18 +374,18 @@
     font-family: var(--mono);
     white-space: nowrap;
   }
-  .bs-layer-band-meta span { display: flex; align-items: center; gap: 4px; }
-  .bs-city-view {
+  .eg-layer-band-meta span { display: flex; align-items: center; gap: 4px; }
+  .eg-city-view {
     padding: 32px 12px 12px 12px;
     overflow-y: auto;
     height: 100%;
   }
-  .bs-city-grid {
+  .eg-city-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 8px;
   }
-  .bs-city-block {
+  .eg-city-block {
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;
@@ -394,22 +394,22 @@
     position: relative;
     background: var(--bg-raised);
   }
-  .bs-city-block:hover {
+  .eg-city-block:hover {
     border-color: var(--border-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
-  .bs-city-block.active {
+  .eg-city-block.active {
     border-color: var(--accent-dim);
     background: rgba(74, 158, 255, 0.05);
   }
-  .bs-city-block-header {
+  .eg-city-block-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 6px;
   }
-  .bs-city-block-icon {
+  .eg-city-block-icon {
     width: 20px;
     height: 20px;
     border-radius: 4px;
@@ -420,28 +420,28 @@
     font-weight: 600;
     flex-shrink: 0;
   }
-  .bs-city-block-name {
+  .eg-city-block-name {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-primary);
   }
-  .bs-city-block-meta {
+  .eg-city-block-meta {
     font-size: 10px;
     color: var(--text-tertiary);
     margin-bottom: 8px;
   }
-  .bs-city-block-bar {
+  .eg-city-block-bar {
     height: 3px;
     border-radius: 2px;
     background: var(--border);
     overflow: hidden;
   }
-  .bs-city-block-bar-fill {
+  .eg-city-block-bar-fill {
     height: 100%;
     border-radius: 2px;
     transition: width var(--t-slow) ease-out;
   }
-  .bs-city-block-footer {
+  .eg-city-block-footer {
     display: flex;
     justify-content: space-between;
     margin-top: 8px;
@@ -449,36 +449,36 @@
     color: var(--text-tertiary);
     font-family: var(--mono);
   }
-  .bs-constellation-svg {
+  .eg-constellation-svg {
     width: 100%;
     height: 100%;
   }
-  .bs-planet { cursor: pointer; }
-  .bs-planet circle { transition: all var(--t-fast) ease-out; }
-  .bs-planet:hover circle { stroke: var(--accent); stroke-width: 2; }
-  .bs-planet.active circle { stroke: var(--accent); stroke-width: 2; fill: rgba(74,158,255,0.1); }
-  .bs-constellation-link { stroke: var(--border); stroke-width: 1; transition: stroke var(--t-fast) ease-out; }
-  .bs-constellation-link.active { stroke: var(--accent-dim); }
-  .bs-globe-view {
+  .eg-planet { cursor: pointer; }
+  .eg-planet circle { transition: all var(--t-fast) ease-out; }
+  .eg-planet:hover circle { stroke: var(--accent); stroke-width: 2; }
+  .eg-planet.active circle { stroke: var(--accent); stroke-width: 2; fill: rgba(74,158,255,0.1); }
+  .eg-constellation-link { stroke: var(--border); stroke-width: 1; transition: stroke var(--t-fast) ease-out; }
+  .eg-constellation-link.active { stroke: var(--accent-dim); }
+  .eg-globe-view {
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     height: 100%;
   }
-  .bs-globe-container {
+  .eg-globe-container {
     position: relative;
     width: 280px;
     height: 280px;
   }
-  .bs-globe-ring {
+  .eg-globe-ring {
     position: absolute;
     border-radius: 50%;
     border: 1px solid var(--border);
     transition: all var(--t-fast) ease-out;
   }
-  .bs-globe-ring:hover { border-color: var(--border-hover); }
-  .bs-globe-core {
+  .eg-globe-ring:hover { border-color: var(--border-hover); }
+  .eg-globe-core {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -494,7 +494,7 @@
     letter-spacing: 1px;
     background: rgba(74,158,255,0.05);
   }
-  .bs-globe-satellite {
+  .eg-globe-satellite {
     position: absolute;
     width: 44px; height: 44px;
     border-radius: 50%;
@@ -510,47 +510,47 @@
     text-align: center;
     line-height: 1.2;
   }
-  .bs-globe-satellite:hover {
+  .eg-globe-satellite:hover {
     border-color: var(--accent-dim);
     color: var(--text-primary);
     background: rgba(74,158,255,0.08);
   }
-  .bs-globe-satellite.active {
+  .eg-globe-satellite.active {
     border-color: var(--accent);
     color: var(--text-primary);
     background: rgba(74,158,255,0.1);
   }
-  .bs-globe-orbit {
+  .eg-globe-orbit {
     position: absolute;
     border-radius: 50%;
     border: 1px dashed var(--border);
     pointer-events: none;
   }
-  .bs-tunnel-view {
+  .eg-tunnel-view {
     padding: 32px 24px 24px 24px;
     overflow-y: auto;
     height: 100%;
   }
-  .bs-tunnel-path {
+  .eg-tunnel-path {
     display: flex;
     flex-direction: column;
     max-width: 600px;
     margin: 0 auto;
   }
-  .bs-tunnel-node-wrap {
+  .eg-tunnel-node-wrap {
     display: flex;
     align-items: stretch;
     position: relative;
   }
-  .bs-tunnel-connector {
+  .eg-tunnel-connector {
     width: 2px;
     background: var(--border);
     margin-left: 19px;
     min-height: 24px;
     transition: background var(--t-fast) ease-out;
   }
-  .bs-tunnel-connector.active { background: var(--accent-dim); }
-  .bs-tunnel-node {
+  .eg-tunnel-connector.active { background: var(--accent-dim); }
+  .eg-tunnel-node {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -564,15 +564,15 @@
     margin-left: 12px;
     position: relative;
   }
-  .bs-tunnel-node:hover {
+  .eg-tunnel-node:hover {
     border-color: var(--border-hover);
     background: rgba(255,255,255,0.02);
   }
-  .bs-tunnel-node.active {
+  .eg-tunnel-node.active {
     border-color: var(--accent-dim);
     background: rgba(74, 158, 255, 0.05);
   }
-  .bs-tunnel-node-dot {
+  .eg-tunnel-node-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -581,39 +581,39 @@
     flex-shrink: 0;
     transition: all var(--t-fast) ease-out;
   }
-  .bs-tunnel-node.active .bs-tunnel-node-dot {
+  .eg-tunnel-node.active .eg-tunnel-node-dot {
     border-color: var(--accent);
     background: var(--accent);
   }
-  .bs-tunnel-node-info { flex: 1; }
-  .bs-tunnel-node-name {
+  .eg-tunnel-node-info { flex: 1; }
+  .eg-tunnel-node-name {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 2px;
   }
-  .bs-tunnel-node-desc {
+  .eg-tunnel-node-desc {
     font-size: 11px;
     color: var(--text-tertiary);
   }
-  .bs-tunnel-node-layer {
+  .eg-tunnel-node-layer {
     font-size: 10px;
     color: var(--text-quaternary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-family: var(--mono);
   }
-  .bs-modules-view {
+  .eg-modules-view {
     padding: 32px 12px 12px 12px;
     overflow-y: auto;
     height: 100%;
   }
-  .bs-modules-grid {
+  .eg-modules-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 10px;
   }
-  .bs-module-card {
+  .eg-module-card {
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px;
@@ -621,22 +621,22 @@
     transition: all var(--t-fast) ease-out;
     background: var(--bg-raised);
   }
-  .bs-module-card:hover {
+  .eg-module-card:hover {
     border-color: var(--border-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
-  .bs-module-card.active {
+  .eg-module-card.active {
     border-color: var(--accent-dim);
     background: rgba(74, 158, 255, 0.05);
   }
-  .bs-module-header {
+  .eg-module-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
   }
-  .bs-module-icon {
+  .eg-module-icon {
     width: 24px;
     height: 24px;
     border-radius: 4px;
@@ -647,8 +647,8 @@
     font-weight: 600;
     flex-shrink: 0;
   }
-  .bs-module-title { flex: 1; min-width: 0; }
-  .bs-module-name {
+  .eg-module-title { flex: 1; min-width: 0; }
+  .eg-module-name {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-primary);
@@ -656,39 +656,39 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bs-module-category {
+  .eg-module-category {
     font-size: 10px;
     color: var(--text-quaternary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .bs-module-desc {
+  .eg-module-desc {
     font-size: 11px;
     color: var(--text-tertiary);
     line-height: 1.4;
     margin-bottom: 10px;
     min-height: 44px;
   }
-  .bs-module-bar {
+  .eg-module-bar {
     height: 4px;
     background: var(--border);
     border-radius: 2px;
     overflow: hidden;
     margin-bottom: 8px;
   }
-  .bs-module-bar-fill {
+  .eg-module-bar-fill {
     height: 100%;
     border-radius: 2px;
     transition: width var(--t-slow) ease-out;
   }
-  .bs-module-footer {
+  .eg-module-footer {
     display: flex;
     justify-content: space-between;
     font-size: 10px;
     color: var(--text-quaternary);
     font-family: var(--mono);
   }
-  .bs-right {
+  .eg-right {
     width: 280px;
     display: flex;
     flex-direction: column;
@@ -696,45 +696,45 @@
     flex-shrink: 0;
     overflow: hidden;
   }
-  .bs-detail-header {
+  .eg-detail-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 10px;
   }
-  .bs-detail-header h3 {
+  .eg-detail-header h3 {
     font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
     flex: 1;
   }
-  .bs-badge {
+  .eg-badge {
     font-size: 10px;
     padding: 2px 8px;
     border-radius: 4px;
     font-weight: 500;
     font-family: var(--mono);
   }
-  .bs-badge.ok { background: var(--positive-dim); color: var(--positive); }
-  .bs-badge.warn { background: var(--warning-dim); color: var(--warning); }
-  .bs-badge.crit { background: var(--danger-dim); color: var(--danger); }
-  .bs-badge.idle { background: var(--text-quaternary); color: var(--text-secondary); }
-  .bs-detail-row {
+  .eg-badge.ok { background: var(--positive-dim); color: var(--positive); }
+  .eg-badge.warn { background: var(--warning-dim); color: var(--warning); }
+  .eg-badge.crit { background: var(--danger-dim); color: var(--danger); }
+  .eg-badge.idle { background: var(--text-quaternary); color: var(--text-secondary); }
+  .eg-detail-row {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
     border-bottom: 1px solid var(--border);
     font-size: 12px;
   }
-  .bs-detail-row:last-child { border-bottom: none; }
-  .bs-detail-key { color: var(--text-tertiary); }
-  .bs-detail-val {
+  .eg-detail-row:last-child { border-bottom: none; }
+  .eg-detail-key { color: var(--text-tertiary); }
+  .eg-detail-val {
     color: var(--text-primary);
     font-weight: 500;
     font-family: var(--mono);
     font-size: 11px;
   }
-  .bs-empty-state {
+  .eg-empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -745,14 +745,14 @@
     gap: 8px;
     text-align: center;
   }
-  .bs-pipeline-list {
+  .eg-pipeline-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
     max-height: 200px;
     overflow-y: auto;
   }
-  .bs-pipeline-item {
+  .eg-pipeline-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -764,30 +764,30 @@
     transition: all var(--t-fast) ease-out;
     background: var(--bg-raised);
   }
-  .bs-pipeline-item:hover { border-color: var(--border-hover); }
-  .bs-pipeline-item.active { border-color: var(--accent-dim); background: rgba(74,158,255,0.05); }
-  .bs-pipeline-dot {
+  .eg-pipeline-item:hover { border-color: var(--border-hover); }
+  .eg-pipeline-item.active { border-color: var(--accent-dim); background: rgba(74,158,255,0.05); }
+  .eg-pipeline-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .bs-pipeline-dot.running { background: var(--positive); }
-  .bs-pipeline-dot.paused { background: var(--warning); }
-  .bs-pipeline-dot.stopped { background: var(--danger); }
-  .bs-pipeline-name { flex: 1; color: var(--text-secondary); }
-  .bs-pipeline-name.active { color: var(--text-primary); }
-  .bs-pipeline-throughput {
+  .eg-pipeline-dot.running { background: var(--positive); }
+  .eg-pipeline-dot.paused { background: var(--warning); }
+  .eg-pipeline-dot.stopped { background: var(--danger); }
+  .eg-pipeline-name { flex: 1; color: var(--text-secondary); }
+  .eg-pipeline-name.active { color: var(--text-primary); }
+  .eg-pipeline-throughput {
     font-size: 10px;
     color: var(--text-tertiary);
     font-family: var(--mono);
   }
-  .bs-agent-grid {
+  .eg-agent-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px;
   }
-  .bs-agent-cell {
+  .eg-agent-cell {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -799,20 +799,20 @@
     transition: all var(--t-fast) ease-out;
     background: var(--bg-raised);
   }
-  .bs-agent-cell:hover { border-color: var(--border-hover); }
-  .bs-agent-cell.active { border-color: var(--accent-dim); background: rgba(74,158,255,0.05); }
-  .bs-agent-dot {
+  .eg-agent-cell:hover { border-color: var(--border-hover); }
+  .eg-agent-cell.active { border-color: var(--accent-dim); background: rgba(74,158,255,0.05); }
+  .eg-agent-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .bs-agent-dot.busy { background: var(--positive); animation: pulse 2s ease-in-out infinite; }
-  .bs-agent-dot.idle { background: var(--text-quaternary); }
-  .bs-agent-name { flex: 1; color: var(--text-secondary); font-family: var(--mono); font-size: 10px; }
-  .bs-agent-name.active { color: var(--text-primary); }
-  .bs-agent-task { font-size: 9px; color: var(--text-quaternary); }
-  .bs-footer {
+  .eg-agent-dot.busy { background: var(--positive); animation: pulse 2s ease-in-out infinite; }
+  .eg-agent-dot.idle { background: var(--text-quaternary); }
+  .eg-agent-name { flex: 1; color: var(--text-secondary); font-family: var(--mono); font-size: 10px; }
+  .eg-agent-name.active { color: var(--text-primary); }
+  .eg-agent-task { font-size: 9px; color: var(--text-quaternary); }
+  .eg-footer {
     display: flex;
     align-items: center;
     gap: 16px;
@@ -825,140 +825,140 @@
     flex-shrink: 0;
     font-family: var(--mono);
   }
-  .bs-footer-item { display: flex; align-items: center; gap: 6px; }
-  .bs-footer-item svg { width: 12px; height: 12px; }
-  .bs-footer-sep { color: var(--border); }
-  .bs-footer-right { margin-left: auto; display: flex; gap: 12px; }
+  .eg-footer-item { display: flex; align-items: center; gap: 6px; }
+  .eg-footer-item svg { width: 12px; height: 12px; }
+  .eg-footer-sep { color: var(--border); }
+  .eg-footer-right { margin-left: auto; display: flex; gap: 12px; }
   @media (max-width: 1100px) {
-    .bs-left { width: 180px; }
-    .bs-right { width: 240px; }
+    .eg-left { width: 180px; }
+    .eg-right { width: 240px; }
   }
   @media (max-width: 900px) {
-    .bs-main { flex-direction: column; }
-    .bs-left, .bs-right { width: 100%; flex-direction: row; }
-    .bs-left .bs-panel { flex: 1; }
+    .eg-main { flex-direction: column; }
+    .eg-left, .eg-right { width: 100%; flex-direction: row; }
+    .eg-left .eg-panel { flex: 1; }
   }
 </style>
 <base target="_blank">
 </head>
 <body>
-<div class="bs-container">
-  <div class="bs-toolbar">
-    <div class="bs-toolbar-title">Egregore <span>Command Surface</span></div>
-    <button class="bs-toolbar-btn active" data-view="cross" onclick="switchView('cross')">
+<div class="eg-container">
+  <div class="eg-toolbar">
+    <div class="eg-toolbar-title">Egregore <span>Command Surface</span></div>
+    <button class="eg-toolbar-btn active" data-view="cross" onclick="switchView('cross')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 3.08C4.55 3.08 5 3.53 5 4.08V18.04H19.99L20.1 18.04C20.6 18.09 21 18.52 21 19.04C21 19.55 20.6 19.98 20.1 20.03L19.99 20.04H5C3.9 20.04 3 19.14 3 18.04V4.08C3 3.53 3.45 3.08 4 3.08ZM18.26 6.52C18.63 6.11 19.26 6.07 19.67 6.44C20.09 6.81 20.12 7.44 19.75 7.85L15.87 12.18C15.16 12.97 13.94 13.07 13.12 12.39L10.91 10.6L7.45 14.66C7.09 15.08 6.46 15.13 6.04 14.77C5.62 14.42 5.57 13.78 5.93 13.36L9.39 9.3C10.09 8.47 11.33 8.36 12.17 9.05L14.38 10.84L18.26 6.52Z" fill="currentColor"/></svg>
       Cross-section
     </button>
-    <button class="bs-toolbar-btn" data-view="city" onclick="switchView('city')">
+    <button class="eg-toolbar-btn" data-view="city" onclick="switchView('city')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9.5 12.5C10.6 12.5 11.5 13.4 11.5 14.5V19C11.5 20.04 10.71 20.89 9.7 20.99L9.5 21H5L4.8 20.99C3.85 20.89 3.11 20.15 3.01 19.2L3 19V14.5C3 13.4 3.9 12.5 5 12.5H9.5ZM5 14.3C4.89 14.3 4.8 14.39 4.8 14.5V19C4.8 19.11 4.89 19.2 5 19.2H9.5C9.61 19.2 9.7 19.11 9.7 19V14.5C9.7 14.39 9.61 14.3 9.5 14.3H5Z" fill="currentColor"/><path d="M19 12.5C20.1 12.5 21 13.4 21 14.5V19C21 20.04 20.21 20.89 19.2 20.99L19 21H14.5L14.3 20.99C13.35 20.89 12.61 20.15 12.51 19.2L12.5 19V14.5C12.5 13.4 13.4 12.5 14.5 12.5H19ZM14.5 14.3C14.39 14.3 14.3 14.39 14.3 14.5V19C14.3 19.11 14.39 19.2 14.5 19.2H19C19.11 19.2 19.2 19.11 19.2 19V14.5C19.2 14.39 19.11 14.3 19 14.3H14.5Z" fill="currentColor"/><path d="M9.5 3C10.6 3 11.5 3.9 11.5 5V9.5C11.5 10.54 10.71 11.39 9.7 11.49L9.5 11.5H5L4.8 11.49C3.85 11.39 3.11 10.65 3.01 9.7L3 9.5V5C3 3.9 3.9 3 5 3H9.5ZM5 4.8C4.89 4.8 4.8 4.89 4.8 5V9.5C4.8 9.61 4.89 9.7 5 9.7H9.5C9.61 9.7 9.7 9.61 9.7 9.5V5C9.7 4.89 9.61 4.8 9.5 4.8H5Z" fill="currentColor"/><path d="M19 3C20.1 3 21 3.9 21 5V9.5C21 10.54 20.21 11.39 19.2 11.49L19 11.5H14.5L14.3 11.49C13.35 11.39 12.61 10.65 12.51 9.7L12.5 9.5V5C12.5 3.9 13.4 3 14.5 3H19ZM14.5 4.8C14.39 4.8 14.3 4.89 14.3 5V9.5C14.3 9.61 14.39 9.7 14.5 9.7H19C19.11 9.7 19.2 9.61 19.2 9.5V5C19.2 4.89 19.11 4.8 19 4.8H14.5Z" fill="currentColor"/></svg>
       City Grid
     </button>
-    <button class="bs-toolbar-btn" data-view="constellation" onclick="switchView('constellation')">
+    <button class="eg-toolbar-btn" data-view="constellation" onclick="switchView('constellation')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10 5.19C7.05 6.05 4.9 8.77 4.9 12C4.9 15.92 8.08 19.1 12 19.1C15.23 19.1 17.95 16.95 18.81 14H20.67C19.76 17.95 16.23 20.9 12 20.9C7.08 20.9 3.1 16.92 3.1 12C3.1 7.77 6.05 4.23 10 3.33V5.19Z" fill="currentColor"/><path d="M12 2.1C17.47 2.1 21.9 6.53 21.9 12C21.9 12.47 21.55 12.85 21.09 12.9L21 12.9H12C11.5 12.9 11.1 12.5 11.1 12V3C11.1 2.5 11.5 2.1 12 2.1ZM12.9 11.1H20.05C19.63 7.35 16.65 4.37 12.9 3.95V11.1Z" fill="currentColor"/></svg>
       Constellation
     </button>
-    <button class="bs-toolbar-btn" data-view="globe" onclick="switchView('globe')">
+    <button class="eg-toolbar-btn" data-view="globe" onclick="switchView('globe')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18.9 10.8C18.9 7.09 16.25 3.9 12 3.9C7.74 3.9 5.1 7.05 5.1 10.8C5.1 13.08 6.29 15.18 7.8 16.92C9.31 18.64 11.04 19.9 11.91 20.48C11.94 20.5 11.97 20.51 12 20.51C12.03 20.51 12.06 20.5 12.09 20.48C12.96 19.9 14.7 18.64 16.2 16.92C17.71 15.18 18.9 13.08 18.9 10.8ZM14.1 10.8C14.1 9.64 13.16 8.7 12 8.7C10.84 8.7 9.9 9.64 9.9 10.8C9.9 11.96 10.84 12.9 12 12.9C13.16 12.9 14.1 11.96 14.1 10.8ZM15.9 10.8C15.9 12.95 14.15 14.7 12 14.7C9.85 14.7 8.1 12.95 8.1 10.8C8.1 8.65 9.85 6.9 12 6.9C14.15 6.9 15.9 8.65 15.9 10.8Z" fill="currentColor"/></svg>
       Globe
     </button>
-    <button class="bs-toolbar-btn" data-view="tunnel" onclick="switchView('tunnel')">
+    <button class="eg-toolbar-btn" data-view="tunnel" onclick="switchView('tunnel')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11.36 3.36C11.72 3.01 12.28 3.01 12.64 3.36L17.08 7.81C17.43 8.16 17.43 8.73 17.08 9.08C16.73 9.43 16.16 9.43 15.81 9.08L12.9 6.17V14.67C12.9 15.16 12.5 15.57 12 15.57C11.5 15.57 11.1 15.16 11.1 14.67V6.17L8.19 9.08C7.84 9.43 7.27 9.43 6.92 9.08C6.57 8.73 6.57 8.16 6.92 7.81L11.36 3.36ZM4 13.77C4.5 13.77 4.9 14.17 4.9 14.67V18.22C4.9 18.46 4.99 18.68 5.16 18.84C5.32 19.01 5.54 19.1 5.78 19.1H18.22C18.46 19.1 18.68 19.01 18.84 18.84C19.01 18.68 19.1 18.46 19.1 18.22V14.67C19.1 14.17 19.5 13.77 20 13.77C20.5 13.77 20.9 14.17 20.9 14.67V18.22C20.9 18.93 20.62 19.61 20.12 20.12C19.61 20.62 18.93 20.9 18.22 20.9H5.78C5.07 20.9 4.39 20.62 3.88 20.12C3.38 19.61 3.1 18.93 3.1 18.22V14.67C3.1 14.17 3.5 13.77 4 13.77Z" fill="currentColor"/></svg>
       Tunnel
     </button>
-    <button class="bs-toolbar-btn" data-view="modules" onclick="switchView('modules')">
+    <button class="eg-toolbar-btn" data-view="modules" onclick="switchView('modules')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 3C4.55 3 5 3.45 5 4V10C5 10.55 4.55 11 4 11C3.45 11 3 10.55 3 10V4C3 3.45 3.45 3 4 3ZM10 3C10.55 3 11 3.45 11 4V10C11 10.55 10.55 11 10 11C9.45 11 9 10.55 9 10V4C9 3.45 9.45 3 10 3ZM16 3C16.55 3 17 3.45 17 4V10C17 10.55 16.55 11 16 11C15.45 11 15 10.55 15 10V4C15 3.45 15.45 3 16 3ZM20 13H4C2.9 13 2 13.9 2 15V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V15C22 13.9 21.1 13 20 13ZM20 20H4V15H20V20Z" fill="currentColor"/></svg>
       Modules
     </button>
-    <button class="bs-toolbar-btn" onclick="setApiKey()" title="Set X-API-Key">
+    <button class="eg-toolbar-btn" onclick="setApiKey()" title="Set X-API-Key">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12.65 10.35C13.95 9.05 14.65 7.45 14.65 5.75C14.65 4.05 13.95 2.45 12.65 1.15C11.35 -0.15 9.75 -0.85 8.05 -0.85C6.35 -0.85 4.75 -0.15 3.45 1.15L0.65 3.95C-0.65 5.25 -1.35 6.85 -1.35 8.55C-1.35 10.25 -0.65 11.85 0.65 13.15C1.95 14.45 3.55 15.15 5.25 15.15C6.95 15.15 8.55 14.45 9.85 13.15L12.65 10.35ZM21.7 11.3L19.7 9.3C19.5 9.1 19.2 9 18.9 9H18V7C18 6.45 17.55 6 17 6H15V5.1C15 4.8 14.9 4.5 14.7 4.3L12.7 2.3C12.3 1.9 11.7 1.9 11.3 2.3L9.3 4.3C9.1 4.5 9 4.8 9 5.1V6H7C6.45 6 6 6.45 6 7V9H5.1C4.8 9 4.5 9.1 4.3 9.3L2.3 11.3C1.9 11.7 1.9 12.3 2.3 12.7L4.3 14.7C4.5 14.9 4.8 15 5.1 15H6V17C6 17.55 6.45 18 7 18H9V18.9C9 19.2 9.1 19.5 9.3 19.7L11.3 21.7C11.7 22.1 12.3 22.1 12.7 21.7L14.7 19.7C14.9 19.5 15 19.2 15 18.9V18H17C17.55 18 18 17.55 18 17V15H18.9C19.2 15 19.5 14.9 19.7 14.7L21.7 12.7C22.1 12.3 22.1 11.7 21.7 11.3ZM17 13H15C14.45 13 14 13.45 14 14V16H12V14C12 13.45 11.55 13 11 13H9V11H11C11.55 11 12 10.55 12 10V8H14V10C14 10.55 14.45 11 15 11H17V13Z" fill="currentColor"/></svg>
       Key
     </button>
   </div>
 
-  <div class="bs-main">
-    <div class="bs-left">
-      <div class="bs-panel" style="flex:1;overflow-y:auto;">
-        <div class="bs-panel-title">Architecture Layers</div>
+  <div class="eg-main">
+    <div class="eg-left">
+      <div class="eg-panel" style="flex:1;overflow-y:auto;">
+        <div class="eg-panel-title">Architecture Layers</div>
         <div id="layerList"></div>
       </div>
-      <div class="bs-panel" style="flex:1;overflow-y:auto;">
-        <div class="bs-panel-title">Nodes</div>
+      <div class="eg-panel" style="flex:1;overflow-y:auto;">
+        <div class="eg-panel-title">Nodes</div>
         <div id="nodeList"></div>
       </div>
     </div>
 
-    <div class="bs-center">
-      <div class="bs-viewport">
-        <div class="bs-viewport-label"><span class="live-dot"></span><span id="viewportLabel">Cross-section view</span></div>
+    <div class="eg-center">
+      <div class="eg-viewport">
+        <div class="eg-viewport-label"><span class="live-dot"></span><span id="viewportLabel">Cross-section view</span></div>
 
-        <div class="bs-view-content active" id="viewCross">
-          <div class="bs-cross-section" id="crossSectionLayers"></div>
+        <div class="eg-view-content active" id="viewCross">
+          <div class="eg-cross-section" id="crossSectionLayers"></div>
         </div>
 
-        <div class="bs-view-content" id="viewCity">
-          <div class="bs-city-view" id="cityView"></div>
+        <div class="eg-view-content" id="viewCity">
+          <div class="eg-city-view" id="cityView"></div>
         </div>
 
-        <div class="bs-view-content" id="viewConstellation">
-          <svg class="bs-constellation-svg" id="constellationSvg"></svg>
+        <div class="eg-view-content" id="viewConstellation">
+          <svg class="eg-constellation-svg" id="constellationSvg"></svg>
         </div>
 
-        <div class="bs-view-content" id="viewGlobe">
-          <div class="bs-globe-view" id="globeView"></div>
+        <div class="eg-view-content" id="viewGlobe">
+          <div class="eg-globe-view" id="globeView"></div>
         </div>
 
-        <div class="bs-view-content" id="viewTunnel">
-          <div class="bs-tunnel-view" id="tunnelView"></div>
+        <div class="eg-view-content" id="viewTunnel">
+          <div class="eg-tunnel-view" id="tunnelView"></div>
         </div>
 
-        <div class="bs-view-content" id="viewModules">
-          <div class="bs-modules-view" id="modulesView"></div>
+        <div class="eg-view-content" id="viewModules">
+          <div class="eg-modules-view" id="modulesView"></div>
         </div>
       </div>
     </div>
 
-    <div class="bs-right">
-      <div class="bs-panel" id="detailPanel" style="flex:1.5;overflow-y:auto;">
-        <div class="bs-detail-header">
+    <div class="eg-right">
+      <div class="eg-panel" id="detailPanel" style="flex:1.5;overflow-y:auto;">
+        <div class="eg-detail-header">
           <h3 id="detailTitle">Select an item</h3>
-          <span class="bs-badge ok" id="detailBadge" style="display:none;">--</span>
+          <span class="eg-badge ok" id="detailBadge" style="display:none;">--</span>
         </div>
         <div id="detailContent">
-          <div class="bs-empty-state">
+          <div class="eg-empty-state">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="opacity:0.3;"><path d="M11.5 3C16.19 3 20 6.81 20 11.5C20 13.52 19.29 15.38 18.11 16.84L21.14 19.86C21.49 20.22 21.49 20.78 21.14 21.14C20.78 21.49 20.22 21.49 19.86 21.14L16.84 18.11C15.38 19.29 13.52 20 11.5 20C6.81 20 3 16.19 3 11.5C3 6.81 6.81 3 11.5 3ZM11.5 18.2C15.2 18.2 18.2 15.2 18.2 11.5C18.2 7.8 15.2 4.8 11.5 4.8C7.8 4.8 4.8 7.8 4.8 11.5C4.8 15.2 7.8 18.2 11.5 18.2Z" fill="currentColor"/></svg>
             Click a layer, node, block, or pipeline to inspect
           </div>
         </div>
       </div>
-      <div class="bs-panel" id="pipelinePanel" style="flex:1;overflow-y:auto;">
-        <div class="bs-panel-title">Active Pipelines</div>
-        <div class="bs-pipeline-list" id="pipelineList"></div>
+      <div class="eg-panel" id="pipelinePanel" style="flex:1;overflow-y:auto;">
+        <div class="eg-panel-title">Active Pipelines</div>
+        <div class="eg-pipeline-list" id="pipelineList"></div>
       </div>
-      <div class="bs-panel" id="agentPanel" style="flex:1;overflow-y:auto;">
-        <div class="bs-panel-title">Agents</div>
-        <div class="bs-agent-grid" id="agentGrid"></div>
+      <div class="eg-panel" id="agentPanel" style="flex:1;overflow-y:auto;">
+        <div class="eg-panel-title">Agents</div>
+        <div class="eg-agent-grid" id="agentGrid"></div>
       </div>
     </div>
   </div>
 
-  <div class="bs-footer">
-    <div class="bs-footer-item">
+  <div class="eg-footer">
+    <div class="eg-footer-item">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M11.9 6.8C12.4 6.8 12.8 7.2 12.8 7.7V11.73L14.74 13.66C15.09 14.01 15.09 14.58 14.74 14.94C14.39 15.29 13.81 15.29 13.46 14.94L11.26 12.74C11.09 12.57 11 12.34 11 12.1V7.7C11 7.2 11.4 6.8 11.9 6.8Z" fill="currentColor"/><path d="M12 1.9C17.47 1.9 21.9 6.33 21.9 11.8C21.9 17.27 17.47 21.7 12 21.7C6.53 21.7 2.1 17.27 2.1 11.8C2.1 6.33 6.53 1.9 12 1.9ZM20.1 11.8C20.1 7.33 16.47 3.7 12 3.7C7.53 3.7 3.9 7.33 3.9 11.8C3.9 16.27 7.53 19.9 12 19.9C16.47 19.9 20.1 16.27 20.1 11.8Z" fill="currentColor"/></svg>
       <span id="footerTime">--:--:--</span>
     </div>
-    <span class="bs-footer-sep">|</span>
-    <div class="bs-footer-item">
+    <span class="eg-footer-sep">|</span>
+    <div class="eg-footer-item">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 4.1C20.15 4.1 21.9 5.85 21.9 8V16C21.9 18.15 20.15 19.9 18 19.9H6C3.85 19.9 2.1 18.15 2.1 16V8C2.1 5.85 3.85 4.1 6 4.1H18ZM3.9 16C3.9 17.16 4.84 18.1 6 18.1H18C19.16 18.1 20.1 17.16 20.1 16V9.5L13.54 13.54C12.6 14.11 11.41 14.11 10.47 13.52L3.9 9.39V16ZM6 5.9C5.07 5.9 4.29 6.5 4.01 7.33L11.43 12C11.79 12.22 12.24 12.22 12.59 12L20.02 7.43C19.77 6.55 18.96 5.9 18 5.9H6Z" fill="currentColor"/></svg>
       <span id="footerMsg">0 msg/s</span>
     </div>
-    <span class="bs-footer-sep">|</span>
-    <div class="bs-footer-item">
+    <span class="eg-footer-sep">|</span>
+    <div class="eg-footer-item">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3.97 8.07C4.99 7.34 6.19 7.1 7 7.1H9C9.5 7.1 9.9 7.5 9.9 8C9.9 8.5 9.5 8.9 9 8.9H7C6.48 8.9 5.67 9.06 5.03 9.53C4.42 9.96 3.9 10.69 3.9 12C3.9 13.31 4.42 14.04 5.03 14.47C5.67 14.94 6.48 15.1 7 15.1H9C9.5 15.1 9.9 15.5 9.9 16C9.9 16.5 9.5 16.9 9 16.9H7C6.19 16.9 4.99 16.66 3.97 15.93C2.91 15.16 2.1 13.89 2.1 12C2.1 10.11 2.91 8.84 3.97 8.07ZM14.1 8C14.1 7.5 14.5 7.1 15 7.1H17C17.81 7.1 19.01 7.34 20.03 8.07C21.09 8.84 21.9 10.11 21.9 12C21.9 13.89 21.09 15.16 20.03 15.93C19.01 16.66 17.81 16.9 17 16.9H15C14.5 16.9 14.1 16.5 14.1 16C14.1 15.5 14.5 15.1 15 15.1H17C17.52 15.1 18.33 14.94 18.97 14.47C19.58 14.04 20.1 13.31 20.1 12C20.1 10.69 19.58 9.96 18.97 9.53C18.33 9.06 17.52 8.9 17 8.9H15C14.5 8.9 14.1 8.5 14.1 8ZM7.1 12C7.1 11.5 7.5 11.1 8 11.1H16C16.5 11.1 16.9 11.5 16.9 12C16.9 12.5 16.5 12.9 16 12.9H8C7.5 12.9 7.1 12.5 7.1 12Z" fill="currentColor"/></svg>
       <span id="footerNet">0 KB/s</span>
     </div>
-    <div class="bs-footer-right">
+    <div class="eg-footer-right">
       <span id="footerVersion">v0.6.0-phase1</span>
-      <span class="bs-footer-sep">|</span>
+      <span class="eg-footer-sep">|</span>
       <span id="footerStatus">3 nodes online</span>
     </div>
   </div>
@@ -1100,8 +1100,8 @@ async function apiFetch(path, opts={}) {
 
 function switchView(view) {
   currentView = view;
-  document.querySelectorAll('.bs-toolbar-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.querySelectorAll('.bs-view-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.eg-toolbar-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.eg-view-content').forEach(el => el.classList.remove('active'));
   document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
   const labels = { cross: 'Cross-section view', city: 'City grid view', constellation: 'Constellation view', globe: 'Globe view', tunnel: 'Tunnel to core', modules: 'Egregore modules' };
   document.getElementById('viewportLabel').textContent = labels[view];
@@ -1175,7 +1175,7 @@ function showEmpty() {
   document.getElementById('detailTitle').textContent = 'Select an item';
   document.getElementById('detailBadge').style.display = 'none';
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-empty-state">
+    <div class="eg-empty-state">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="opacity:0.3;"><path d="M11.5 3C16.19 3 20 6.81 20 11.5C20 13.52 19.29 15.38 18.11 16.84L21.14 19.86C21.49 20.22 21.49 20.78 21.14 21.14C20.78 21.49 20.22 21.49 19.86 21.14L16.84 18.11C15.38 19.29 13.52 20 11.5 20C6.81 20 3 16.19 3 11.5C3 6.81 6.81 3 11.5 3ZM11.5 18.2C15.2 18.2 18.2 15.2 18.2 11.5C18.2 7.8 15.2 4.8 11.5 4.8C7.8 4.8 4.8 7.8 4.8 11.5C4.8 15.2 7.8 18.2 11.5 18.2Z" fill="currentColor"/></svg>
       Click a layer, node, block, or pipeline to inspect
     </div>`;
@@ -1186,16 +1186,16 @@ function showLayerDetail(id) {
   document.getElementById('detailTitle').textContent = l.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (l.load > 80 ? 'crit' : l.load > 60 ? 'warn' : 'ok');
+  badge.className = 'eg-badge ' + (l.load > 80 ? 'crit' : l.load > 60 ? 'warn' : 'ok');
   badge.textContent = l.closed ? 'CLOSED' : 'OPEN';
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Description</span><span class="bs-detail-val">${l.desc}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Depth</span><span class="bs-detail-val">${l.depth}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Load</span><span class="bs-detail-val">${l.load}%</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Agents</span><span class="bs-detail-val">${l.agents}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Pipelines</span><span class="bs-detail-val">${l.pipelines}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Access</span><span class="bs-detail-val"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" ${l.closed ? '' : 'checked'} onchange="toggleLayer('${l.id}')" style="accent-color:var(--positive);"> Open layer</label></span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Determinism</span><span class="bs-detail-val">${l.closed ? 'Strict replay' : 'Best-effort projection'}</span></div>`;
+    <div class="eg-detail-row"><span class="eg-detail-key">Description</span><span class="eg-detail-val">${l.desc}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Depth</span><span class="eg-detail-val">${l.depth}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Load</span><span class="eg-detail-val">${l.load}%</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Agents</span><span class="eg-detail-val">${l.agents}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Pipelines</span><span class="eg-detail-val">${l.pipelines}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Access</span><span class="eg-detail-val"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" ${l.closed ? '' : 'checked'} onchange="toggleLayer('${l.id}')" style="accent-color:var(--positive);"> Open layer</label></span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Determinism</span><span class="eg-detail-val">${l.closed ? 'Strict replay' : 'Best-effort projection'}</span></div>`;
 }
 
 function showNodeDetail(id) {
@@ -1203,21 +1203,21 @@ function showNodeDetail(id) {
   document.getElementById('detailTitle').textContent = n.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (n.status === 'online' ? 'ok' : n.status === 'standby' ? 'warn' : 'crit');
+  badge.className = 'eg-badge ' + (n.status === 'online' ? 'ok' : n.status === 'standby' ? 'warn' : 'crit');
   badge.textContent = n.status.toUpperCase();
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Role</span><span class="bs-detail-val">${n.role}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">IP</span><span class="bs-detail-val">${n.ip}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">CPU</span><span class="bs-detail-val">${n.cpu}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">RAM</span><span class="bs-detail-val">${n.ram}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">GPU</span><span class="bs-detail-val">${n.gpu}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Storage</span><span class="bs-detail-val">${n.storage}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Uptime</span><span class="bs-detail-val">${n.uptime}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Load</span><span class="bs-detail-val">${n.load}%</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Temp</span><span class="bs-detail-val">${n.temp > 0 ? n.temp + 'C' : 'N/A'}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Role</span><span class="eg-detail-val">${n.role}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">IP</span><span class="eg-detail-val">${n.ip}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">CPU</span><span class="eg-detail-val">${n.cpu}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">RAM</span><span class="eg-detail-val">${n.ram}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">GPU</span><span class="eg-detail-val">${n.gpu}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Storage</span><span class="eg-detail-val">${n.storage}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Uptime</span><span class="eg-detail-val">${n.uptime}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Load</span><span class="eg-detail-val">${n.load}%</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Temp</span><span class="eg-detail-val">${n.temp > 0 ? n.temp + 'C' : 'N/A'}</span></div>
     <div style="margin-top:8px;">
       <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Load History</div>
-      <svg class="bs-mini-chart" viewBox="0 0 200 40" preserveAspectRatio="none">
+      <svg class="eg-mini-chart" viewBox="0 0 200 40" preserveAspectRatio="none">
         <path d="M0,${40-n.load*0.4} L20,${40-(n.load+Math.random()*20-10)*0.4} L40,${40-(n.load+Math.random()*20-10)*0.4} L60,${40-(n.load+Math.random()*20-10)*0.4} L80,${40-(n.load+Math.random()*20-10)*0.4} L100,${40-(n.load+Math.random()*20-10)*0.4} L120,${40-(n.load+Math.random()*20-10)*0.4} L140,${40-(n.load+Math.random()*20-10)*0.4} L160,${40-(n.load+Math.random()*20-10)*0.4} L180,${40-(n.load+Math.random()*20-10)*0.4} L200,${40-n.load*0.4}" stroke="var(--accent)" fill="none" stroke-width="1.5"/>
       </svg>
     </div>`;
@@ -1228,14 +1228,14 @@ function showBlockDetail(id) {
   document.getElementById('detailTitle').textContent = b.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (b.status === 'ok' ? 'ok' : b.status === 'warn' ? 'warn' : 'crit');
+  badge.className = 'eg-badge ' + (b.status === 'ok' ? 'ok' : b.status === 'warn' ? 'warn' : 'crit');
   badge.textContent = b.status.toUpperCase();
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Type</span><span class="bs-detail-val">${b.type}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Layer</span><span class="bs-detail-val">${b.layer}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Description</span><span class="bs-detail-val">${b.desc}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Load</span><span class="bs-detail-val">${b.load}%</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Agents</span><span class="bs-detail-val">${b.agents}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Type</span><span class="eg-detail-val">${b.type}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Layer</span><span class="eg-detail-val">${b.layer}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Description</span><span class="eg-detail-val">${b.desc}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Load</span><span class="eg-detail-val">${b.load}%</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Agents</span><span class="eg-detail-val">${b.agents}</span></div>
     <div style="margin-top:8px;">
       <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Resource Usage</div>
       <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
@@ -1249,13 +1249,13 @@ function showPipelineDetail(id) {
   document.getElementById('detailTitle').textContent = p.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (p.status === 'running' ? 'ok' : p.status === 'paused' ? 'warn' : 'crit');
+  badge.className = 'eg-badge ' + (p.status === 'running' ? 'ok' : p.status === 'paused' ? 'warn' : 'crit');
   badge.textContent = p.status.toUpperCase();
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Description</span><span class="bs-detail-val">${p.desc}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Layer</span><span class="bs-detail-val">${p.layer}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Throughput</span><span class="bs-detail-val">${p.throughput} ops/s</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Status</span><span class="bs-detail-val">${p.status}</span></div>`;
+    <div class="eg-detail-row"><span class="eg-detail-key">Description</span><span class="eg-detail-val">${p.desc}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Layer</span><span class="eg-detail-val">${p.layer}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Throughput</span><span class="eg-detail-val">${p.throughput} ops/s</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Status</span><span class="eg-detail-val">${p.status}</span></div>`;
 }
 
 function showAgentDetail(id) {
@@ -1264,13 +1264,13 @@ function showAgentDetail(id) {
   document.getElementById('detailTitle').textContent = a.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (a.status === 'busy' ? 'ok' : 'idle');
+  badge.className = 'eg-badge ' + (a.status === 'busy' ? 'ok' : 'idle');
   badge.textContent = a.status.toUpperCase();
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Task</span><span class="bs-detail-val">${a.task}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Node</span><span class="bs-detail-val">${n.name}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Model</span><span class="bs-detail-val">${a.model}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Status</span><span class="bs-detail-val">${a.status}</span></div>`;
+    <div class="eg-detail-row"><span class="eg-detail-key">Task</span><span class="eg-detail-val">${a.task}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Node</span><span class="eg-detail-val">${n.name}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Model</span><span class="eg-detail-val">${a.model}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Status</span><span class="eg-detail-val">${a.status}</span></div>`;
 }
 
 function showTunnelDetail(id) {
@@ -1278,13 +1278,13 @@ function showTunnelDetail(id) {
   document.getElementById('detailTitle').textContent = t.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ok';
+  badge.className = 'eg-badge ok';
   badge.textContent = 'DEPTH ' + t.depth;
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Description</span><span class="bs-detail-val">${t.desc}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Layer</span><span class="bs-detail-val">${t.layer}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Depth</span><span class="bs-detail-val">${t.depth}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Access</span><span class="bs-detail-val">${t.depth < 4 ? 'Plane 1 only' : 'Plane 2 readable'}</span></div>`;
+    <div class="eg-detail-row"><span class="eg-detail-key">Description</span><span class="eg-detail-val">${t.desc}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Layer</span><span class="eg-detail-val">${t.layer}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Depth</span><span class="eg-detail-val">${t.depth}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Access</span><span class="eg-detail-val">${t.depth < 4 ? 'Plane 1 only' : 'Plane 2 readable'}</span></div>`;
 }
 
 function showModuleDetail(id) {
@@ -1292,22 +1292,22 @@ function showModuleDetail(id) {
   document.getElementById('detailTitle').textContent = m.name;
   const badge = document.getElementById('detailBadge');
   badge.style.display = 'inline-block';
-  badge.className = 'bs-badge ' + (m.status === 'ok' ? 'ok' : m.status === 'warn' ? 'warn' : m.status === 'paused' ? 'idle' : 'crit');
+  badge.className = 'eg-badge ' + (m.status === 'ok' ? 'ok' : m.status === 'warn' ? 'warn' : m.status === 'paused' ? 'idle' : 'crit');
   badge.textContent = m.status.toUpperCase();
   document.getElementById('detailContent').innerHTML = `
-    <div class="bs-detail-row"><span class="bs-detail-key">Description</span><span class="bs-detail-val">${m.desc}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Category</span><span class="bs-detail-val">${m.category}</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Load</span><span class="bs-detail-val">${m.load}%</span></div>
-    <div class="bs-detail-row"><span class="bs-detail-key">Status</span><span class="bs-detail-val">${m.status}</span></div>`;
+    <div class="eg-detail-row"><span class="eg-detail-key">Description</span><span class="eg-detail-val">${m.desc}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Category</span><span class="eg-detail-val">${m.category}</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Load</span><span class="eg-detail-val">${m.load}%</span></div>
+    <div class="eg-detail-row"><span class="eg-detail-key">Status</span><span class="eg-detail-val">${m.status}</span></div>`;
 }
 
 function renderLayers() {
   const container = document.getElementById('layerList');
   container.innerHTML = DATA.layers.map(l => `
-    <div class="bs-layer-item ${selectedLayer === l.id ? 'active' : ''}" onclick="selectLayer('${l.id}')">
-      <div class="bs-layer-dot" style="background:${l.color}"></div>
+    <div class="eg-layer-item ${selectedLayer === l.id ? 'active' : ''}" onclick="selectLayer('${l.id}')">
+      <div class="eg-layer-dot" style="background:${l.color}"></div>
       <span>${l.name}</span>
-      <div class="bs-layer-toggle ${l.closed ? '' : 'open'}" onclick="toggleLayer('${l.id}', event)" title="${l.closed ? 'Open layer' : 'Close layer'}"></div>
+      <div class="eg-layer-toggle ${l.closed ? '' : 'open'}" onclick="toggleLayer('${l.id}', event)" title="${l.closed ? 'Open layer' : 'Close layer'}"></div>
     </div>
   `).join('');
 }
@@ -1315,10 +1315,10 @@ function renderLayers() {
 function renderNodes() {
   const container = document.getElementById('nodeList');
   container.innerHTML = DATA.nodes.map(n => `
-    <div class="bs-node-row ${selectedNode === n.id ? 'active' : ''}" onclick="selectNode('${n.id}')">
-      <div class="bs-node-status ${n.status}"></div>
+    <div class="eg-node-row ${selectedNode === n.id ? 'active' : ''}" onclick="selectNode('${n.id}')">
+      <div class="eg-node-status ${n.status}"></div>
       <span>${n.name}</span>
-      <span class="bs-node-load">${n.load}%</span>
+      <span class="eg-node-load">${n.load}%</span>
     </div>
   `).join('');
 }
@@ -1330,15 +1330,15 @@ function renderCrossSection() {
   container.innerHTML = DATA.layers.map(l => {
     const h = ((l.depth + 1) / 8) * 100;
     const barColor = l.load > 80 ? 'var(--danger)' : l.load > 60 ? 'var(--warning)' : 'var(--positive)';
-    const el = `<div class="bs-layer-band ${selectedLayer === l.id ? 'active' : ''}" style="top:${top}%;height:${h}%;" onclick="selectLayer('${l.id}')">
-      <div class="bs-layer-band-inner">
-        <span class="bs-layer-band-name">${l.name}</span>
-        <div class="bs-layer-band-bar"><div class="bs-layer-band-bar-fill" style="width:${l.load}%;background:${barColor};"></div></div>
-        <div class="bs-layer-band-meta">
+    const el = `<div class="eg-layer-band ${selectedLayer === l.id ? 'active' : ''}" style="top:${top}%;height:${h}%;" onclick="selectLayer('${l.id}')">
+      <div class="eg-layer-band-inner">
+        <span class="eg-layer-band-name">${l.name}</span>
+        <div class="eg-layer-band-bar"><div class="eg-layer-band-bar-fill" style="width:${l.load}%;background:${barColor};"></div></div>
+        <div class="eg-layer-band-meta">
           <span>A:${l.agents}</span>
           <span>P:${l.pipelines}</span>
-          <span class="bs-layer-band-status" onclick="toggleLayer('${l.id}', event)">${l.closed ? 'CLOSED' : 'OPEN'}</span>
-          <button class="bs-layer-band-toggle" onclick="toggleLayer('${l.id}', event)">${l.closed ? 'Open' : 'Close'}</button>
+          <span class="eg-layer-band-status" onclick="toggleLayer('${l.id}', event)">${l.closed ? 'CLOSED' : 'OPEN'}</span>
+          <button class="eg-layer-band-toggle" onclick="toggleLayer('${l.id}', event)">${l.closed ? 'Open' : 'Close'}</button>
         </div>
       </div>
     </div>`;
@@ -1349,18 +1349,18 @@ function renderCrossSection() {
 
 function renderCityGrid() {
   const container = document.getElementById('cityView');
-  container.innerHTML = '<div class="bs-city-grid">' + DATA.cityBlocks.map(b => {
+  container.innerHTML = '<div class="eg-city-grid">' + DATA.cityBlocks.map(b => {
     const barColor = b.status === 'ok' ? 'var(--positive)' : b.status === 'warn' ? 'var(--warning)' : 'var(--danger)';
     const iconColor = b.status === 'ok' ? 'var(--positive-dim)' : b.status === 'warn' ? 'var(--warning-dim)' : 'var(--danger-dim)';
     const iconText = b.status === 'ok' ? 'OK' : b.status === 'warn' ? '!' : 'X';
-    return `<div class="bs-city-block ${selectedBlock === b.id ? 'active' : ''}" onclick="selectBlock('${b.id}')">
-      <div class="bs-city-block-header">
-        <div class="bs-city-block-icon" style="background:${iconColor};color:${barColor};">${iconText}</div>
-        <span class="bs-city-block-name">${b.name}</span>
+    return `<div class="eg-city-block ${selectedBlock === b.id ? 'active' : ''}" onclick="selectBlock('${b.id}')">
+      <div class="eg-city-block-header">
+        <div class="eg-city-block-icon" style="background:${iconColor};color:${barColor};">${iconText}</div>
+        <span class="eg-city-block-name">${b.name}</span>
       </div>
-      <div class="bs-city-block-meta">${b.type} &middot; ${b.agents} agents</div>
-      <div class="bs-city-block-bar"><div class="bs-city-block-bar-fill" style="width:${b.load}%;background:${barColor};"></div></div>
-      <div class="bs-city-block-footer"><span>${b.load}%</span><span>${b.layer}</span></div>
+      <div class="eg-city-block-meta">${b.type} &middot; ${b.agents} agents</div>
+      <div class="eg-city-block-bar"><div class="eg-city-block-bar-fill" style="width:${b.load}%;background:${barColor};"></div></div>
+      <div class="eg-city-block-footer"><span>${b.load}%</span><span>${b.layer}</span></div>
     </div>`;
   }).join('') + '</div>';
 }
@@ -1384,12 +1384,12 @@ function renderConstellation() {
   connections.forEach(c => {
     const a = planets.find(p => p.id === c.from);
     const b = planets.find(p => p.id === c.to);
-    html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="bs-constellation-link" />`;
+    html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="eg-constellation-link" />`;
   });
   planets.forEach(p => {
     const n = DATA.nodes.find(x => x.id === p.id.replace('p', 'pioneer'));
     const color = n.status === 'online' ? 'var(--positive)' : n.status === 'standby' ? 'var(--warning)' : 'var(--danger)';
-    html += `<g class="bs-planet ${selectedNode === p.id.replace('p', 'pioneer') ? 'active' : ''}" onclick="selectNode('${p.id.replace('p', 'pioneer')}')">
+    html += `<g class="eg-planet ${selectedNode === p.id.replace('p', 'pioneer') ? 'active' : ''}" onclick="selectNode('${p.id.replace('p', 'pioneer')}')">
       <circle cx="${p.x}" cy="${p.y}" r="28" fill="none" stroke="var(--border)" stroke-width="1" />
       <circle cx="${p.x}" cy="${p.y}" r="4" fill="${color}" />
       <text x="${p.x}" y="${p.y + 42}" text-anchor="middle" fill="var(--text-secondary)" font-size="11" font-weight="500">${p.name}</text>
@@ -1405,11 +1405,11 @@ function renderGlobe() {
   const h = container.clientHeight || 300;
   const cx = w / 2, cy = h / 2;
   const rings = [120, 90, 60];
-  let html = '<div class="bs-globe-container" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">';
+  let html = '<div class="eg-globe-container" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">';
   rings.forEach((r, i) => {
-    html += `<div class="bs-globe-ring" style="width:${r*2}px;height:${r*2}px;top:${140-r}px;left:${140-r}px;"></div>`;
+    html += `<div class="eg-globe-ring" style="width:${r*2}px;height:${r*2}px;top:${140-r}px;left:${140-r}px;"></div>`;
   });
-  html += '<div class="bs-globe-core">CORE</div>';
+  html += '<div class="eg-globe-core">CORE</div>';
   const sats = [
     { id: 'pioneer1', name: 'P1', angle: 0, dist: 120 },
     { id: 'pioneer2', name: 'P2', angle: 120, dist: 120 },
@@ -1421,7 +1421,7 @@ function renderGlobe() {
     const y = 140 + Math.sin(rad) * s.dist - 22;
     const n = DATA.nodes.find(x => x.id === s.id);
     const color = n.status === 'online' ? 'var(--positive)' : n.status === 'standby' ? 'var(--warning)' : 'var(--danger)';
-    html += `<div class="bs-globe-satellite ${selectedNode === s.id ? 'active' : ''}" style="left:${x}px;top:${y}px;border-color:${color};" onclick="selectNode('${s.id}')">
+    html += `<div class="eg-globe-satellite ${selectedNode === s.id ? 'active' : ''}" style="left:${x}px;top:${y}px;border-color:${color};" onclick="selectNode('${s.id}')">
       <div><div style="font-weight:600;font-size:10px;">${s.name}</div><div style="font-size:8px;color:var(--text-quaternary);">${n.status}</div></div>
     </div>`;
   });
@@ -1431,18 +1431,18 @@ function renderGlobe() {
 
 function renderTunnel() {
   const container = document.getElementById('tunnelView');
-  container.innerHTML = '<div class="bs-tunnel-path">' + DATA.tunnel.map((t, i) => {
+  container.innerHTML = '<div class="eg-tunnel-path">' + DATA.tunnel.map((t, i) => {
     const isLast = i === DATA.tunnel.length - 1;
     return `
-      ${i > 0 ? `<div class="bs-tunnel-connector ${selectedTunnel === t.id ? 'active' : ''}"></div>` : ''}
-      <div class="bs-tunnel-node-wrap">
-        <div class="bs-tunnel-node ${selectedTunnel === t.id ? 'active' : ''}" onclick="selectTunnel('${t.id}')">
-          <div class="bs-tunnel-node-dot"></div>
-          <div class="bs-tunnel-node-info">
-            <div class="bs-tunnel-node-name">${t.name}</div>
-            <div class="bs-tunnel-node-desc">${t.desc}</div>
+      ${i > 0 ? `<div class="eg-tunnel-connector ${selectedTunnel === t.id ? 'active' : ''}"></div>` : ''}
+      <div class="eg-tunnel-node-wrap">
+        <div class="eg-tunnel-node ${selectedTunnel === t.id ? 'active' : ''}" onclick="selectTunnel('${t.id}')">
+          <div class="eg-tunnel-node-dot"></div>
+          <div class="eg-tunnel-node-info">
+            <div class="eg-tunnel-node-name">${t.name}</div>
+            <div class="eg-tunnel-node-desc">${t.desc}</div>
           </div>
-          <div class="bs-tunnel-node-layer">${t.layer}</div>
+          <div class="eg-tunnel-node-layer">${t.layer}</div>
         </div>
       </div>`;
   }).join('') + '</div>';
@@ -1450,21 +1450,21 @@ function renderTunnel() {
 
 function renderModules() {
   const container = document.getElementById('modulesView');
-  container.innerHTML = '<div class="bs-modules-grid">' + DATA.modules.map(m => {
+  container.innerHTML = '<div class="eg-modules-grid">' + DATA.modules.map(m => {
     const barColor = m.status === 'ok' ? 'var(--positive)' : m.status === 'warn' ? 'var(--warning)' : m.status === 'paused' ? 'var(--text-tertiary)' : 'var(--danger)';
     const iconColor = m.status === 'ok' ? 'var(--positive-dim)' : m.status === 'warn' ? 'var(--warning-dim)' : m.status === 'paused' ? 'var(--text-quaternary)' : 'var(--danger-dim)';
     const iconText = m.status === 'ok' ? 'OK' : m.status === 'warn' ? '!' : m.status === 'paused' ? 'II' : 'X';
-    return `<div class="bs-module-card ${selectedModule === m.id ? 'active' : ''}" onclick="selectModule('${m.id}')">
-      <div class="bs-module-header">
-        <div class="bs-module-icon" style="background:${iconColor};color:${barColor};">${iconText}</div>
-        <div class="bs-module-title">
-          <div class="bs-module-name">${m.name}</div>
-          <div class="bs-module-category">${m.category}</div>
+    return `<div class="eg-module-card ${selectedModule === m.id ? 'active' : ''}" onclick="selectModule('${m.id}')">
+      <div class="eg-module-header">
+        <div class="eg-module-icon" style="background:${iconColor};color:${barColor};">${iconText}</div>
+        <div class="eg-module-title">
+          <div class="eg-module-name">${m.name}</div>
+          <div class="eg-module-category">${m.category}</div>
         </div>
       </div>
-      <div class="bs-module-desc">${m.desc}</div>
-      <div class="bs-module-bar"><div class="bs-module-bar-fill" style="width:${m.load}%;background:${barColor};"></div></div>
-      <div class="bs-module-footer"><span>${m.load}% load</span><span>${m.status.toUpperCase()}</span></div>
+      <div class="eg-module-desc">${m.desc}</div>
+      <div class="eg-module-bar"><div class="eg-module-bar-fill" style="width:${m.load}%;background:${barColor};"></div></div>
+      <div class="eg-module-footer"><span>${m.load}% load</span><span>${m.status.toUpperCase()}</span></div>
     </div>`;
   }).join('') + '</div>';
 }
@@ -1472,10 +1472,10 @@ function renderModules() {
 function renderPipelines() {
   const container = document.getElementById('pipelineList');
   container.innerHTML = DATA.pipelines.map(p => `
-    <div class="bs-pipeline-item ${selectedPipeline === p.id ? 'active' : ''}" onclick="selectPipeline('${p.id}')">
-      <div class="bs-pipeline-dot ${p.status}"></div>
-      <span class="bs-pipeline-name ${selectedPipeline === p.id ? 'active' : ''}">${p.name}</span>
-      <span class="bs-pipeline-throughput">${p.throughput > 0 ? p.throughput + '/s' : '---'}</span>
+    <div class="eg-pipeline-item ${selectedPipeline === p.id ? 'active' : ''}" onclick="selectPipeline('${p.id}')">
+      <div class="eg-pipeline-dot ${p.status}"></div>
+      <span class="eg-pipeline-name ${selectedPipeline === p.id ? 'active' : ''}">${p.name}</span>
+      <span class="eg-pipeline-throughput">${p.throughput > 0 ? p.throughput + '/s' : '---'}</span>
     </div>
   `).join('');
 }
@@ -1483,10 +1483,10 @@ function renderPipelines() {
 function renderAgents() {
   const container = document.getElementById('agentGrid');
   container.innerHTML = DATA.agents.map(a => `
-    <div class="bs-agent-cell ${selectedAgent === a.id ? 'active' : ''}" onclick="selectAgent('${a.id}')">
-      <div class="bs-agent-dot ${a.status}"></div>
-      <span class="bs-agent-name ${selectedAgent === a.id ? 'active' : ''}">${a.name}</span>
-      <span class="bs-agent-task">${a.task}</span>
+    <div class="eg-agent-cell ${selectedAgent === a.id ? 'active' : ''}" onclick="selectAgent('${a.id}')">
+      <div class="eg-agent-dot ${a.status}"></div>
+      <span class="eg-agent-name ${selectedAgent === a.id ? 'active' : ''}">${a.name}</span>
+      <span class="eg-agent-task">${a.task}</span>
     </div>
   `).join('');
 }

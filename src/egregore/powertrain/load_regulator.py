@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """LoadRegulator - Mantle layer token-bucket flow regulator."""
 
 from dataclasses import dataclass, field

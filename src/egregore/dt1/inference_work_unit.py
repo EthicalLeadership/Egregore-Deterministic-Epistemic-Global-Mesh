@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 import hashlib
 import importlib
 from dataclasses import dataclass

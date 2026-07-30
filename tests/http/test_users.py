@@ -14,10 +14,10 @@ def admin_key() -> str:
 @pytest.fixture
 def client(monkeypatch, tmp_path, admin_key):
     """Build a TestClient with a fresh temp DB and a seeded admin API key."""
-    monkeypatch.setenv("BLACKSTAR_DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("BLACKSTAR_NODE_ID", "testnode")
-    monkeypatch.setenv("BLACKSTAR_API_KEYS", f"{admin_key}:test:admin:admin")
-    monkeypatch.setenv("BLACKSTAR_ZARC_SIGNING_KEY_HEX", "a" * 64)
+    monkeypatch.setenv("EGREGORE_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("EGREGORE_NODE_ID", "testnode")
+    monkeypatch.setenv("EGREGORE_API_KEYS", f"{admin_key}:test:admin:admin")
+    monkeypatch.setenv("EGREGORE_ZARC_SIGNING_KEY_HEX", "a" * 64)
 
     # Clear any cached default repository from previous tests.
     import egregore.infrastructure.persistence.user_repository as user_repo_mod

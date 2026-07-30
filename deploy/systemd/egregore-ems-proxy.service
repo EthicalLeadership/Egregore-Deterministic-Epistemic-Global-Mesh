@@ -1,0 +1,24 @@
+[Unit]
+Description=Egregore Model Service Proxy
+After=network.target
+
+[Service]
+Type=simple
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore
+Environment=PYTHONPATH=/opt/egregore/src
+Environment=EGREGORE_EMS_DB=/opt/egregore/data/ems_registry.db
+Environment=EGREGORE_EMS_PROXY_PORT=8001
+Environment=EGREGORE_EMS_PROXY_HOST=0.0.0.0
+Environment=EGREGORE_EMS_AUTO_START=true
+Environment=EGREGORE_MODEL_ROOT=/opt/egregore/models
+Environment=EGREGORE_NODE_ID=pioneer1
+ExecStart=/opt/egregore/.venv/bin/egregor proxy --host 0.0.0.0 --port 8001
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

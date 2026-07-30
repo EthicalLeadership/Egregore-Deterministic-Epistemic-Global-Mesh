@@ -1,0 +1,44 @@
+{
+  "module_id": "egregore.governance",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "plane1",
+    "m1_layer": "governance",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.models",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [
+        "line 201: result = subprocess.run(  # noqa: S603",
+        "line 379: result = subprocess.run(  # noqa: S603",
+        "line 386: sudo_result = subprocess.run(  # noqa: S603",
+        "line 414: svc = subprocess.run(",
+        "line 436: svc = subprocess.run(",
+        "line 485: ip = subprocess.run("
+      ],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     check_parser.add_argument(
         "--signing-key-hex",
         default=None,
-        help="Ed25519 signing key hex (or set BLACKSTAR_SIGNING_KEY_HEX)",
+        help="Ed25519 signing key hex (or set EGREGORE_SIGNING_KEY_HEX)",
     )
     check_parser.add_argument(
         "--signer-id",

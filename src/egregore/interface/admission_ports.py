@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Admission Ports
+EGREGORE LAW: Admission Ports
 Injection-friendly port definitions for capacity and admission.
 """
 

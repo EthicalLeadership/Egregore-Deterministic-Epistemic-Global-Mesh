@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 from typing import Protocol, runtime_checkable
 
 

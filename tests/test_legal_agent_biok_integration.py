@@ -103,7 +103,6 @@ def _valid_output() -> LegalAnalysisOutput:
 
 
 class TestIRImmutability:
-
     def test_ir_is_frozen_dataclass(self):
         ir = _make_ir()
         with pytest.raises((AttributeError, TypeError)):
@@ -135,7 +134,6 @@ class TestIRImmutability:
 
 
 class TestBoundaryValidationValidOutput:
-
     def test_valid_output_passes_without_error(self):
         output = _valid_output()
         validate_legal_analysis_output(output)  # must not raise
@@ -154,7 +152,6 @@ class TestBoundaryValidationValidOutput:
 
 
 class TestBoundaryValidationStructural:
-
     def test_non_empty_prohibited_conclusions_rejected(self):
         """prohibited_conclusions must always be () — structural invariant."""
         output = _valid_output()
@@ -200,7 +197,6 @@ class TestBoundaryValidationStructural:
 
 
 class TestBoundaryValidationForbiddenLanguage:
-
     def _output_with_conclusion(self, conclusion: str) -> LegalAnalysisOutput:
         import dataclasses
 
@@ -257,7 +253,6 @@ class TestBoundaryValidationForbiddenLanguage:
 
 
 class TestBoundaryIsolation:
-
     def test_agent_failure_does_not_corrupt_ir(self):
         class BrokenRegistry:
             def find_applicable(self, facts):

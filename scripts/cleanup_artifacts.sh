@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== BLACKSTAR ARTIFACT CLEANUP ==="
+echo "=== EGREGORE ARTIFACT CLEANUP ==="
 
 # 1. Remove all __pycache__ directories and compiled Python artifacts
 #    Skip .venv because installed packages legitimately contain __pycache__.

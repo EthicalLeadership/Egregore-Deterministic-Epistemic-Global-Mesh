@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-06: Threat Intelligence Fusion — Federation mesh integrity and anomaly detection."""
 
 from __future__ import annotations

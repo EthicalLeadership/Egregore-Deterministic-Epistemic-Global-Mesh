@@ -127,7 +127,7 @@ All checks should report `PASS`.
 
 ### 5. ZARC journal integrity
 
-For each active journal file (check `BLACKSTAR_SIGNING_KEY_PATH` and configured
+For each active journal file (check `EGREGORE_SIGNING_KEY_PATH` and configured
 zarc paths):
 
 ```bash

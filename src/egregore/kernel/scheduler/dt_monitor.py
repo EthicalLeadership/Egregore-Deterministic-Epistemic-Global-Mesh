@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: DT Monitor
+EGREGORE LAW: DT Monitor
 Hardware capacity sensing for Deterministic Throughput.
 """
 

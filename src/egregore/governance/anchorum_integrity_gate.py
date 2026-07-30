@@ -54,18 +54,20 @@ class AnchorumConfig:
 
         recovered_default = Path(
             os.environ.get(
-                "BLACKSTAR_RECOVERED_DOWNLOADS_DIR",
-                os.environ.get("RECOVERED_DOWNLOADS_DIR", "/opt/egregore/recovered_downloads"),
+                "EGREGORE_RECOVERED_DOWNLOADS_DIR",
+                os.environ.get(
+                    "RECOVERED_DOWNLOADS_DIR", "/opt/egregore/recovered_downloads"
+                ),
             )
         )
         dedup_default = Path(
             os.environ.get(
-                "BLACKSTAR_DEDUP_LOG",
+                "EGREGORE_DEDUP_LOG",
                 "/opt/egregore/hardening/dedup_log.json",
             )
         )
         backup_default = Path(
-            os.environ.get("BLACKSTAR_BACKUP_DIR", "/opt/egregore/backup")
+            os.environ.get("EGREGORE_BACKUP_DIR", "/opt/egregore/backup")
         )
 
         return cls(
@@ -74,7 +76,7 @@ class AnchorumConfig:
             dedup_log=dedup_default,
             backup_dir=backup_default,
             db_dsn=os.environ.get(
-                "BLACKSTAR_DB_DSN",
+                "EGREGORE_DB_DSN",
                 "postgresql://egregore:testpass@localhost:5432/egregore_test",
             ),
             ci_mode=os.environ.get("ANCHORUM_CI", "").lower() in ("1", "true", "yes"),
@@ -92,8 +94,8 @@ class AnchorumConfig:
 
     @staticmethod
     def _resolve_repo_root() -> Path:
-        """Return the repository root, preferring BLACKSTAR_ROOT if set."""
-        if env_root := os.environ.get("BLACKSTAR_ROOT"):
+        """Return the repository root, preferring EGREGORE_ROOT if set."""
+        if env_root := os.environ.get("EGREGORE_ROOT"):
             return Path(env_root).expanduser().resolve()
         # src/egregore/governance/anchorum_integrity_gate.py -> 4 levels up
         return Path(__file__).resolve().parents[3]
@@ -553,8 +555,7 @@ def run_anchorum_check(
 
     if report["errors"]:
         reason = (
-            f"ANCHORUM FAIL: {len(report['errors'])} error(s) — "
-            f"{report['errors'][0]}"
+            f"ANCHORUM FAIL: {len(report['errors'])} error(s) — {report['errors'][0]}"
         )
         if freeze_controller is not None:
             if hasattr(freeze_controller, "integrity_breach"):

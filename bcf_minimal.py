@@ -56,7 +56,7 @@ class E(threading.Thread):
     def stop(self): self.run = False
 
 def main():
-    print("=" * 50); print("BLACKSTAR BCF — PIONEER 1"); print("=" * 50)
+    print("=" * 50); print("EGREGORE BCF — PIONEER 1"); print("=" * 50)
     p = P()
     print(f"[4P] DT={p.dt}(C={p.dtc},G={p.dtg}) TU={p.tu}")
     g = False

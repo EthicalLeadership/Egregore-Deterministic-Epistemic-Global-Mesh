@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: SQLite Anchor Store
+EGREGORE LAW: SQLite Anchor Store
 Local anchor persistence for edge deployment. Same contract as PostgresAnchorStore.
 """
 

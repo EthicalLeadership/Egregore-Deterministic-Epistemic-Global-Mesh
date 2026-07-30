@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Scheduler domain models - immutable, deterministic ordering primitives."""
 
 from dataclasses import dataclass, field

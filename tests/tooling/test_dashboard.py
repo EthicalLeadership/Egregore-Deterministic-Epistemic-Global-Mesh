@@ -100,24 +100,24 @@ def test_dashboard_index(client: TestClient) -> None:
 def test_dashboard_report_not_found(client: TestClient) -> None:
     # Ensure default path does not accidentally find a report.
     with tempfile.TemporaryDirectory() as tmp:
-        os.environ["BLACKSTAR_SANDBOX_OUTPUT"] = tmp
+        os.environ["EGREGORE_SANDBOX_OUTPUT"] = tmp
         response = client.get("/api/report")
         assert response.status_code == 404
-    del os.environ["BLACKSTAR_SANDBOX_OUTPUT"]
+    del os.environ["EGREGORE_SANDBOX_OUTPUT"]
 
 
 def test_dashboard_report_endpoint(client: TestClient, temp_report: Path) -> None:
-    os.environ["BLACKSTAR_SANDBOX_OUTPUT"] = str(temp_report)
+    os.environ["EGREGORE_SANDBOX_OUTPUT"] = str(temp_report)
     response = client.get("/api/report")
     assert response.status_code == 200
     data = response.json()
     assert data["modules_scanned"] == 2
     assert any(m["module_id"] == "egregore.shared" for m in data["module_results"])
-    del os.environ["BLACKSTAR_SANDBOX_OUTPUT"]
+    del os.environ["EGREGORE_SANDBOX_OUTPUT"]
 
 
 def test_dashboard_module_endpoint(client: TestClient, temp_report: Path) -> None:
-    os.environ["BLACKSTAR_SANDBOX_OUTPUT"] = str(temp_report)
+    os.environ["EGREGORE_SANDBOX_OUTPUT"] = str(temp_report)
     response = client.get("/api/modules/egregore.application.heavy")
     assert response.status_code == 200
     data = response.json()
@@ -125,22 +125,22 @@ def test_dashboard_module_endpoint(client: TestClient, temp_report: Path) -> Non
     assert data["terminal"] is True
     assert data["attestation_badge"] == "SIGNED"
     assert data["decom_manifest"]["attestation"]["signer_id"] == "dsb-chair"
-    del os.environ["BLACKSTAR_SANDBOX_OUTPUT"]
+    del os.environ["EGREGORE_SANDBOX_OUTPUT"]
 
 
 def test_dashboard_module_endpoint_short_name(
     client: TestClient, temp_report: Path
 ) -> None:
-    os.environ["BLACKSTAR_SANDBOX_OUTPUT"] = str(temp_report)
+    os.environ["EGREGORE_SANDBOX_OUTPUT"] = str(temp_report)
     response = client.get("/api/modules/shared")
     assert response.status_code == 200
     data = response.json()
     assert data["module_id"] == "egregore.shared"
-    del os.environ["BLACKSTAR_SANDBOX_OUTPUT"]
+    del os.environ["EGREGORE_SANDBOX_OUTPUT"]
 
 
 def test_dashboard_module_not_found(client: TestClient, temp_report: Path) -> None:
-    os.environ["BLACKSTAR_SANDBOX_OUTPUT"] = str(temp_report)
+    os.environ["EGREGORE_SANDBOX_OUTPUT"] = str(temp_report)
     response = client.get("/api/modules/egregore.missing")
     assert response.status_code == 404
-    del os.environ["BLACKSTAR_SANDBOX_OUTPUT"]
+    del os.environ["EGREGORE_SANDBOX_OUTPUT"]

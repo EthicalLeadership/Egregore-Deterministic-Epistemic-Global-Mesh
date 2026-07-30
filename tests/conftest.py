@@ -6,20 +6,22 @@ import pytest
 
 # Ensure tests never write to the real data directory.
 _tmp_root = tempfile.mkdtemp(prefix="egregore_test_")
-os.environ.setdefault("BLACKSTAR_DATA_DIR", _tmp_root)
-os.environ.setdefault("BLACKSTAR_NODE_ID", "testnode")
-os.environ.setdefault("BLACKSTAR_API_KEYS", "a" * 64 + ":test:admin:admin")
-os.environ.setdefault("BLACKSTAR_ZARC_SIGNING_KEY_HEX", "a" * 64)
+os.environ.setdefault("EGREGORE_DATA_DIR", _tmp_root)
+os.environ.setdefault("EGREGORE_NODE_ID", "testnode")
+os.environ.setdefault("EGREGORE_API_KEYS", "a" * 64 + ":test:admin:admin")
+os.environ.setdefault("EGREGORE_ZARC_SIGNING_KEY_HEX", "a" * 64)
 
 # Redirect repo-root defaults to the actual checkout so tests can create
 # directories (rag/, cells/, ANCHORUM_reports/) without touching /opt/egregore.
 _repo_root = str(Path(__file__).resolve().parent.parent)
-os.environ.setdefault("BLACKSTAR_REPO_ROOT", _repo_root)
-os.environ.setdefault("ANCHORUM_REPORT_DIR", os.path.join(_repo_root, "ANCHORUM_reports"))
+os.environ.setdefault("EGREGORE_REPO_ROOT", _repo_root)
+os.environ.setdefault(
+    "ANCHORUM_REPORT_DIR", os.path.join(_repo_root, "ANCHORUM_reports")
+)
 os.environ.setdefault(
     "ANCHORUM_ZARC_PATH", os.path.join(_tmp_root, "anchorum", "reports", "zarc")
 )
-os.environ.setdefault("BLACKSTAR_MODELS_ROOT", os.path.join(_tmp_root, "models"))
+os.environ.setdefault("EGREGORE_MODELS_ROOT", os.path.join(_tmp_root, "models"))
 
 from egregore.kernel.ed25519_signer import generate_signing_key, get_verify_key_hex
 

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """FastAPI router for the anchor orchestrator public verification API."""
 
 from __future__ import annotations

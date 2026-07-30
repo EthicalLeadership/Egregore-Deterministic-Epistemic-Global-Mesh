@@ -39,7 +39,9 @@ from egregore.rfe.integration.mapper import (
 )
 from egregore.shared.canonical import canonical_dumps
 
-DB_PATH = Path(os.environ.get("BLACKSTAR_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
+DB_PATH = (
+    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
+)
 
 logger = logging.getLogger("egregore.ombudsman")
 
@@ -252,7 +254,7 @@ def update_load(
     with _connection() as conn:
         conn.execute(
             "UPDATE cells SET stage_states = ?, updated_at = ? WHERE cell_id = ?",
-            (canonical_dumps(state.stage_states), time.time(), cell_id),
+            (canonical_dumps(state.stage_states), time.time_ns() / 1e9, cell_id),
         )
         conn.commit()
 
@@ -551,7 +553,7 @@ def _error_stream(spec: CellSpec, detail: str) -> dict[str, Any]:
         "confidence": 0.0,
         "provenance_hash": "",
         "signature": None,
-        "timestamp": datetime.now(UTC).isoformat(timespec="seconds"),
+        "timestamp": datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat(timespec="seconds"),
         "decay": {"method": "unbounded"},
         "severity_impact": 0.8,
         "relevance_tags": [t for t in spec.taxonomy_path().split("/") if t],

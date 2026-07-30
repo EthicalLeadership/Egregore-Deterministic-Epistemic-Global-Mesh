@@ -70,7 +70,7 @@ class SedimentArchive:
         self._fossil_count = 0
 
     def _compute_epoch(self) -> str:
-        now = datetime.now(UTC)
+        now = datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC)
         return f"{now.year}-Q{(now.month - 1) // 3 + 1}"
 
     def fossilize(self, agency: AgencyState) -> str:
@@ -88,7 +88,7 @@ class SedimentArchive:
             sediment_id=sediment_id,
             agency_state=agency,
             stratum_epoch=epoch,
-            fossilization_timestamp_ns=int(time.time() * 1e9),
+            fossilization_timestamp_ns=time.time_ns(),
         )
 
         self._strata[epoch].add(fossil)

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Reproducible Fusion Engine (RFE).
 
 Idempotency definition

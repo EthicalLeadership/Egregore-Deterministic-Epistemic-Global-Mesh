@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Lazy-loading GGUF model host for cell execution.
 
 This module mirrors the model-host pattern used by

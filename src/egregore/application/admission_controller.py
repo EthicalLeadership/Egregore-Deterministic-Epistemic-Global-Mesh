@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Admission Controller
+EGREGORE LAW: Admission Controller
 Fail-closed gatekeeper. Minimize waiting, not maximize utilization.
 """
 

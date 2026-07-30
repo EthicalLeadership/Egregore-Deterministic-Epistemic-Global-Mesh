@@ -48,7 +48,7 @@ class CodeFactoryService:
 
     The service routes all requests to the configured ``InferenceService``. When
     the requested model is a Claude identifier, the Anthropic backend is used;
-    otherwise the request falls through to the default backend (usually Ollama).
+    otherwise the request falls through to the default backend (native Coder).
     """
 
     def __init__(self, inference_service: InferenceService):

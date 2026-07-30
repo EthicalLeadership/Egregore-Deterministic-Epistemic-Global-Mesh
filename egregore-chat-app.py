@@ -68,7 +68,7 @@ def log(message: str) -> None:
 
 def _extract_first_api_key() -> str | None:
     """Return the first configured API key (admin/owner key) from the env."""
-    raw = os.environ.get("BLACKSTAR_API_KEYS", "")
+    raw = os.environ.get("EGREGORE_API_KEYS", "")
     if not raw:
         return None
     first_entry = raw.split(",")[0].strip()

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Powertrain Coupling
+EGREGORE LAW: Powertrain Coupling
 Links TU/DT budget to the gearbox for compute reservation.
 """
 

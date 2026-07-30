@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 from datetime import UTC, datetime
-import os
 from pathlib import Path
 
 from egregore.domain.self_rep_dossier.actor_classifier import ActorRegistry
-from egregore.domain.self_rep_dossier.claim_extractor import extract_claims_from_artifact
+from egregore.domain.self_rep_dossier.claim_extractor import (
+    extract_claims_from_artifact,
+)
 from egregore.domain.self_rep_dossier.contradiction_detector import (
     detect_contradictions_and_corroborations,
 )
@@ -122,7 +124,7 @@ class SelfRepDossierBuilder:
         # Build preliminary dossier to map claims to Quebec procedure/evidence rules.
         preliminary = Dossier(
             case_id=case_id,
-            generated_at=datetime.now(UTC),
+            generated_at=datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC),
             actors=registry.all_actors(),
             artifacts=tuple(artifacts),
             claims=tuple(claims),
@@ -148,7 +150,7 @@ class SelfRepDossierBuilder:
 
         return Dossier(
             case_id=case_id,
-            generated_at=datetime.now(UTC),
+            generated_at=datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC),
             actors=registry.all_actors(),
             artifacts=tuple(artifacts),
             claims=tuple(claims),

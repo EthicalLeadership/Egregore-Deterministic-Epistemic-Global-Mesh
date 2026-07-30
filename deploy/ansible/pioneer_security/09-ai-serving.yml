@@ -36,11 +36,11 @@
         group: root
         mode: "0640"
         content: |
-          BLACKSTAR_AI_GPU_MODE=auto
-          BLACKSTAR_AI_GPU_GAME_PROTECT=1
-          BLACKSTAR_AI_GPU_PROTECT_UTIL_THRESHOLD=70
-          BLACKSTAR_AI_GPU_PROTECT_VRAM_THRESHOLD_MIB=5200
-          BLACKSTAR_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
-          BLACKSTAR_AI_TIMEOUT_SECONDS=8
-          BLACKSTAR_AI_MAX_PROMPT_CHARS=4096
-          BLACKSTAR_AI_DENYLIST_TERMS=private key,seed phrase,root token
+          EGREGORE_AI_GPU_MODE=auto
+          EGREGORE_AI_GPU_GAME_PROTECT=1
+          EGREGORE_AI_GPU_PROTECT_UTIL_THRESHOLD=70
+          EGREGORE_AI_GPU_PROTECT_VRAM_THRESHOLD_MIB=5200
+          EGREGORE_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
+          EGREGORE_AI_TIMEOUT_SECONDS=8
+          EGREGORE_AI_MAX_PROMPT_CHARS=4096
+          EGREGORE_AI_DENYLIST_TERMS=private key,seed phrase,root token

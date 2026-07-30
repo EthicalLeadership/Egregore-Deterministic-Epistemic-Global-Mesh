@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: DI Container
+EGREGORE LAW: DI Container
 Dependency injection bootstrap. No hidden state, no global singletons.
 """
 
@@ -61,9 +61,9 @@ class EgregoreContainer:
     @classmethod
     def from_env(cls) -> EgregoreContainer:
         """Bootstrap from environment variables."""
-        node_id = os.environ.get("BLACKSTAR_NODE_ID", "pioneer1")
+        node_id = os.environ.get("EGREGORE_NODE_ID", "pioneer1")
         data_dir = Path(
-            os.environ.get("BLACKSTAR_DATA_DIR", f"~/egregore_data/{node_id}")
+            os.environ.get("EGREGORE_DATA_DIR", f"~/egregore_data/{node_id}")
         )
         data_dir = data_dir.expanduser()
 
@@ -71,7 +71,7 @@ class EgregoreContainer:
         block_store = BlockStore(data_dir / "blocks.zarc")
 
         # Persistence tier: SQLite (default) or PostgreSQL
-        dsn = os.environ.get("BLACKSTAR_DSN")
+        dsn = os.environ.get("EGREGORE_DSN")
         if dsn:
             # Lazy import so the container can be built when psycopg2 is absent.
             from egregore.infrastructure.persistence.postgresql_dossier_adapter import (
@@ -95,8 +95,8 @@ class EgregoreContainer:
             anchor_store = SQLiteAnchorStore(db_path)
 
         # Timestamp client: TSA with fallback, or mock
-        tsa_url = os.environ.get("BLACKSTAR_TSA_URL")
-        signing_key_hex = os.environ.get("BLACKSTAR_SIGNING_KEY_HEX")
+        tsa_url = os.environ.get("EGREGORE_TSA_URL")
+        signing_key_hex = os.environ.get("EGREGORE_SIGNING_KEY_HEX")
         if tsa_url and signing_key_hex:
             fallback = LocalFallbackTimestampClient(signing_key_hex)
             timestamp_client: ITimestampClient = RFC3161TimestampClient(

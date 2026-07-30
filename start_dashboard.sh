@@ -7,8 +7,8 @@ set -a
 set +a
 
 # Load environment variables
-export BLACKSTAR_API_KEYS="$(cat secrets/api_key.hex):test:admin:admin${BLACKSTAR_API_KEYS:+,}${BLACKSTAR_API_KEYS}"
-export BLACKSTAR_ZARC_SIGNING_KEY_HEX="$(cat secrets/signing_key.pem)"
+export EGREGORE_API_KEYS="$(cat secrets/api_key.hex):test:admin:admin${EGREGORE_API_KEYS:+,}${EGREGORE_API_KEYS}"
+export EGREGORE_ZARC_SIGNING_KEY_HEX="$(cat secrets/signing_key.pem)"
 export PYTHONPATH=src
 
 # Start uvicorn with production settings + TLS

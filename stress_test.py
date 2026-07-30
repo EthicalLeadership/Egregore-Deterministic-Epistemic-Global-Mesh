@@ -52,9 +52,9 @@ def t4():
 @test("zarc_config: fails closed at runtime")
 def t5():
     e = os.environ.copy()
-    e.pop("BLACKSTAR_ZARC_SIGNING_KEY_HEX", None)
-    e.pop("BLACKSTAR_ZARC_SIGNING_KEY_HEX_FILE", None)
-    r = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, 'src'); import os; os.environ.pop('BLACKSTAR_ZARC_SIGNING_KEY_HEX', None); os.environ.pop('BLACKSTAR_ZARC_SIGNING_KEY_HEX_FILE', None); from egregore.http_api.http.v1.zarc_config import ZARC_SIGNING_KEY_HEX"], cwd=REPO_ROOT, capture_output=True, text=True, env=e)
+    e.pop("EGREGORE_ZARC_SIGNING_KEY_HEX", None)
+    e.pop("EGREGORE_ZARC_SIGNING_KEY_HEX_FILE", None)
+    r = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, 'src'); import os; os.environ.pop('EGREGORE_ZARC_SIGNING_KEY_HEX', None); os.environ.pop('EGREGORE_ZARC_SIGNING_KEY_HEX_FILE', None); from egregore.http_api.http.v1.zarc_config import ZARC_SIGNING_KEY_HEX"], cwd=REPO_ROOT, capture_output=True, text=True, env=e)
     assert r.returncode != 0 and ("RuntimeError" in r.stderr or "mandatory" in r.stderr)
 
 @test("SQLite: no predictable fallback")
@@ -88,7 +88,7 @@ def t10():
 @test("Auth middleware: accepts 64-char key")
 def t11():
     import importlib
-    with patch.dict(os.environ, {"BLACKSTAR_API_KEYS": "a" * 64 + ":test:admin:admin"}):
+    with patch.dict(os.environ, {"EGREGORE_API_KEYS": "a" * 64 + ":test:admin:admin"}):
         importlib.reload(__import__("egregore.http_api.http.middleware.api_key_middleware", fromlist=["_API_KEYS"]))
         from egregore.http_api.http.middleware.api_key_middleware import _API_KEYS
         assert "a" * 64 in _API_KEYS
@@ -96,7 +96,7 @@ def t11():
 @test("Auth middleware: rejects short key")
 def t12():
     import importlib
-    with patch.dict(os.environ, {"BLACKSTAR_API_KEYS": "a" * 32 + ":test:admin:admin"}):
+    with patch.dict(os.environ, {"EGREGORE_API_KEYS": "a" * 32 + ":test:admin:admin"}):
         importlib.reload(__import__("egregore.http_api.http.middleware.api_key_middleware", fromlist=["_API_KEYS"]))
         from egregore.http_api.http.middleware.api_key_middleware import _API_KEYS
         assert "a" * 32 not in _API_KEYS
@@ -183,7 +183,7 @@ def t24():
     assert bad not in c
 
 print("=" * 60)
-print("BLACKSTAR STRESS TEST")
+print("EGREGORE STRESS TEST")
 print("=" * 60)
 for t in [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24]:
     t()

@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-09: Federation & Resilience — Treaty lifecycle and resilience patterns."""
 
 from __future__ import annotations

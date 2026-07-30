@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Causal Policy Engine Test Matrix
+EGREGORE LAW: Causal Policy Engine Test Matrix
 """
 
 from __future__ import annotations

@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: Threshold Signer Domain
+EGREGORE LAW: Threshold Signer Domain
 Shamir Secret Sharing over GF(2^255 - 19), the Ed25519 base field.
 Pure math — no I/O, no crypto operations.
 """

@@ -43,10 +43,10 @@ flowchart LR
 ## API Security Model
 
 - Access tokens are HMAC (`HS256`) and validated in `api/auth.py`.
-- Global API auth enforcement is enabled by default (`BLACKSTAR_ENFORCE_GLOBAL_AUTH=1`).
+- Global API auth enforcement is enabled by default (`EGREGORE_ENFORCE_GLOBAL_AUTH=1`).
   - Public allowlist is restricted to `/auth/token`, docs endpoints, and OpenAPI docs assets.
   - Dev compatibility mode for control center read views:
-    - `BLACKSTAR_ALLOW_LOCAL_ANON_READONLY=1` (default in dev/test)
+    - `EGREGORE_ALLOW_LOCAL_ANON_READONLY=1` (default in dev/test)
     - Allows unauthenticated **GET-only** access from loopback clients to dashboard read routes.
     - Disabled behind reverse-proxy forwarded traffic (`X-Forwarded-For` present).
 - Claims used:
@@ -57,19 +57,19 @@ flowchart LR
 - Policy-as-code authorization:
   - Policy file: `/etc/pioneer/authz_policy.yml`
   - Baseline source in repository: `configs/security/authz_policy.yml`
-  - Runtime mode via `BLACKSTAR_AUTHZ_POLICY_MODE` (`enforce`, `audit`, `disabled`)
+  - Runtime mode via `EGREGORE_AUTHZ_POLICY_MODE` (`enforce`, `audit`, `disabled`)
   - Baseline rules:
     - `POST /register|/telemetry|/federation/sync` -> require `inference` scope
     - `GET /*` -> require `status` or `read` scope
     - `POST|PUT|PATCH|DELETE /*` -> require `write` or `admin` role
 - Token issuing endpoint (`/auth/token`) is disabled by default.
-  - Enable only with `BLACKSTAR_ENABLE_TOKEN_ISSUER=1`.
-  - Require `BLACKSTAR_BOOTSTRAP_TOKEN` and `X-Bootstrap-Token` match.
-  - Restrict callers via `BLACKSTAR_TOKEN_ISSUER_ALLOWED_CIDR`.
+  - Enable only with `EGREGORE_ENABLE_TOKEN_ISSUER=1`.
+  - Require `EGREGORE_BOOTSTRAP_TOKEN` and `X-Bootstrap-Token` match.
+  - Restrict callers via `EGREGORE_TOKEN_ISSUER_ALLOWED_CIDR`.
   - Enforce scope/role allowlists and max expiry window via:
-    - `BLACKSTAR_TOKEN_ISSUER_ALLOWED_SCOPES`
-    - `BLACKSTAR_TOKEN_ISSUER_ALLOWED_ROLES`
-    - `BLACKSTAR_TOKEN_MAX_EXPIRES_HOURS`
+    - `EGREGORE_TOKEN_ISSUER_ALLOWED_SCOPES`
+    - `EGREGORE_TOKEN_ISSUER_ALLOWED_ROLES`
+    - `EGREGORE_TOKEN_MAX_EXPIRES_HOURS`
 - Auth events emit to security lane (`lane=security`) for dual-lane observability.
 
 ## PII Redaction Path

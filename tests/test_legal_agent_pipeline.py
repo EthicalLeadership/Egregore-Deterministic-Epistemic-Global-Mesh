@@ -80,7 +80,6 @@ def _analyze_governed(
 
 
 class TestBindFacts:
-
     def test_fact_statement_projected_with_weight_1(self):
         engine = _make_engine()
         ir = _make_ir(
@@ -166,7 +165,6 @@ class TestBindFacts:
 
 
 class TestMapRules:
-
     def test_communication_keyword_triggers_workplace_comms_rule(self):
         engine = _make_engine()
         facts = [LegalFact("f1", "An email was sent.", "fact", "s1", 1.0)]
@@ -194,7 +192,6 @@ class TestMapRules:
 
 
 class TestBuildInferenceGraph:
-
     def test_each_rule_produces_one_node(self):
         engine = _make_engine()
         facts = [LegalFact("f1", "Email was sent.", "fact", "s1", 1.0)]
@@ -247,7 +244,6 @@ class TestBuildInferenceGraph:
 
 
 class TestFullPipeline:
-
     def _full_ir(self) -> CanonicalSemanticIR:
         return _make_ir(
             (

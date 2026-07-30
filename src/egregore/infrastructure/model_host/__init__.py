@@ -1,1 +1,1 @@
-# BLACKSTAR LAW: Package marker
+# EGREGORE LAW: Package marker

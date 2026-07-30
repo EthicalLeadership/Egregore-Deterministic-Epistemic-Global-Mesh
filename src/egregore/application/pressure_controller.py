@@ -1,4 +1,4 @@
-"""BLACKSTAR LAW: Pressure Controller
+"""EGREGORE LAW: Pressure Controller
 Feedback loop that adjusts lane count based on epoch metrics.
 """
 

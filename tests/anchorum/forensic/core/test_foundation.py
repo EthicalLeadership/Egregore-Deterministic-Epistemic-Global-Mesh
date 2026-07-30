@@ -233,9 +233,7 @@ class TestNormalization:
         assert normalize_person("SMITH, JOHN") == "john smith"
 
     def test_organization_strip_suffix(self):
-        assert (
-            normalize_organization("Acme Corp Canada Inc.") == "acme corp canada"
-        )
+        assert normalize_organization("Acme Corp Canada Inc.") == "acme corp canada"
 
     def test_organization_strip_ltd(self):
         assert normalize_organization("Egregore Edge Ltd.") == "egregore edge"
@@ -245,8 +243,7 @@ class TestNormalization:
 
     def test_email_strip_plus(self):
         assert (
-            normalize_email("John.Smith+HR@AcmeCorp.COM")
-            == "john.smith@acmecorp.com"
+            normalize_email("John.Smith+HR@AcmeCorp.COM") == "john.smith@acmecorp.com"
         )
 
     def test_email_lowercase(self):

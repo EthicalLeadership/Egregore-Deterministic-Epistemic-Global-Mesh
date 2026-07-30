@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Threshold Signer Interface Ports
+EGREGORE LAW: Threshold Signer Interface Ports
 """
 
 from __future__ import annotations

@@ -35,7 +35,7 @@ class AgentRegistry:
 
     def __init__(self, agent_dir: Path | str | None = None) -> None:
         self.agent_dir = Path(
-            agent_dir or os.environ.get("BLACKSTAR_AGENTS_DIR", DEFAULT_AGENT_DIR)
+            agent_dir or os.environ.get("EGREGORE_AGENTS_DIR", DEFAULT_AGENT_DIR)
         )
         self._agents: dict[str, AgentSpec] = {}
         self.discover()

@@ -31,7 +31,7 @@ MEMORY_OVERHEAD_FACTOR = 1.15  # KV cache, activations, OS overhead buffer
 
 def _local_models_dir() -> Path:
     """Resolve configured local models directory."""
-    env_dir = os.environ.get("BLACKSTAR_LOCAL_MODELS_DIR", "")
+    env_dir = os.environ.get("EGREGORE_LOCAL_MODELS_DIR", "")
     if env_dir:
         return Path(env_dir).expanduser().resolve()
     return Path(DEFAULT_LOCAL_MODELS_DIR).resolve()
@@ -185,7 +185,7 @@ class LocalModelClient:
 
     def generate(self, prompt: str, model: str | None = None) -> str:
         """Single-turn text generation."""
-        target_model = model or os.environ.get("BLACKSTAR_CHAT_MODEL", "")
+        target_model = model or os.environ.get("EGREGORE_CHAT_MODEL", "")
         if not target_model:
             raise RuntimeError("No model specified for local generation.")
 
@@ -295,7 +295,7 @@ class LocalModelClient:
         return ChatResponse(
             message=ChatMessage(role="assistant", content=content),
             model=request.model,
-            created_at_ns=int(time.time() * 1e9),
+            created_at_ns=time.time_ns(),
             usage={
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,

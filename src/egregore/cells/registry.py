@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Cell registry: discover, validate, and index cell specs on disk.
 
 The registry scans ``cells/<cell_id>/spec.yaml`` files, validates them with

@@ -10,6 +10,7 @@ import hashlib
 import os
 import sqlite3
 import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Protocol
@@ -68,8 +69,8 @@ class IUserRepository(Protocol):
 
 def default_db_path() -> Path:
     """Return the default SQLite path used by the rest of the system."""
-    node_id = os.environ.get("BLACKSTAR_NODE_ID", "pioneer1")
-    data_dir = Path(os.environ.get("BLACKSTAR_DATA_DIR", f"~/egregore_data/{node_id}"))
+    node_id = os.environ.get("EGREGORE_NODE_ID", "pioneer1")
+    data_dir = Path(os.environ.get("EGREGORE_DATA_DIR", f"~/egregore_data/{node_id}"))
     return data_dir.expanduser() / "node.db"
 
 
@@ -80,7 +81,7 @@ def _hash_api_key(key: str) -> str:
 def _now_ns() -> int:
     import datetime
 
-    return int(datetime.datetime.now(datetime.UTC).timestamp() * 1e9)
+    return time.time_ns()
 
 
 # ---------------------------------------------------------------------------

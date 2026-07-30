@@ -22,7 +22,7 @@ from egregore.infrastructure.postgres_block_store import PostgresBlockStore
 from egregore.shared.freeze_state import FreezeController
 
 DSN = os.environ.get(
-    "BLACKSTAR_DSN", "postgresql://egregore:egregore@localhost:5432/egregore"
+    "EGREGORE_DSN", "postgresql://egregore:egregore@localhost:5432/egregore"
 )
 
 

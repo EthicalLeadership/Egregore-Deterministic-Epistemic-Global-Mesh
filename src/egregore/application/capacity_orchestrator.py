@@ -1,4 +1,4 @@
-"""BLACKSTAR LAW: Capacity Orchestrator."""
+"""EGREGORE LAW: Capacity Orchestrator."""
 
 from __future__ import annotations
 

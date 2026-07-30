@@ -1,0 +1,32 @@
+{
+  "module_id": "egregore.cortex",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "cortex",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

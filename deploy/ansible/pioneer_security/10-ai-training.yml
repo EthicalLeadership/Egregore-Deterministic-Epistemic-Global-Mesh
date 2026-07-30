@@ -57,10 +57,10 @@
         group: root
         mode: "0640"
         content: |
-          BLACKSTAR_AI_DATASET_PATH={{ pioneer_ai_dataset_path }}
-          BLACKSTAR_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
-          BLACKSTAR_AI_CHECKPOINTS_DIR={{ pioneer_ai_checkpoints_dir }}
-          BLACKSTAR_AI_SERVING_DIR={{ pioneer_ai_serving_dir }}
+          EGREGORE_AI_DATASET_PATH={{ pioneer_ai_dataset_path }}
+          EGREGORE_AI_RAG_INDEX_PATH={{ pioneer_ai_index_path }}
+          EGREGORE_AI_CHECKPOINTS_DIR={{ pioneer_ai_checkpoints_dir }}
+          EGREGORE_AI_SERVING_DIR={{ pioneer_ai_serving_dir }}
           PIONEER_PII_FAIL_CLOSED=1
 
     - name: Deploy ingest+index runner
@@ -76,8 +76,8 @@
           cd {{ pioneer_ai_repo_path_resolved }}
           /usr/bin/python3 tools/ai_ingest_and_index.py \
             --docs-dir docs \
-            --dataset-path "$BLACKSTAR_AI_DATASET_PATH" \
-            --index-path "$BLACKSTAR_AI_RAG_INDEX_PATH"
+            --dataset-path "$EGREGORE_AI_DATASET_PATH" \
+            --index-path "$EGREGORE_AI_RAG_INDEX_PATH"
 
     - name: Deploy nightly training runner
       ansible.builtin.copy:
@@ -91,8 +91,8 @@
           source /etc/pioneer/ai-training.env
           cd {{ pioneer_ai_repo_path_resolved }}
           /usr/bin/python3 tools/ai_train_nightly.py \
-            --index-path "$BLACKSTAR_AI_RAG_INDEX_PATH" \
-            --checkpoints-dir "$BLACKSTAR_AI_CHECKPOINTS_DIR"
+            --index-path "$EGREGORE_AI_RAG_INDEX_PATH" \
+            --checkpoints-dir "$EGREGORE_AI_CHECKPOINTS_DIR"
 
     - name: Deploy promotion runner
       ansible.builtin.copy:
@@ -106,8 +106,8 @@
           source /etc/pioneer/ai-training.env
           cd {{ pioneer_ai_repo_path_resolved }}
           /usr/bin/python3 tools/ai_promote_model.py \
-            --checkpoints-dir "$BLACKSTAR_AI_CHECKPOINTS_DIR" \
-            --serving-dir "$BLACKSTAR_AI_SERVING_DIR" \
+            --checkpoints-dir "$EGREGORE_AI_CHECKPOINTS_DIR" \
+            --serving-dir "$EGREGORE_AI_SERVING_DIR" \
             --min-score {{ pioneer_ai_eval_min_score }}
 
     - name: Schedule daily ingestion + index refresh

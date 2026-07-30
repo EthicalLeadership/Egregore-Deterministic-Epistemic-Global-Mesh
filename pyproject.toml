@@ -65,6 +65,12 @@ dev = [
 llm = [
     "llama-cpp-python>=0.2.0",
 ]
+llm-native = [
+    "transformers>=4.45.0",
+    "torch>=2.4.0",
+    "bitsandbytes>=0.43.0",
+    "accelerate>=0.34.0",
+]
 messaging = [
     "nats-py>=2.6.0",
     "redis>=5.0.0",
@@ -82,6 +88,7 @@ all = ["egregore[dev,llm,messaging,persistence,telemetry]"]
 
 [project.scripts]
 egregore-admin = "egregore.cli.admin:main"
+egregor = "egregore.ems.cli:main_model"
 
 [project.urls]
 Homepage = "https://egregore.dev"

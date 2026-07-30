@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """ExecutionContext - immutable identity and causality context for every execution."""
 
 from dataclasses import dataclass, field

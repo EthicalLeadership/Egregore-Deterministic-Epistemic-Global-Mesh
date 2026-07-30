@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: Epoch Scheduler
+EGREGORE LAW: Epoch Scheduler
 Deterministic epoch-bound scheduling with TU allocation.
 """
 

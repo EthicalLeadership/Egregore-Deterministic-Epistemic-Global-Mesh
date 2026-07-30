@@ -434,12 +434,11 @@ if __name__ == "__main__":
         raise AssertionError
     if not (normalize_person("SMITH, JOHN") == "john smith"):
         raise AssertionError
-    if not (
-        normalize_organization("Acme Corp Canada Inc.") == "acme corp canada"
-    ):
+    if not (normalize_organization("Acme Corp Canada Inc.") == "acme corp canada"):
         raise AssertionError
     if not (
-        normalize_email("John.Smith+HR@Acme-Corp.Example.COM") == "john.smith@acme-corp.example.com"
+        normalize_email("John.Smith+HR@Acme-Corp.Example.COM")
+        == "john.smith@acme-corp.example.com"
     ):
         raise AssertionError
     if not (normalize_software("Microsoft Word 16.0.12345") == "microsoft word"):

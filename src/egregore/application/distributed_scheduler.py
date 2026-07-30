@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Distributed Scheduler
+EGREGORE LAW: Distributed Scheduler
 Orchestrates local epoch scheduling + remote node placement.
 """
 

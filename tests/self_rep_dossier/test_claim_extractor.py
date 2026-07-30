@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from egregore.domain.self_rep_dossier.claim_extractor import extract_claims_from_artifact
+from egregore.domain.self_rep_dossier.claim_extractor import (
+    extract_claims_from_artifact,
+)
 from egregore.domain.self_rep_dossier.dossier_models import Artifact
 
 

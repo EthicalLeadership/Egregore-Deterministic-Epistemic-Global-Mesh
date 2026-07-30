@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Vertical-aware permission service for Egregore Chat.
 
 Centralizes all authorization decisions so the middleware, HTTP routers,

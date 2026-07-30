@@ -103,8 +103,7 @@ def test_run_missing_manifest(tmp_path: Path) -> None:
     assert report.module_id == "empty_module"
     assert report.manifest_valid is False
     assert any(
-        "egregore-module.json not found" in e["message"]
-        for e in report.manifest_errors
+        "egregore-module.json not found" in e["message"] for e in report.manifest_errors
     )
     assert not report.load_errors
     assert report.provenance is None

@@ -8,11 +8,11 @@ services:
     container_name: egregore-core
     restart: unless-stopped
     environment:
-      - BLACKSTAR_ENV=production
-      - BLACKSTAR_LOG_LEVEL=INFO
-      - BLACKSTAR_DB_URL=postgresql://egregore:${DB_PASSWORD}@postgres:5432/egregore
-      - BLACKSTAR_REDIS_URL=redis://redis:6379/0
-      - BLACKSTAR_NATS_URL=nats://nats:4222
+      - EGREGORE_ENV=production
+      - EGREGORE_LOG_LEVEL=INFO
+      - EGREGORE_DB_URL=postgresql://egregore:${DB_PASSWORD}@postgres:5432/egregore
+      - EGREGORE_REDIS_URL=redis://redis:6379/0
+      - EGREGORE_NATS_URL=nats://nats:4222
     ports:
       - "8001:8000"   # Changed from 8000 to 8001
       - "8081:8080"   # Changed from 8080 to 8081

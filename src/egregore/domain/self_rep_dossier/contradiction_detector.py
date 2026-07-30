@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Detect contradictions and corroborations between claims.
 
 Conservative and scalable. Uses an inverted index over content words but only

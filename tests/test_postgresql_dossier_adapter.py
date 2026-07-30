@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: PostgreSQL Transactional Persistence Test Matrix
+EGREGORE LAW: PostgreSQL Transactional Persistence Test Matrix
 Same contract as SQLite, verified against live temporary PostgreSQL.
 """
 
@@ -212,10 +212,10 @@ class TestPostgreSQLCommitSemantics:
                 command=cmd,
                 computed_data={"snapshot": f"v{i}"},
                 version_number=i + 1,
-                version_id=f"v{i+1}",
+                version_id=f"v{i + 1}",
                 case_next_state="active",
-                events=_events(f"v{i+1}"),
-                outbox_entries=_outbox(f"v{i+1}"),
+                events=_events(f"v{i + 1}"),
+                outbox_entries=_outbox(f"v{i + 1}"),
                 idempotency_fingerprint=f"exec_{i}",
                 usage_deltas=[("org_1", "dossier_generations", 1)],
                 timestamp_ns=100 + i,

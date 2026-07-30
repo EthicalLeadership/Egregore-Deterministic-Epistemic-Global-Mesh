@@ -19,7 +19,7 @@ from egregore.services.anchor_orchestrator.timestamp_client import (
 )
 
 DSN = os.environ.get(
-    "BLACKSTAR_DSN", "postgresql://egregore:egregore@localhost:5432/egregore"
+    "EGREGORE_DSN", "postgresql://egregore:egregore@localhost:5432/egregore"
 )
 
 

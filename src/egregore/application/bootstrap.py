@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Bootstrap
+EGREGORE LAW: Bootstrap
 Entry point for production deployment. Reads env, builds container, returns app.
 """
 

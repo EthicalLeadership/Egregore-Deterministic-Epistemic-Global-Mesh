@@ -149,7 +149,7 @@ def main() -> int:
     if args.format == "json":
         print(json.dumps(results, indent=2))
     else:
-        print("=== BLACKSTAR SEL-X AUDIT ===")
+        print("=== EGREGORE SEL-X AUDIT ===")
         for key, value in results.items():
             if key == "overall":
                 continue

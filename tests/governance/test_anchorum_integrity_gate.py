@@ -36,8 +36,8 @@ def _make_config(tmp_path: Path, **overrides: Any) -> AnchorumConfig:
 
 
 def test_config_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("BLACKSTAR_ROOT", str(tmp_path))
-    monkeypatch.setenv("BLACKSTAR_DB_DSN", "postgresql://env/env")
+    monkeypatch.setenv("EGREGORE_ROOT", str(tmp_path))
+    monkeypatch.setenv("EGREGORE_DB_DSN", "postgresql://env/env")
     monkeypatch.setenv("ANCHORUM_CI", "true")
     monkeypatch.setenv("ANCHORUM_BACKUP_MAX_AGE_HOURS", "12")
     cfg = AnchorumConfig.from_env()

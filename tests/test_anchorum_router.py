@@ -8,7 +8,7 @@ import pytest
 
 # Ensure the API-key middleware has a key available before it is imported.
 os.environ.setdefault(
-    "BLACKSTAR_API_KEYS",
+    "EGREGORE_API_KEYS",
     "2c7e17e74e15b30c6813a7bde6ad0be898ef2fdcc1def66046eee6f179d3e7a7:test_tenant:test_user:admin",
 )
 
@@ -68,7 +68,7 @@ def test_list_cases_returns_case_ids(client: TestClient, tmp_path: Path) -> None
     _write_report(tmp_path, "TEST-001", {"case_id": "TEST-001", "artifact_count": 1})
     resp = client.get(
         "/api/v1/anchorum/cases",
-        headers={"X-API-Key": os.environ["BLACKSTAR_API_KEYS"].split(":")[0]},
+        headers={"X-API-Key": os.environ["EGREGORE_API_KEYS"].split(":")[0]},
     )
     assert resp.status_code == 200
     assert resp.json() == ["TEST-001"]
@@ -93,7 +93,7 @@ def test_get_case_summary(client: TestClient, tmp_path: Path) -> None:
     )
     resp = client.get(
         "/api/v1/anchorum/cases/TEST-002/summary",
-        headers={"X-API-Key": os.environ["BLACKSTAR_API_KEYS"].split(":")[0]},
+        headers={"X-API-Key": os.environ["EGREGORE_API_KEYS"].split(":")[0]},
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -149,7 +149,7 @@ def test_trigger_batch_sync_copies_report(
     resp = client.post(
         "/api/v1/anchorum/batch/sync",
         json={"input_path": str(tmp_path), "case_id": "BATCH-001", "operator": "test"},
-        headers={"X-API-Key": os.environ["BLACKSTAR_API_KEYS"].split(":")[0]},
+        headers={"X-API-Key": os.environ["EGREGORE_API_KEYS"].split(":")[0]},
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -165,6 +165,6 @@ def test_trigger_batch_rejects_duplicate_case(
     resp = client.post(
         "/api/v1/anchorum/batch",
         json={"input_path": str(tmp_path), "case_id": "DUP-001", "operator": "test"},
-        headers={"X-API-Key": os.environ["BLACKSTAR_API_KEYS"].split(":")[0]},
+        headers={"X-API-Key": os.environ["EGREGORE_API_KEYS"].split(":")[0]},
     )
     assert resp.status_code == 409

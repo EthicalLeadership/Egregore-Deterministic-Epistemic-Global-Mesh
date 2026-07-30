@@ -12,17 +12,17 @@
   </style>
   {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-bs-bg text-bs-text">
-  <nav class="border-b border-bs-border bg-bs-surface">
+<body class="min-h-screen bg-eg-bg text-eg-text">
+  <nav class="border-b border-eg-border bg-eg-surface">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-14">
         <div class="flex items-center gap-3">
-          <div class="w-3 h-3 rounded-full bg-bs-accent animate-pulse"></div>
-          <span class="font-mono font-bold text-lg tracking-tight">BLACKSTAR</span>
-          <span class="text-xs text-bs-text-muted border border-bs-border rounded px-2 py-0.5">PLANE 2</span>
-          <a href="/dashboard/anchorum" class="ml-4 text-sm text-bs-accent hover:underline">ANCHORUM</a>
+          <div class="w-3 h-3 rounded-full bg-eg-accent animate-pulse"></div>
+          <span class="font-mono font-bold text-lg tracking-tight">EGREGORE</span>
+          <span class="text-xs text-eg-text-muted border border-eg-border rounded px-2 py-0.5">PLANE 2</span>
+          <a href="/dashboard/anchorum" class="ml-4 text-sm text-eg-accent hover:underline">ANCHORUM</a>
         </div>
-        <div class="flex items-center gap-4 text-sm text-bs-text-muted">
+        <div class="flex items-center gap-4 text-sm text-eg-text-muted">
           <span id="nav-status">{{ state.system_status.value if state else "—" }}</span>
           <span class="font-mono text-xs">{{ state.node_id if state else "unknown" }}</span>
         </div>
@@ -32,9 +32,9 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {% block content %}{% endblock %}
   </main>
-  <footer class="border-t border-bs-border mt-auto py-4">
-    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-bs-text-muted font-mono">
-      BLACKSTAR OPERATOR DASHBOARD — FAIL-CLOSED — NO SILENT DEGRADATION
+  <footer class="border-t border-eg-border mt-auto py-4">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-eg-text-muted font-mono">
+      EGREGORE OPERATOR DASHBOARD — FAIL-CLOSED — NO SILENT DEGRADATION
     </div>
   </footer>
 </body>

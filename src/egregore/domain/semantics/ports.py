@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 # Domain-level semantics ports — no outer-layer imports allowed
 from typing import Any, Protocol
 

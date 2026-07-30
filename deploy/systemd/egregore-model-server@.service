@@ -1,0 +1,20 @@
+[Unit]
+Description=Egregore Model Server — %i
+After=network.target egregore-ems-proxy.service
+
+[Service]
+Type=simple
+User=egregore
+Group=egregore
+WorkingDirectory=/opt/egregore
+Environment=PYTHONPATH=/opt/egregore/src
+Environment=EGREGORE_EMS_DB=/opt/egregore/data/ems_registry.db
+# The model ID is passed as the instance name (%i).
+ExecStart=/opt/egregore/.venv/bin/egregor model serve %i
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

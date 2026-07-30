@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Load regulator ports — domain-level protocol for Mantle flow control."""
 
 from typing import Protocol, runtime_checkable

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Placement Scorer
+EGREGORE LAW: Placement Scorer
 Score nodes for work unit placement. Minimize waiting, not maximize utilization.
 """
 

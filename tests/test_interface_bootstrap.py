@@ -23,7 +23,7 @@ def test_live_route(client):
 def test_nodes_health_route(client, monkeypatch):
     import os
 
-    os.environ["BLACKSTAR_CLUSTER_NODES"] = (
+    os.environ["EGREGORE_CLUSTER_NODES"] = (
         "pioneer1=127.0.0.1:8080,pioneer2=192.168.1.102:1,pioneer3=192.168.1.103:1"
     )
 

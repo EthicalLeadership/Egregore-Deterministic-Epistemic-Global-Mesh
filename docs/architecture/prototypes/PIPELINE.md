@@ -26,7 +26,7 @@ python -m egregore.tooling.module_pipeline check \
   --module-dir src/egregore/<module> \
   --class {fast,standard} \
   --out-dir pipeline_outputs/ \
-  [--signing-key-hex $BLACKSTAR_SIGNING_KEY_HEX]
+  [--signing-key-hex $EGREGORE_SIGNING_KEY_HEX]
 ```
 
 ### 2.2 Inputs
@@ -80,7 +80,7 @@ CLI exit code is `0` on pass, `1` on fail.
 python -m egregore.tooling.module_pipeline graph \
   --modules src/egregore/domain src/egregore/application ... \
   --out-dir pipeline_outputs/ \
-  [--signing-key-hex $BLACKSTAR_SIGNING_KEY_HEX]
+  [--signing-key-hex $EGREGORE_SIGNING_KEY_HEX]
 ```
 
 ### 3.2 Inputs
@@ -149,10 +149,10 @@ make sandbox
 
 | Variable | Purpose |
 |----------|---------|
-| `BLACKSTAR_SIGNING_KEY_HEX` | Ed25519 signing key. Falls back to a deterministic test key. |
-| `BLACKSTAR_SANDBOX_OUT_DIR` | Output directory (default: `sandbox_outputs`). |
-| `BLACKSTAR_SANDBOX_STRICT` | If set, fail any module without a manifest. |
-| `BLACKSTAR_SANDBOX_SRC_ROOT` | Source root for monorepo/testing (default: repo root). |
+| `EGREGORE_SIGNING_KEY_HEX` | Ed25519 signing key. Falls back to a deterministic test key. |
+| `EGREGORE_SANDBOX_OUT_DIR` | Output directory (default: `sandbox_outputs`). |
+| `EGREGORE_SANDBOX_STRICT` | If set, fail any module without a manifest. |
+| `EGREGORE_SANDBOX_SRC_ROOT` | Source root for monorepo/testing (default: repo root). |
 
 ### 4.3 Outputs
 

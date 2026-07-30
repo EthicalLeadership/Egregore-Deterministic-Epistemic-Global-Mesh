@@ -22,7 +22,7 @@ DEFAULT_BASE_URL = "https://api.anthropic.com"
 
 
 def load_context() -> Dict[str, Any]:
-    raw = os.environ.get("BLACKSTAR_AGENT_CONTEXT", "{}")
+    raw = os.environ.get("EGREGORE_AGENT_CONTEXT", "{}")
     try:
         return json.loads(raw)
     except json.JSONDecodeError:

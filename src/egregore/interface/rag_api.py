@@ -12,7 +12,9 @@ from sentence_transformers import SentenceTransformer
 
 router = APIRouter(prefix="/api/v1/rag", tags=["rag"])
 
-CHROMA_PATH = Path(os.environ.get("BLACKSTAR_REPO_ROOT", "/opt/egregore")) / "rag/chroma_db"
+CHROMA_PATH = (
+    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/chroma_db"
+)
 _EMBEDDER: SentenceTransformer | None = None
 
 

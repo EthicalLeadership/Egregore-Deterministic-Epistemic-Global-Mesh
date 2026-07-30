@@ -53,9 +53,7 @@ def _build_router() -> Any:  # noqa: C901
         """
         try:
             # Lazy import application-layer intake adapter
-            intake_mod = importlib.import_module(
-                "egregore.application.document_intake"
-            )
+            intake_mod = importlib.import_module("egregore.application.document_intake")
             extract_document = intake_mod.extract_document
             build_dossier_request_from_intake = (
                 intake_mod.build_dossier_request_from_intake

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: NaCl Threshold Signer
+EGREGORE LAW: NaCl Threshold Signer
 Concrete implementation using Shamir Secret Sharing + Ed25519.
 """
 

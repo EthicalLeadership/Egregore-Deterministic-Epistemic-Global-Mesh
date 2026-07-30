@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-04: Autonomous Response Engine — Execution guard and block management."""
 
 from __future__ import annotations

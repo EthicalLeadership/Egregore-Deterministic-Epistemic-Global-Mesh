@@ -1,36 +1,36 @@
-<div class="bs-panel">
+<div class="eg-panel">
   <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-mono font-semibold text-bs-text-muted uppercase tracking-wider">System Status</h2>
-    <div class="spinner w-4 h-4 border-2 border-bs-accent border-t-transparent rounded-full animate-spin"></div>
+    <h2 class="text-sm font-mono font-semibold text-eg-text-muted uppercase tracking-wider">System Status</h2>
+    <div class="spinner w-4 h-4 border-2 border-eg-accent border-t-transparent rounded-full animate-spin"></div>
   </div>
   <div class="flex items-center gap-4">
     {% if status == SystemStatus.FROZEN %}
-      <div class="w-12 h-12 rounded-full bg-bs-frozen/20 flex items-center justify-center">
-        <div class="w-4 h-4 rounded-full bg-bs-frozen animate-pulse"></div>
+      <div class="w-12 h-12 rounded-full bg-eg-frozen/20 flex items-center justify-center">
+        <div class="w-4 h-4 rounded-full bg-eg-frozen animate-pulse"></div>
       </div>
       <div>
-        <div class="text-2xl font-bold text-bs-frozen font-mono">FROZEN</div>
-        <div class="text-xs text-bs-text-muted">System is locked. No mutations allowed.</div>
+        <div class="text-2xl font-bold text-eg-frozen font-mono">FROZEN</div>
+        <div class="text-xs text-eg-text-muted">System is locked. No mutations allowed.</div>
       </div>
     {% elif status == SystemStatus.RECONCILING %}
-      <div class="w-12 h-12 rounded-full bg-bs-unfrozen/20 flex items-center justify-center">
-        <div class="w-4 h-4 rounded-full bg-bs-unfrozen"></div>
+      <div class="w-12 h-12 rounded-full bg-eg-unfrozen/20 flex items-center justify-center">
+        <div class="w-4 h-4 rounded-full bg-eg-unfrozen"></div>
       </div>
       <div>
-        <div class="text-2xl font-bold text-bs-unfrozen font-mono">RECONCILING</div>
-        <div class="text-xs text-bs-text-muted">System reconciling after freeze.</div>
+        <div class="text-2xl font-bold text-eg-unfrozen font-mono">RECONCILING</div>
+        <div class="text-xs text-eg-text-muted">System reconciling after freeze.</div>
       </div>
     {% else %}
-      <div class="w-12 h-12 rounded-full bg-bs-normal/20 flex items-center justify-center">
-        <div class="w-4 h-4 rounded-full bg-bs-normal"></div>
+      <div class="w-12 h-12 rounded-full bg-eg-normal/20 flex items-center justify-center">
+        <div class="w-4 h-4 rounded-full bg-eg-normal"></div>
       </div>
       <div>
-        <div class="text-2xl font-bold text-bs-normal font-mono">NORMAL</div>
-        <div class="text-xs text-bs-text-muted">System operating normally.</div>
+        <div class="text-2xl font-bold text-eg-normal font-mono">NORMAL</div>
+        <div class="text-xs text-eg-text-muted">System operating normally.</div>
       </div>
     {% endif %}
   </div>
-  <div class="mt-4 pt-4 border-t border-bs-border text-xs text-bs-text-muted font-mono">
+  <div class="mt-4 pt-4 border-t border-eg-border text-xs text-eg-text-muted font-mono">
     Last update: {{ fmt_ts(timestamp) }}
   </div>
 </div>

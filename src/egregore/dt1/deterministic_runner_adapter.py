@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 import hashlib
 import time
 

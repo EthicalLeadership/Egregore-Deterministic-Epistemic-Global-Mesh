@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Deterministic verification tooling used by the Reproducible Fusion Engine.
 
 This module exposes the canonical hashing, serialization, and replay-determinism

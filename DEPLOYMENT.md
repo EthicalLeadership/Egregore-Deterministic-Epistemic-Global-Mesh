@@ -84,7 +84,7 @@ GATEWAY_URL=http://localhost:18000 CORE_URL=http://localhost:18000 \
 | NATS client | `NATS_CLIENT_HOST_PORT` | `14222` | `4222` |
 | NATS monitoring | `NATS_MONITOR_HOST_PORT` | `18222` | `8222` |
 
-Inside the container the API always listens on `0.0.0.0:8000`, and service-to-service URLs (e.g., `BLACKSTAR_DB_URL`) use the Docker service names (`postgres`, `redis`, `nats`).
+Inside the container the API always listens on `0.0.0.0:8000`, and service-to-service URLs (e.g., `EGREGORE_DB_URL`) use the Docker service names (`postgres`, `redis`, `nats`).
 
 ## Notes
 

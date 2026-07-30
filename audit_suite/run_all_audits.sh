@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 echo "========================================"
-echo "BLACKSTAR FULL AUDIT SUITE"
+echo "EGREGORE FULL AUDIT SUITE"
 echo "========================================"
 cd ~/egregore 2>/dev/null || cd ~
 OUTDIR="$(pwd)"

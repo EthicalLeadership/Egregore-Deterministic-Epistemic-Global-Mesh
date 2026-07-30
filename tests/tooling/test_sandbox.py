@@ -31,8 +31,8 @@ def _run_sandbox(
 ) -> subprocess.CompletedProcess[str]:
     env = {
         **os.environ,
-        "BLACKSTAR_SIGNING_KEY_HEX": signing_key,
-        "BLACKSTAR_SANDBOX_SRC_ROOT": str(cwd),
+        "EGREGORE_SIGNING_KEY_HEX": signing_key,
+        "EGREGORE_SANDBOX_SRC_ROOT": str(cwd),
         "PYTHONPATH": str(Path(__file__).resolve().parents[2] / "src"),
     }
     if extra_env:
@@ -85,7 +85,7 @@ def test_sandbox_strict_mode_fails_missing_manifest(
     pkg_root = tmp_path / "src" / "egregore"
     _write_top_module(pkg_root, "application", "x = 1")
 
-    result = _run_sandbox(tmp_path, signing_key, {"BLACKSTAR_SANDBOX_STRICT": "1"})
+    result = _run_sandbox(tmp_path, signing_key, {"EGREGORE_SANDBOX_STRICT": "1"})
 
     assert result.returncode == 1
     assert "missing egregore-module.json" in result.stderr

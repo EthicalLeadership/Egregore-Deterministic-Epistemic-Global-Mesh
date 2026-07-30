@@ -42,8 +42,8 @@ from anchorum.forensic.core import (
     ingest_artifact,
     to_canonical_json,
 )
-from anchorum.forensic.core.egregore_client import EgregoreModelClient
 from anchorum.forensic.core.canonicalization import EntityExtractor, merge_entities
+from anchorum.forensic.core.egregore_client import EgregoreModelClient
 from anchorum.forensic.core.ingestion import IngestionError, detect_container
 from anchorum.forensic.core.types import (
     AnomalyFinding,

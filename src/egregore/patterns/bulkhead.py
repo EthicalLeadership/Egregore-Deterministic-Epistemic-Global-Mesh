@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# epistemic marker: provenance / auditability
 """Egregore Bulkhead Pattern"""
 
 import threading

@@ -1,40 +1,40 @@
-<div class="bs-panel">
+<div class="eg-panel">
   <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-mono font-semibold text-bs-text-muted uppercase tracking-wider">Key Health</h2>
+    <h2 class="text-sm font-mono font-semibold text-eg-text-muted uppercase tracking-wider">Key Health</h2>
     {% if health.health == KeyHealth.HEALTHY %}
-      <span class="bs-badge bg-bs-unfrozen/20 text-bs-unfrozen">HEALTHY</span>
+      <span class="eg-badge bg-eg-unfrozen/20 text-eg-unfrozen">HEALTHY</span>
     {% elif health.health == KeyHealth.SHORT %}
-      <span class="bs-badge bg-bs-warning/20 text-bs-warning">SHORT</span>
+      <span class="eg-badge bg-eg-warning/20 text-eg-warning">SHORT</span>
     {% elif health.health == KeyHealth.MISSING %}
-      <span class="bs-badge bg-bs-danger/20 text-bs-danger">MISSING</span>
+      <span class="eg-badge bg-eg-danger/20 text-eg-danger">MISSING</span>
     {% else %}
-      <span class="bs-badge bg-bs-warning/20 text-bs-warning">EXPIRED</span>
+      <span class="eg-badge bg-eg-warning/20 text-eg-warning">EXPIRED</span>
     {% endif %}
   </div>
   <div class="space-y-3">
     <div class="flex justify-between text-sm">
-      <span class="text-bs-text-muted">Key length</span>
+      <span class="text-eg-text-muted">Key length</span>
       <span class="font-mono">{{ health.key_length }} / {{ health.min_required }} chars</span>
     </div>
-    <div class="w-full bg-bs-surface-elevated rounded-full h-2">
+    <div class="w-full bg-eg-surface-elevated rounded-full h-2">
       <div class="h-2 rounded-full transition-all duration-500
-        {% if health.health == KeyHealth.HEALTHY %}bg-bs-unfrozen w-full
-        {% elif health.health == KeyHealth.SHORT %}bg-bs-warning" style="width: {{ (health.key_length / health.min_required * 100) | int }}%
-        {% else %}bg-bs-danger w-0{% endif %}">
+        {% if health.health == KeyHealth.HEALTHY %}bg-eg-unfrozen w-full
+        {% elif health.health == KeyHealth.SHORT %}bg-eg-warning" style="width: {{ (health.key_length / health.min_required * 100) | int }}%
+        {% else %}bg-eg-danger w-0{% endif %}">
       </div>
     </div>
     {% if health.last_rotated %}
     <div class="flex justify-between text-sm">
-      <span class="text-bs-text-muted">Last rotated</span>
+      <span class="text-eg-text-muted">Last rotated</span>
       <span class="font-mono text-xs">{{ fmt_ts(health.last_rotated) }}</span>
     </div>
     {% endif %}
     {% if health.rotation_due %}
-    <div class="p-2 rounded bg-bs-danger/10 border border-bs-danger/30 text-xs text-bs-danger">
+    <div class="p-2 rounded bg-eg-danger/10 border border-eg-danger/30 text-xs text-eg-danger">
       ⚠ Key rotation overdue. Rotate immediately.
     </div>
     {% elif health.rotation_days_remaining is not none and health.rotation_days_remaining < 14 %}
-    <div class="p-2 rounded bg-bs-warning/10 border border-bs-warning/30 text-xs text-bs-warning">
+    <div class="p-2 rounded bg-eg-warning/10 border border-eg-warning/30 text-xs text-eg-warning">
       ⚠ Key rotation due in {{ health.rotation_days_remaining }} days.
     </div>
     {% endif %}

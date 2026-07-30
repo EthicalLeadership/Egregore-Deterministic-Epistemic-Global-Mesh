@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Schema Migration Harness
+EGREGORE LAW: Schema Migration Harness
 Idempotent, up-only, version-tracked in schema_migrations table.
 """
 

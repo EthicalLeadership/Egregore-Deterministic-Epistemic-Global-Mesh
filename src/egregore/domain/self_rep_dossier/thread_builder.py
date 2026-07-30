@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Reconstruct email/message threads from artifact metadata."""
 
 from __future__ import annotations
@@ -127,7 +128,7 @@ class ThreadBuilder:
         for thread_id, messages in self.threads.items():
             sorted_messages = sorted(
                 messages,
-                key=lambda m: (m.timestamp or datetime.min.replace(tzinfo=UTC)),
+                key=lambda m: m.timestamp or datetime.min.replace(tzinfo=UTC),
             )
             participants = tuple(sorted({m.actor_id for m in sorted_messages}))
             initiator = sorted_messages[0].actor_id if sorted_messages else ""

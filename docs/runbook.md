@@ -49,9 +49,9 @@ Escalation path: On-call → SRE → Security/Governance → Product/Legal.
 |-------|--------------|--------|
 | `files` | Critical source file missing or empty (`CRITICAL_PATHS`) | Verify repo checkout; restore from git or backup. Do not run with missing files. |
 | `imports` | Python module import failure | Run `PYTHONPATH=src python3 -c "import egregore.domain.models.dossier"` to isolate. |
-| `postgresql` | Postgres adapter smoke test fails | Verify `BLACKSTAR_DB_URL`; run `npm run services:check`. |
-| `kek` | Cluster KEK not readable | Check `secrets/cluster_kek.bin` permissions and `BLACKSTAR_CLUSTER_KEK_PATH`. |
-| `gguf` | Local model catalog unhealthy | Verify `BLACKSTAR_LOCAL_MODEL_MANIFEST` and model files. |
+| `postgresql` | Postgres adapter smoke test fails | Verify `EGREGORE_DB_URL`; run `npm run services:check`. |
+| `kek` | Cluster KEK not readable | Check `secrets/cluster_kek.bin` permissions and `EGREGORE_CLUSTER_KEK_PATH`. |
+| `gguf` | Local model catalog unhealthy | Verify `EGREGORE_LOCAL_MODEL_MANIFEST` and model files. |
 | `ufw` / `fail2ban` | Host hardening disabled | Re-enable via host playbook; treat as SEV2 if exposed. |
 | `backup` | Backup missing or stale > 48h | Trigger manual backup; investigate scheduler. |
 
@@ -93,7 +93,7 @@ Escalation path: On-call → SRE → Security/Governance → Product/Legal.
    - Caller-supplied?
    - `request.timestamp_ns`?
    - Deterministically derived via `derive_timestamp_ns_deterministically()`?
-3. Verify deterministic engine policy is used in tests; real inference path requires `BLACKSTAR_LOCAL_MODEL_MANIFEST`.
+3. Verify deterministic engine policy is used in tests; real inference path requires `EGREGORE_LOCAL_MODEL_MANIFEST`.
 
 **Recovery:**
 

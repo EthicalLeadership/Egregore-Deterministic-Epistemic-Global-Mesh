@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: Unit System
+EGREGORE LAW: Unit System
 DT (Deterministic Throughput) and TU (Temporal Unit) value objects.
 """
 

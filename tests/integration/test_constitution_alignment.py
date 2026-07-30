@@ -42,9 +42,7 @@ pytestmark = pytest.mark.integration
 
 
 def _default_constitution_yaml() -> str:
-    path = (
-        Path(__file__).resolve().parents[2] / "config" / "egregore_constitution.yaml"
-    )
+    path = Path(__file__).resolve().parents[2] / "config" / "egregore_constitution.yaml"
     return path.read_text(encoding="utf-8")
 
 

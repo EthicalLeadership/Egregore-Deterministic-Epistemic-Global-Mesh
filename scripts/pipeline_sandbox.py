@@ -5,9 +5,9 @@ Runs M1 (and M2 when a manifest exists) on every top-level module, produces
 signed per-module bundles, and writes an aggregate signed provenance report.
 
 Environment variables:
-  BLACKSTAR_SIGNING_KEY_HEX  Ed25519 signing key (hex). Falls back to generated test key.
-  BLACKSTAR_SANDBOX_OUT_DIR  Output directory (default: sandbox_outputs).
-  BLACKSTAR_SANDBOX_STRICT   If set, fail any module without egregore-module.json.
+  EGREGORE_SIGNING_KEY_HEX  Ed25519 signing key (hex). Falls back to generated test key.
+  EGREGORE_SANDBOX_OUT_DIR  Output directory (default: sandbox_outputs).
+  EGREGORE_SANDBOX_STRICT   If set, fail any module without egregore-module.json.
 """
 
 from __future__ import annotations
@@ -32,14 +32,14 @@ def _env(key: str, default: str) -> str:
 # The sandbox root defaults to the repository containing this script, but can
 # be overridden for testing or monorepo layouts.
 REPO_ROOT = Path(
-    _env("BLACKSTAR_SANDBOX_SRC_ROOT", str(Path(__file__).resolve().parents[1]))
+    _env("EGREGORE_SANDBOX_SRC_ROOT", str(Path(__file__).resolve().parents[1]))
 ).resolve()
 SRC_ROOT = REPO_ROOT / "src"
 PKG_ROOT = SRC_ROOT / "egregore"
 
 
 def _signing_key() -> str:
-    key = _env("BLACKSTAR_SIGNING_KEY_HEX", "")
+    key = _env("EGREGORE_SIGNING_KEY_HEX", "")
     if key:
         return key
     # Fallback to a deterministic test key so CI never blocks on missing secrets.
@@ -240,9 +240,9 @@ def _write_aggregate_zarc(
 
 
 def main(argv: list[str] | None = None) -> int:
-    out_dir = Path(_env("BLACKSTAR_SANDBOX_OUT_DIR", "sandbox_outputs")).resolve()
+    out_dir = Path(_env("EGREGORE_SANDBOX_OUT_DIR", "sandbox_outputs")).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    strict = bool(_env("BLACKSTAR_SANDBOX_STRICT", ""))
+    strict = bool(_env("EGREGORE_SANDBOX_STRICT", ""))
     signing_key = _signing_key()
 
     modules = _discover_modules()

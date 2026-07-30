@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """
 Sensitivity analysis for the Reproducible Fusion Engine.
 Exposes how decay parameter variations affect report conclusions.

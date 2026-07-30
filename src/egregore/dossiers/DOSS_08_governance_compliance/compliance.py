@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """DOSS-08: Governance & Compliance — CBI-0 checkpoints and policy versioning."""
 
 from __future__ import annotations

@@ -3,7 +3,7 @@
 #
 # Defaults:
 #   Host: 0.0.0.0
-#   Port: 8443 (override with BLACKSTAR_CHAT_PORT)
+#   Port: 8443 (override with EGREGORE_CHAT_PORT)
 #   SSL:  certs/dashboard.key + certs/dashboard.crt
 #
 # The script prevents duplicate uvicorn processes by tracking the PID in
@@ -16,8 +16,8 @@ PID_DIR="${REPO_ROOT}/.pids"
 PID_FILE="${PID_DIR}/chat_server.pid"
 LOG_DIR="${REPO_ROOT}/logs"
 LOG_FILE="${LOG_DIR}/chat_server.log"
-PORT="${BLACKSTAR_CHAT_PORT:-8443}"
-HOST="${BLACKSTAR_CHAT_HOST:-0.0.0.0}"
+PORT="${EGREGORE_CHAT_PORT:-8443}"
+HOST="${EGREGORE_CHAT_HOST:-0.0.0.0}"
 APP="egregore.interface.bootstrap:create_app"
 
 mkdir -p "${PID_DIR}" "${LOG_DIR}"
@@ -49,7 +49,7 @@ fi
 
 # Also refuse to start if something else is already bound to the port.
 if ss -tln 2>/dev/null | grep -qE "\b${PORT}\b"; then
-  echo "ERROR: port ${PORT} is already in use. Choose another with BLACKSTAR_CHAT_PORT." >&2
+  echo "ERROR: port ${PORT} is already in use. Choose another with EGREGORE_CHAT_PORT." >&2
   exit 1
 fi
 

@@ -1,33 +1,33 @@
 /* Egregore Dashboard — Standalone CSS, no build step required */
 :root {
-  --bs-bg: #0a0a0f;
-  --bs-surface: #12121a;
-  --bs-surface-elevated: #1a1a25;
-  --bs-border: #2a2a3a;
-  --bs-text: #e0e0e0;
-  --bs-text-muted: #8888a0;
-  --bs-accent: #00d4aa;
-  --bs-accent-dim: #00a080;
-  --bs-danger: #ff3366;
-  --bs-warning: #ffaa33;
-  --bs-info: #3388ff;
-  --bs-frozen: #00d4ff;
-  --bs-unfrozen: #00d4aa;
-  --bs-normal: #8888a0;
+  --eg-bg: #0a0a0f;
+  --eg-surface: #12121a;
+  --eg-surface-elevated: #1a1a25;
+  --eg-border: #2a2a3a;
+  --eg-text: #e0e0e0;
+  --eg-text-muted: #8888a0;
+  --eg-accent: #00d4aa;
+  --eg-accent-dim: #00a080;
+  --eg-danger: #ff3366;
+  --eg-warning: #ffaa33;
+  --eg-info: #3388ff;
+  --eg-frozen: #00d4ff;
+  --eg-unfrozen: #00d4aa;
+  --eg-normal: #8888a0;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bs-bg);
-  color: var(--bs-text);
+  background-color: var(--eg-bg);
+  color: var(--eg-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bs-surface); }
-::-webkit-scrollbar-thumb { background: var(--bs-border); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--bs-text-muted); }
+::-webkit-scrollbar-track { background: var(--eg-surface); }
+::-webkit-scrollbar-thumb { background: var(--eg-border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--eg-text-muted); }
 
 .min-h-screen { min-height: 100vh; }
 .max-w-7xl { max-width: 80rem; }
@@ -68,19 +68,19 @@ body {
 .tracking-wider { letter-spacing: 0.05em; }
 .uppercase { text-transform: uppercase; }
 
-.bg-bs-bg { background-color: var(--bs-bg); }
-.bg-bs-surface { background-color: var(--bs-surface); }
-.bg-bs-surface-elevated { background-color: var(--bs-surface-elevated); }
-.border-bs-border { border-color: var(--bs-border); }
-.text-bs-text { color: var(--bs-text); }
-.text-bs-text-muted { color: var(--bs-text-muted); }
-.text-bs-accent { color: var(--bs-accent); }
-.text-bs-danger { color: var(--bs-danger); }
-.text-bs-warning { color: var(--bs-warning); }
-.text-bs-info { color: var(--bs-info); }
-.text-bs-frozen { color: var(--bs-frozen); }
-.text-bs-unfrozen { color: var(--bs-unfrozen); }
-.text-bs-normal { color: var(--bs-normal); }
+.bg-eg-bg { background-color: var(--eg-bg); }
+.bg-eg-surface { background-color: var(--eg-surface); }
+.bg-eg-surface-elevated { background-color: var(--eg-surface-elevated); }
+.border-eg-border { border-color: var(--eg-border); }
+.text-eg-text { color: var(--eg-text); }
+.text-eg-text-muted { color: var(--eg-text-muted); }
+.text-eg-accent { color: var(--eg-accent); }
+.text-eg-danger { color: var(--eg-danger); }
+.text-eg-warning { color: var(--eg-warning); }
+.text-eg-info { color: var(--eg-info); }
+.text-eg-frozen { color: var(--eg-frozen); }
+.text-eg-unfrozen { color: var(--eg-unfrozen); }
+.text-eg-normal { color: var(--eg-normal); }
 
 .border { border-width: 1px; border-style: solid; }
 .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
@@ -107,28 +107,28 @@ body {
 .max-w-xs { max-width: 20rem; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.bs-panel {
-  background-color: var(--bs-surface);
-  border: 1px solid var(--bs-border);
+.eg-panel {
+  background-color: var(--eg-surface);
+  border: 1px solid var(--eg-border);
   border-radius: 0.5rem;
   padding: 1rem;
 }
-.bs-input {
+.eg-input {
   width: 100%;
-  background-color: var(--bs-surface);
-  border: 1px solid var(--bs-border);
+  background-color: var(--eg-surface);
+  border: 1px solid var(--eg-border);
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
-  color: var(--bs-text);
+  color: var(--eg-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.875rem;
 }
-.bs-input:focus {
+.eg-input:focus {
   outline: none;
-  border-color: var(--bs-accent);
+  border-color: var(--eg-accent);
   box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
 }
-.bs-btn {
+.eg-btn {
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   font-weight: 500;
@@ -137,27 +137,27 @@ body {
   border: none;
   transition: background-color 0.15s;
 }
-.bs-btn:disabled {
+.eg-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.bs-btn-danger {
-  background-color: var(--bs-danger);
+.eg-btn-danger {
+  background-color: var(--eg-danger);
   color: white;
 }
-.bs-btn-danger:hover:not(:disabled) { background-color: #e62e5c; }
-.bs-btn-warning {
-  background-color: var(--bs-warning);
-  color: var(--bs-bg);
+.eg-btn-danger:hover:not(:disabled) { background-color: #e62e5c; }
+.eg-btn-warning {
+  background-color: var(--eg-warning);
+  color: var(--eg-bg);
 }
-.bs-btn-warning:hover:not(:disabled) { background-color: #e6992e; }
-.bs-btn-secondary {
-  background-color: var(--bs-surface-elevated);
-  color: var(--bs-text);
-  border: 1px solid var(--bs-border);
+.eg-btn-warning:hover:not(:disabled) { background-color: #e6992e; }
+.eg-btn-secondary {
+  background-color: var(--eg-surface-elevated);
+  color: var(--eg-text);
+  border: 1px solid var(--eg-border);
 }
-.bs-btn-secondary:hover:not(:disabled) { background-color: var(--bs-border); }
-.bs-badge {
+.eg-btn-secondary:hover:not(:disabled) { background-color: var(--eg-border); }
+.eg-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.625rem;
@@ -165,23 +165,23 @@ body {
   font-size: 0.75rem;
   font-weight: 500;
 }
-.bs-table {
+.eg-table {
   width: 100%;
   text-align: left;
   font-size: 0.875rem;
   border-collapse: collapse;
 }
-.bs-table th,
-.bs-table td {
+.eg-table th,
+.eg-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--bs-border);
+  border-bottom: 1px solid var(--eg-border);
 }
-.bs-table th {
-  color: var(--bs-text-muted);
+.eg-table th {
+  color: var(--eg-text-muted);
   font-weight: 500;
 }
-.bs-table tbody tr:last-child td { border-bottom: none; }
-.bs-table tbody tr:hover { background-color: var(--bs-surface-elevated); }
+.eg-table tbody tr:last-child td { border-bottom: none; }
+.eg-table tbody tr:hover { background-color: var(--eg-surface-elevated); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }

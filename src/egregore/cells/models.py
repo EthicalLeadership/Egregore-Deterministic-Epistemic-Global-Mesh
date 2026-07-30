@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Pydantic models for cell specifications.
 
 The schema is intentionally backward-compatible with the existing BCCBP protocol

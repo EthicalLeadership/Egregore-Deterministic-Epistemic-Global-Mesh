@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Interface Synod Dashboard — read-only governance window for sandbox output.
 
 The dashboard consumes the cryptographically signed aggregate report produced by
@@ -5,7 +6,7 @@ The dashboard consumes the cryptographically signed aggregate report produced by
 Conclave, and Interface Synod. It does not mutate Plane-1 state.
 
 Environment variables:
-  BLACKSTAR_SANDBOX_OUTPUT  Directory containing aggregate_report.json
+  EGREGORE_SANDBOX_OUTPUT  Directory containing aggregate_report.json
                             (default: sandbox_outputs).
 """
 
@@ -33,9 +34,9 @@ if STATIC_DIR.is_dir():
 
 
 def _report_path() -> Path:
-    """Return the aggregate report path, respecting BLACKSTAR_SANDBOX_OUTPUT."""
+    """Return the aggregate report path, respecting EGREGORE_SANDBOX_OUTPUT."""
     out_dir = Path(
-        os.environ.get("BLACKSTAR_SANDBOX_OUTPUT", "sandbox_outputs")
+        os.environ.get("EGREGORE_SANDBOX_OUTPUT", "sandbox_outputs")
     ).resolve()
     return out_dir / "aggregate_report.json"
 
@@ -45,7 +46,7 @@ def _load_report() -> dict[str, Any]:
     path = _report_path()
     if not path.is_file():
         raise FileNotFoundError(
-            f"Aggregate report not found at {path}. " "Run 'make sandbox' first."
+            f"Aggregate report not found at {path}. Run 'make sandbox' first."
         )
     with path.open(encoding="utf-8") as f:
         return json.load(f)

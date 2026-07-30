@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 class RegistryValidationError(ValueError):
     """Raised when projection registry validation fails."""
 

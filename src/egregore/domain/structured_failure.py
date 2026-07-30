@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """StructuredFailure - deterministic, auditable failure representation."""
 
 import uuid

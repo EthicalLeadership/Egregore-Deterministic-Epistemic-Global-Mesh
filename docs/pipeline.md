@@ -178,12 +178,12 @@ A module passes the standard class when:
 
 #### Configuration
 
-- `BLACKSTAR_SIGNING_KEY_HEX` — Ed25519 key for `.zarc` signing. Falls back to a
+- `EGREGORE_SIGNING_KEY_HEX` — Ed25519 key for `.zarc` signing. Falls back to a
   deterministic test key when unset (e.g., PR builds).
-- `BLACKSTAR_SANDBOX_STRICT=1` — fail if any module lacks `egregore-module.json`.
+- `EGREGORE_SANDBOX_STRICT=1` — fail if any module lacks `egregore-module.json`.
   Useful for release branches.
-- `BLACKSTAR_SANDBOX_OUT_DIR` — output directory (default: `sandbox_outputs`).
-- `BLACKSTAR_SANDBOX_SRC_ROOT` — source root for monorepo/testing (default: repo root).
+- `EGREGORE_SANDBOX_OUT_DIR` — output directory (default: `sandbox_outputs`).
+- `EGREGORE_SANDBOX_SRC_ROOT` — source root for monorepo/testing (default: repo root).
 
 #### Interface Synod Dashboard
 
@@ -208,7 +208,7 @@ You can also override the preferred port:
 make dashboard DASHBOARD_PORT=8765
 ```
 
-The report path can be overridden with `BLACKSTAR_SANDBOX_OUTPUT`.
+The report path can be overridden with `EGREGORE_SANDBOX_OUTPUT`.
 
 Dashboard features:
 
@@ -261,11 +261,11 @@ sudo systemctl status egregore-api
 
 Environment variables required:
 
-- `BLACKSTAR_DB_URL`
+- `EGREGORE_DB_URL`
 - `REDIS_URL`
 - `NATS_URL`
-- `BLACKSTAR_SIGNING_KEY_PATH`
-- `BLACKSTAR_CLUSTER_KEK_PATH`
+- `EGREGORE_SIGNING_KEY_PATH`
+- `EGREGORE_CLUSTER_KEK_PATH`
 - `NODE_ID`
 
 #### Client Red Dart (Docker)

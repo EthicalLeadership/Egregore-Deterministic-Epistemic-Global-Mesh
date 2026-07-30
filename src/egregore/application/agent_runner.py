@@ -53,7 +53,7 @@ class AgentRunner:
         timeout = spec.timeout or self.default_timeout
 
         env = os.environ.copy()
-        env["BLACKSTAR_AGENT_CONTEXT"] = canonical_dumps(context, default=str)
+        env["EGREGORE_AGENT_CONTEXT"] = canonical_dumps(context, default=str)
         for key in _FORWARDED_ENV_KEYS:
             if key in os.environ:
                 env[key] = os.environ[key]

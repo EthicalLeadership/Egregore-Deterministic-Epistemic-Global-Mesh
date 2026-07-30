@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: Causal Vector
+EGREGORE LAW: Causal Vector
 Vector-clock-like ordering for ExecutionBlocks and PolicyDecisions.
 Pure math — no I/O.
 """

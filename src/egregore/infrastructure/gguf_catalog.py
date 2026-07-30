@@ -12,7 +12,7 @@ from pathlib import Path
 
 MODELS_ROOT = Path(
     os.environ.get(
-        "BLACKSTAR_MODELS_ROOT",
+        "EGREGORE_MODELS_ROOT",
         os.environ.get("MODELS_DIR", "/opt/egregore/models"),
     )
 )
@@ -76,7 +76,7 @@ class GGUFCatalog:
     def register(self, entry: GGUFEntry) -> None:
         target_dir = GGUF_ROOT / entry.tier
         target_dir / entry.filename
-        entry.installed_at = datetime.now(UTC).isoformat()
+        entry.installed_at = datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat()
         entry.last_verified = entry.installed_at
         self._entries[entry.model_id] = entry
         self._save()
@@ -104,7 +104,7 @@ class GGUFCatalog:
                     h.update(chunk)
             if h.hexdigest() == entry.sha256:
                 results[model_id] = "VERIFIED"
-                entry.last_verified = datetime.now(UTC).isoformat()
+                entry.last_verified = datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat()
             else:
                 results[model_id] = "CORRUPT"
         with contextlib.suppress(OSError):

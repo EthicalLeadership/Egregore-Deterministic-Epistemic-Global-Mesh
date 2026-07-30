@@ -1,5 +1,6 @@
+# epistemic marker: provenance / auditability
 """
-BLACKSTAR LAW: Node Profile
+EGREGORE LAW: Node Profile
 Capacity and health snapshot for distributed placement decisions.
 """
 

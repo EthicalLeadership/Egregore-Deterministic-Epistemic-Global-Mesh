@@ -133,7 +133,7 @@ class DashboardService:
             key_health=self._check_key_health(),
             ci_health=self._check_ci_health(),
             node_id=self._node_id,
-            timestamp=datetime.now(UTC),
+            timestamp=datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC),
         )
 
     def _resolve_status(self) -> SystemStatus:
@@ -180,7 +180,7 @@ class DashboardService:
                         last_rotated_str.replace("Z", "+00:00")
                     )
         else:
-            for env_name in ("BLACKSTAR_API_KEY", "BS_API_KEY", "API_KEY"):
+            for env_name in ("EGREGORE_API_KEY", "EG_API_KEY", "API_KEY"):
                 val = os.environ.get(env_name)
                 if val:
                     key_len = len(val)
@@ -196,7 +196,7 @@ class DashboardService:
         rotation_due = False
         days_remaining = None
         if last_rotated:
-            age = (datetime.now(UTC) - last_rotated).days
+            age = (datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC) - last_rotated).days
             days_remaining = max(0, self._KEY_ROTATION_DAYS - age)
             rotation_due = age >= self._KEY_ROTATION_DAYS
 

@@ -15,8 +15,8 @@ ENV_FILE = REPO_ROOT / ".env"
 PID_DIR = REPO_ROOT / ".pids"
 LOG_DIR = REPO_ROOT / "logs"
 
-APP_HOST = os.environ.get("BLACKSTAR_HOST", "0.0.0.0")
-APP_PORT = os.environ.get("BLACKSTAR_PORT", "8443")
+APP_HOST = os.environ.get("EGREGORE_HOST", "0.0.0.0")
+APP_PORT = os.environ.get("EGREGORE_PORT", "8443")
 
 COLOR_OFF = "#2d2d2d"
 COLOR_ON = "#00c853"
@@ -39,7 +39,7 @@ class EgregoreGUI:
         self._log("Egregore GUI ready. Click the switch to power on.")
 
     def _build_ui(self):
-        tk.Label(self.root, text="BLACKSTAR", font=("Helvetica", 24, "bold"), fg=COLOR_FG, bg=COLOR_BG).pack(pady=(20, 5))
+        tk.Label(self.root, text="EGREGORE", font=("Helvetica", 24, "bold"), fg=COLOR_FG, bg=COLOR_BG).pack(pady=(20, 5))
         tk.Label(self.root, text="Deterministic Runtime — SEL-X Chain Verification", font=("Helvetica", 10), fg="#888888", bg=COLOR_BG).pack(pady=(0, 20))
 
         switch_frame = tk.Frame(self.root, bg=COLOR_BG)
@@ -154,17 +154,17 @@ class EgregoreGUI:
                     if line and not line.startswith("#") and "=" in line:
                         key, val = line.split("=", 1)
                         os.environ[key] = val
-        if not os.environ.get("BLACKSTAR_ZARC_SIGNING_KEY_HEX"):
+        if not os.environ.get("EGREGORE_ZARC_SIGNING_KEY_HEX"):
             key_file = REPO_ROOT / "secrets" / "signing_key.pem"
             if key_file.exists():
-                os.environ["BLACKSTAR_ZARC_SIGNING_KEY_HEX"] = key_file.read_text().strip()
-                self._log("Auto-exported BLACKSTAR_ZARC_SIGNING_KEY_HEX")
-        if not os.environ.get("BLACKSTAR_API_KEYS"):
+                os.environ["EGREGORE_ZARC_SIGNING_KEY_HEX"] = key_file.read_text().strip()
+                self._log("Auto-exported EGREGORE_ZARC_SIGNING_KEY_HEX")
+        if not os.environ.get("EGREGORE_API_KEYS"):
             key_file = REPO_ROOT / "secrets" / "signing_key.pem"
             if key_file.exists():
                 key = key_file.read_text().strip()
-                os.environ["BLACKSTAR_API_KEYS"] = f"{key}:default:admin:admin"
-                self._log("Auto-exported BLACKSTAR_API_KEYS")
+                os.environ["EGREGORE_API_KEYS"] = f"{key}:default:admin:admin"
+                self._log("Auto-exported EGREGORE_API_KEYS")
         src_path = str(REPO_ROOT / "src")
         if src_path not in os.environ.get("PYTHONPATH", ""):
             os.environ["PYTHONPATH"] = f"{src_path}:{os.environ.get('PYTHONPATH', '')}"
@@ -280,10 +280,10 @@ class EgregoreGUI:
         api_key_file = REPO_ROOT / "secrets" / "api_key.hex"
         if api_key_file.exists():
             api_key = api_key_file.read_text().strip()
-            env["BLACKSTAR_API_KEYS"] = f"{api_key}:test:admin:admin"
+            env["EGREGORE_API_KEYS"] = f"{api_key}:test:admin:admin"
         signing_key_file = REPO_ROOT / "secrets" / "signing_key.pem"
         if signing_key_file.exists():
-            env["BLACKSTAR_ZARC_SIGNING_KEY_HEX"] = signing_key_file.read_text().strip()
+            env["EGREGORE_ZARC_SIGNING_KEY_HEX"] = signing_key_file.read_text().strip()
         log_file = LOG_DIR / "app.log"
         with open(log_file, "a") as f:
             f.write(f"\n=== Startup {time.strftime('%Y-%m-%d %H:%M:%S')} ===\n")

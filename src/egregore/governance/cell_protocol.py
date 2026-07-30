@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """BCCBP Stage-Gate Controller.
 
 Enforces the 8-stage artifact protocol for every cell in the University.
@@ -20,7 +21,9 @@ import yaml  # type: ignore[import-untyped]
 
 from egregore.shared.canonical import canonical_dumps, canonical_loads
 
-DB_PATH = Path(os.environ.get("BLACKSTAR_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
+DB_PATH = (
+    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
+)
 STAGES = ["plan", "draw", "layout", "erect", "build", "finish", "inspect", "deliver"]
 
 

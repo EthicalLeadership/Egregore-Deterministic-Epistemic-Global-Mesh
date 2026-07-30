@@ -3,7 +3,7 @@ set -euo pipefail
 
 ERRORS=0
 
-echo "=== BLACKSTAR STRUCTURAL HEALTH VERIFICATION ==="
+echo "=== EGREGORE STRUCTURAL HEALTH VERIFICATION ==="
 
 # 1. Check all required files exist
 for f in pyproject.toml Dockerfile docker-compose.yml .env.example .gitignore .dockerignore package.json frontend/package.json; do

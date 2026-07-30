@@ -1,7 +1,7 @@
 cd ~/egregore
 cat > bcf_pioneer1_real.py << 'EOF'
 #!/usr/bin/env python3
-# BLACKSTAR BCF — PIONEER 1 REAL HARDWARE
+# EGREGORE BCF — PIONEER 1 REAL HARDWARE
 import threading, time, random, numpy as np
 from collections import deque
 from dataclasses import dataclass, field
@@ -204,7 +204,7 @@ class CrossFabricArbitrator:
             for n in self.tokens: self.tokens[n] = min(100.0, self.tokens[n] + 10.0)
 
 def main():
-    print("=" * 70); print("BLACKSTAR BCF — PIONEER 1"); print("=" * 70)
+    print("=" * 70); print("EGREGORE BCF — PIONEER 1"); print("=" * 70)
     capacity = FourPillarCapacity(**REAL_CAPACITY)
     print(f"[4P] DT={capacity.dt_total} (CPU={capacity.dt_cpu}, GPU={capacity.dt_gpu}) TU={capacity.tu_total}")
 

@@ -179,7 +179,7 @@ async def create_invite(
         issued_to=req.issued_to,
         role=req.role,
         vertical=verticals[0] if verticals else None,
-        expires_at=int(datetime.datetime.now(datetime.UTC).timestamp() * 1e9)
+        expires_at=time.time_ns()
         + req.expires_in_seconds * int(1e9),
     )
     # Persist via SQLite repository if available.
@@ -219,7 +219,7 @@ async def signup(
 
     if not invite or invite.status != "pending":
         raise HTTPException(status_code=400, detail="Invalid or used invite code")
-    now = int(datetime.datetime.now(datetime.UTC).timestamp() * 1e9)
+    now = time.time_ns()
     if invite.expires_at < now:
         raise HTTPException(status_code=400, detail="Invite expired")
 

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Causal Policy Engine
+EGREGORE LAW: Causal Policy Engine
 Enforces causal ordering before evaluating policy decisions.
 """
 

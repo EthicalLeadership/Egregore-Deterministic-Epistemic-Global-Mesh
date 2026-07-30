@@ -138,7 +138,7 @@ class IntegrityWatcher:
         Returns an IntegrityReport; if a freeze was triggered, the report
         contains forensic details about the first failure.
         """
-        checked_at = datetime.now(UTC)
+        checked_at = datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC)
         blocks_passed = 0
         blocks_failed = 0
         freeze_triggered = False

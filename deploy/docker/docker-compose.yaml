@@ -6,7 +6,7 @@ services:
       - 127.0.0.1:8000:9000
     environment:
       - PYTHONPATH=/app:/app/api
-      - BLACKSTAR_ENV=${BLACKSTAR_ENV:?BLACKSTAR_ENV is required}
+      - EGREGORE_ENV=${EGREGORE_ENV:?EGREGORE_ENV is required}
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
       # cspell:disable-next-line
       - DB_DSN=postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:?POSTGRES_DB is required}

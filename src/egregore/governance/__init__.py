@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 from .cbi0_governance import (
     AuditResult,
     CBI0BlockedError,

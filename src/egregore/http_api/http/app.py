@@ -35,6 +35,7 @@ def create_app(build_container: bool = True) -> Any:
     for mod_name in list(sys.modules.keys()):
         if mod_name.startswith("egregore.http_api.http.v1."):
             del sys.modules[mod_name]
+    from egregore.ems.proxy import build_proxy_router
     from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
     from egregore.http_api.http.v1.auth import router as auth_router
     from egregore.http_api.http.v1.chat import router as chat_router
@@ -82,7 +83,7 @@ def create_app(build_container: bool = True) -> Any:
         except Exception as exc:  # noqa: BLE001
             warnings.warn(
                 f"Failed to bootstrap EgregoreContainer: {exc}. "
-                "Chat endpoints will fall back to a default Ollama client.",
+                "Chat endpoints will fall back to Egregore EMS.",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -102,6 +103,26 @@ def create_app(build_container: bool = True) -> Any:
     for router in _routers:
         if router is not None:
             app.include_router(router)
+
+    # EMS Proxy router — unified model inference endpoint (sovereign Egregore backend).
+    # When the main Egregore process already loaded a native CoderBackend, share it
+    # with the proxy so only one copy of the model sits in GPU memory.
+    try:
+        from egregore.ems.registry import build_registry_from_env
+
+        ems_registry = build_registry_from_env()
+        native_backend = None
+        if app.state.inference_service is not None:
+            native_backend = app.state.inference_service.clients.get("egregore")
+        ems_proxy_router = build_proxy_router(ems_registry, native_backend=native_backend)
+        app.include_router(ems_proxy_router)
+    except Exception as exc:  # noqa: BLE001
+        warnings.warn(
+            f"Failed to mount EMS proxy router: {exc}. "
+            "Unified inference endpoint will not be available.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     # RAG query router for the Legal Dossier knowledge base.
     if rag_router is not None:
@@ -136,10 +157,10 @@ def create_app(build_container: bool = True) -> Any:
     from fastapi.staticfiles import StaticFiles
 
     # Serve a specific PDF from an external on-disk path.
-    # Override with BLACKSTAR_NETWORK_ISOLATION_PDF_PATH env var.
+    # Override with EGREGORE_NETWORK_ISOLATION_PDF_PATH env var.
     network_isolation_pdf_path = Path(
         os.environ.get(
-            "BLACKSTAR_NETWORK_ISOLATION_PDF_PATH",
+            "EGREGORE_NETWORK_ISOLATION_PDF_PATH",
             os.environ.get("DOWNLOADS_DIR", "/opt/egregore/downloads")
             + "/network_isolation_hardening.pdf",
         )
@@ -164,7 +185,7 @@ def create_app(build_container: bool = True) -> Any:
     # NOTE: This route must be registered *before* mounting StaticFiles at "/services",
     # otherwise the StaticFiles mount shadows this endpoint.
     repo_root = Path(
-        os.environ.get("BLACKSTAR_REPO_ROOT", Path(__file__).resolve().parents[4])
+        os.environ.get("EGREGORE_REPO_ROOT", Path(__file__).resolve().parents[4])
     )
     deploy_dir = repo_root / "static"
     if deploy_dir.exists():
@@ -195,7 +216,7 @@ def create_app(build_container: bool = True) -> Any:
         checks: dict[str, Any] = {}
         healthy = True
 
-        db_url = os.environ.get("BLACKSTAR_DB_URL", "")
+        db_url = os.environ.get("EGREGORE_DB_URL", "")
         if db_url.startswith("postgresql") or db_url.startswith("postgres+"):
             try:
                 import asyncpg

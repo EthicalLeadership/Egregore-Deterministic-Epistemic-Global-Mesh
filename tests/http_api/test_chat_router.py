@@ -16,7 +16,7 @@ VALID_KEY = "a" * 64
 
 @pytest.fixture(autouse=True)
 def set_api_key(monkeypatch):
-    monkeypatch.setenv("BLACKSTAR_API_KEYS", f"{VALID_KEY}:default:user:admin")
+    monkeypatch.setenv("EGREGORE_API_KEYS", f"{VALID_KEY}:default:user:admin")
 
 
 @pytest.fixture

@@ -25,8 +25,8 @@ Usage (FastAPI):
 
 Architecture notes:
   - Lives in http_api/middleware/ alongside the old IdentityMiddleware
-  - Reads keys from BLACKSTAR_API_KEYS env var (comma-separated) or
-    BLACKSTAR_API_KEYS_PATH file (JSON)
+  - Reads keys from EGREGORE_API_KEYS env var (comma-separated) or
+    EGREGORE_API_KEYS_PATH file (JSON)
   - No in-memory mutable state — keys are loaded once at init
   - Fail-closed: if no keys are configured, ALL requests are rejected
 """
@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 def _load_dotenv_api_keys() -> dict[str, tuple[str, str, str]]:
-    """Read BLACKSTAR_API_KEYS directly from the repo .env file.
+    """Read EGREGORE_API_KEYS directly from the repo .env file.
 
     This is a fallback used when the process environment has stale/injected
     values (e.g. from a parent shell or runtime wrapper) and .env is the
@@ -70,7 +70,7 @@ def _load_dotenv_api_keys() -> dict[str, tuple[str, str, str]]:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, _, value = line.partition("=")
-            if key.strip() != "BLACKSTAR_API_KEYS":
+            if key.strip() != "EGREGORE_API_KEYS":
                 continue
             value = value.strip().strip("\"'")
             for entry in value.split(","):
@@ -93,8 +93,8 @@ def _load_api_keys() -> dict[str, tuple[str, str, str]]:
     """Load API keys from env or file.
 
     Precedence:
-      1. BLACKSTAR_API_KEYS env var (allows tests and containers to override)
-      2. BLACKSTAR_API_KEYS_PATH JSON file
+      1. EGREGORE_API_KEYS env var (allows tests and containers to override)
+      2. EGREGORE_API_KEYS_PATH JSON file
       3. Repo .env file (fallback for local/dev deployments)
 
     Returns: {api_key_hex: (tenant_id, user_id, role)}
@@ -102,7 +102,7 @@ def _load_api_keys() -> dict[str, tuple[str, str, str]]:
     keys: dict[str, tuple[str, str, str]] = {}
 
     # Source 1: Env var (comma-separated key:tenant:user:role)
-    env_keys = os.environ.get("BLACKSTAR_API_KEYS", "")
+    env_keys = os.environ.get("EGREGORE_API_KEYS", "")
     if env_keys:
         for entry in env_keys.split(","):
             parts = entry.strip().split(":")
@@ -115,7 +115,7 @@ def _load_api_keys() -> dict[str, tuple[str, str, str]]:
         logger.info(f"[APIKeyMiddleware] Loaded {len(keys)} keys from env")
 
     # Source 2: JSON file path
-    keys_path = os.environ.get("BLACKSTAR_API_KEYS_PATH", "")
+    keys_path = os.environ.get("EGREGORE_API_KEYS_PATH", "")
     if keys_path and os.path.exists(keys_path):
         before = len(keys)
         with open(keys_path) as f:

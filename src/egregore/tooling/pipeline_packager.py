@@ -33,7 +33,7 @@ def _load_zarc_sink() -> Any:
 
 def resolve_signing_key(signing_key_hex: str | None) -> str:
     """Return a signing key, falling back to env or a generated test key."""
-    key = signing_key_hex or os.environ.get("BLACKSTAR_SIGNING_KEY_HEX")
+    key = signing_key_hex or os.environ.get("EGREGORE_SIGNING_KEY_HEX")
     if key:
         return key
     signer = _load_signer_module()

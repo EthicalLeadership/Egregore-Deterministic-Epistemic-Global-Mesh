@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: Distributed Scheduler Test Matrix
+EGREGORE LAW: Distributed Scheduler Test Matrix
 """
 
 from __future__ import annotations

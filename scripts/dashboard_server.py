@@ -8,7 +8,7 @@ URL before starting.
 Environment variables:
   DASHBOARD_HOST  Bind host (default: 127.0.0.1).
   DASHBOARD_PORT  Preferred port (default: 8000).
-  BLACKSTAR_SANDBOX_OUTPUT  Directory containing aggregate_report.json.
+  EGREGORE_SANDBOX_OUTPUT  Directory containing aggregate_report.json.
 """
 
 from __future__ import annotations
@@ -45,11 +45,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--sandbox-output",
-        default=os.environ.get("BLACKSTAR_SANDBOX_OUTPUT", "sandbox_outputs"),
+        default=os.environ.get("EGREGORE_SANDBOX_OUTPUT", "sandbox_outputs"),
     )
     args = parser.parse_args(argv)
 
-    os.environ.setdefault("BLACKSTAR_SANDBOX_OUTPUT", args.sandbox_output)
+    os.environ.setdefault("EGREGORE_SANDBOX_OUTPUT", args.sandbox_output)
 
     port = _find_free_port(args.host, args.port)
     if port != args.port:

@@ -56,7 +56,7 @@ def test_registry_empty_when_directory_missing(agent_dir: Path) -> None:
 def test_registry_uses_env_override(agent_dir: Path, monkeypatch) -> None:
     agent_dir.mkdir()
     _make_executable(agent_dir / "env-agent")
-    monkeypatch.setenv("BLACKSTAR_AGENTS_DIR", str(agent_dir))
+    monkeypatch.setenv("EGREGORE_AGENTS_DIR", str(agent_dir))
 
     registry = AgentRegistry()
     assert registry.get("env-agent") is not None

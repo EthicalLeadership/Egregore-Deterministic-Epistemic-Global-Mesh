@@ -1,3 +1,4 @@
+# epistemic marker: provenance / auditability
 """Deterministic verification tools for cell stages.
 
 Tools are plain callables registered in ``TOOLS`` and invoked by the executor

@@ -1,5 +1,5 @@
 """
-BLACKSTAR LAW: PostgreSQL Transactional Persistence
+EGREGORE LAW: PostgreSQL Transactional Persistence
 Production-grade Plane 1 adapter. Same contract as SQLite, hardened for concurrency.
 """
 
@@ -59,7 +59,7 @@ class PostgreSQLTransactionalPersistence(ITransactionalPersistence):
 
         zarc_path = os.path.join(
             self._zarc_dir,
-            f"{os.environ.get('BLACKSTAR_NODE_ID', 'unknown')}.zarc",
+            f"{os.environ.get('EGREGORE_NODE_ID', 'unknown')}.zarc",
         )
         self._provenance = Provenance(
             zarc_path,

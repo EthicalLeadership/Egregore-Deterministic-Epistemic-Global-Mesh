@@ -6,16 +6,16 @@ from pathlib import Path
 
 
 def _tmp_dir() -> Path:
-    base = os.environ.get("BLACKSTAR_TMP_DIR", "tmp")
+    base = os.environ.get("EGREGORE_TMP_DIR", "tmp")
     p = Path(base)
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 def _zarc_signing_key_hex() -> str:
-    key = os.environ.get("BLACKSTAR_ZARC_SIGNING_KEY_HEX")
+    key = os.environ.get("EGREGORE_ZARC_SIGNING_KEY_HEX")
     if not key:
-        raise RuntimeError("BLACKSTAR_ZARC_SIGNING_KEY_HEX is not set")
+        raise RuntimeError("EGREGORE_ZARC_SIGNING_KEY_HEX is not set")
     return key
 
 

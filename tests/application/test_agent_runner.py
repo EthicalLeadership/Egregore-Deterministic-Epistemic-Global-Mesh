@@ -45,7 +45,7 @@ def test_runner_forwards_context_env(runner: AgentRunner, tmp_path: Path) -> Non
     agent_dir = tmp_path / "agents"
     agent_dir.mkdir()
     agent_path = agent_dir / "context-agent"
-    agent_path.write_text('#!/bin/sh\necho "$BLACKSTAR_AGENT_CONTEXT"\n')
+    agent_path.write_text('#!/bin/sh\necho "$EGREGORE_AGENT_CONTEXT"\n')
     agent_path.chmod(agent_path.stat().st_mode | stat.S_IXUSR)
 
     registry = AgentRegistry(agent_dir)

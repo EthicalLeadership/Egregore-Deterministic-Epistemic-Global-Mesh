@@ -410,10 +410,7 @@ class M2Checker:
             Path(__file__).resolve().parents[2]
             / "egregore"
             / (rel_path.with_suffix(".py")),
-            Path(__file__).resolve().parents[2]
-            / "egregore"
-            / rel_path
-            / "__init__.py",
+            Path(__file__).resolve().parents[2] / "egregore" / rel_path / "__init__.py",
         ]
         for candidate in candidates:
             if candidate.exists():

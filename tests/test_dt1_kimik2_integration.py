@@ -19,7 +19,7 @@ def test_validate_kimik2_artifacts_pass(tmp_path):
     model_dir.mkdir()
     (model_dir / "model.safetensors.index.json").write_text("{}")
     for i in range(61):
-        (model_dir / f"model-{i+1}-of-61.safetensors").write_text("")
+        (model_dir / f"model-{i + 1}-of-61.safetensors").write_text("")
     (model_dir / "config.json").write_text("{}")
     (model_dir / "tokenizer_config.json").write_text("{}")
     # Should not raise
@@ -31,7 +31,7 @@ def test_validate_kimik2_artifacts_fail_missing_shard(tmp_path):
     model_dir.mkdir()
     (model_dir / "model.safetensors.index.json").write_text("{}")
     for i in range(60):
-        (model_dir / f"model-{i+1}-of-61.safetensors").write_text("")
+        (model_dir / f"model-{i + 1}-of-61.safetensors").write_text("")
     (model_dir / "config.json").write_text("{}")
     (model_dir / "tokenizer_config.json").write_text("{}")
     with pytest.raises(Kimik2LoaderError):
@@ -43,7 +43,7 @@ def test_loader_init_fail_corrupt_index(tmp_path):
     model_dir.mkdir()
     (model_dir / "model.safetensors.index.json").write_text("notjson")
     for i in range(61):
-        (model_dir / f"model-{i+1}-of-61.safetensors").write_text("")
+        (model_dir / f"model-{i + 1}-of-61.safetensors").write_text("")
     (model_dir / "config.json").write_text("{}")
     (model_dir / "tokenizer_config.json").write_text("{}")
     with pytest.raises(Kimik2LoaderError):

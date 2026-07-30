@@ -52,8 +52,8 @@ COPY --from=builder --chown=egregore:egregore /root/.local /home/egregore/.local
 
 ENV PYTHONPATH=/home/egregore/.local/lib/python3.12/site-packages
 ENV PATH=/home/egregore/.local/bin:$PATH
-ENV BLACKSTAR_REPO_ROOT=/app
-ENV BLACKSTAR_TMP_DIR=/app/tmp
+ENV EGREGORE_REPO_ROOT=/app
+ENV EGREGORE_TMP_DIR=/app/tmp
 
 WORKDIR /app
 USER egregore

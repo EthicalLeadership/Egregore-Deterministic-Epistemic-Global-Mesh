@@ -48,9 +48,9 @@ _entropy: EntropyExchange | None = None
 def _get_constitution() -> Constitution:
     global _constitution
     if _constitution is None:
-        cfg_path = os.environ.get("BLACKSTAR_CONSTITUTION_PATH")
+        cfg_path = os.environ.get("EGREGORE_CONSTITUTION_PATH")
         if cfg_path is None:
-            raise RuntimeError("BLACKSTAR_CONSTITUTION_PATH is not set")
+            raise RuntimeError("EGREGORE_CONSTITUTION_PATH is not set")
         _constitution = load_constitution_from_source(
             FileSystemConstitutionAdapter(cfg_path)
         )
@@ -86,7 +86,7 @@ def _get_ledger() -> TreatyLedger:
 def _get_entropy() -> EntropyExchange:
     global _entropy
     if _entropy is None:
-        node_id = os.environ.get("BLACKSTAR_NODE_ID", "pioneer1")
+        node_id = os.environ.get("EGREGORE_NODE_ID", "pioneer1")
         escalation = EscalationService(freeze_controller=FreezeController())
         _entropy = EntropyExchange(
             node_id=node_id,

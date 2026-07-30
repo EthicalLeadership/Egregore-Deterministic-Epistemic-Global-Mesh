@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# BLACKSTAR DT/TU CAPACITY MODEL DEPLOYMENT SCRIPT
+# EGREGORE DT/TU CAPACITY MODEL DEPLOYMENT SCRIPT
 # Run this on Pioneer 1 from ~/egregore
 
 set -euo pipefail
 
-echo "=== BLACKSTAR DT/TU CAPACITY MODEL DEPLOYMENT ==="
+echo "=== EGREGORE DT/TU CAPACITY MODEL DEPLOYMENT ==="
 
 SRC="/mnt/agents/output/egregore_dt_tu_build"
 DEST="$HOME/egregore"

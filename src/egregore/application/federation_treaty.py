@@ -212,4 +212,4 @@ class TreatyLedger:
 def datetime_now_iso() -> str:
     from datetime import datetime
 
-    return datetime.now(UTC).isoformat()
+    return datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat()

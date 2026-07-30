@@ -9,7 +9,7 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-KEYSTORE_DIR = Path(os.environ.get("BLACKSTAR_KEK_DIR", "/opt/egregore/keystore"))
+KEYSTORE_DIR = Path(os.environ.get("EGREGORE_KEK_DIR", "/opt/egregore/keystore"))
 KEK_FILE = KEYSTORE_DIR / "cluster_kek.bin"
 KEK_BACKUP = KEYSTORE_DIR / "cluster_kek.bin.bak"
 

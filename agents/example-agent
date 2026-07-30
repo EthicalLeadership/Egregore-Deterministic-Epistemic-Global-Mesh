@@ -3,7 +3,7 @@
 Example Egregore CLI agent.
 
 Receives the user's instruction as argv[1] and session context via the
-BLACKSTAR_AGENT_CONTEXT environment variable. Relevant API keys are forwarded
+EGREGORE_AGENT_CONTEXT environment variable. Relevant API keys are forwarded
 from the chat server so the agent can call Claude, Kimi, DeepSeek, etc.
 
 Expected usage from chat:
@@ -18,7 +18,7 @@ import sys
 
 def main() -> int:
     instruction = sys.argv[1] if len(sys.argv) > 1 else ""
-    context_json = os.environ.get("BLACKSTAR_AGENT_CONTEXT", "{}")
+    context_json = os.environ.get("EGREGORE_AGENT_CONTEXT", "{}")
     try:
         context = json.loads(context_json)
     except json.JSONDecodeError:

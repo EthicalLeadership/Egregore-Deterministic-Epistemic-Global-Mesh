@@ -1,0 +1,44 @@
+{
+  "module_id": "egregore.kernel",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "plane1",
+    "m1_layer": "kernel",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 128: with open(path, encoding=\"utf-8\") as f:",
+        "line 70: with path.open(\"r\", encoding=\"utf-8\") as f:",
+        "line 86: with self.zarc_path.open(\"a\", encoding=\"utf-8\") as f:",
+        "line 120: with self.zarc_path.open(\"r\", encoding=\"utf-8\") as f:",
+        "line 153: with self.zarc_path.open(\"r\", encoding=\"utf-8\") as f:",
+        "line 45: with open(\"/proc/cpuinfo\") as f:"
+      ],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}
