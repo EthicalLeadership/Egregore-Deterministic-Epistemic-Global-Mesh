@@ -177,6 +177,7 @@ class EgregoreInferenceHost:
             completion_tokens=int(usage.get("completion_tokens", 0)),
             total_tokens=int(tokens),
             finish_reason=response.finish_reason,
+            backend=backend_name,
             m1=response.m1_passed,
             m2=response.m2_passed,
             m3=response.m3_passed,

@@ -1,6 +1,6 @@
 {
   "source_dir": "report/factory_telemetry",
-  "total_runs": 5,
+  "total_runs": 91,
   "incomplete_runs": 0,
   "buckets": {
     "trivial": {
@@ -34,67 +34,71 @@
       "runs_per_station": {}
     },
     "structured_final": {
-      "count": 2,
+      "count": 6,
       "elapsed_ms": {
-        "p50": 1088653.305,
+        "p50": 26699.98,
         "p95": 1103261.47,
         "max": 1103261.47
       },
       "total_tokens": {
-        "p50": 1045.5,
-        "p95": 1155,
-        "max": 1155
+        "p50": 1759.0,
+        "p95": 2041,
+        "max": 2041
       },
       "calls_per_model": {
-        "my-coder-ft": 16
+        "my-coder-ft": 16,
+        "gguf-qwen-1.5b": 31,
+        "gguf-my-coder-ft": 8
       },
       "runs_per_station": {
-        "spec_synthesis": 2,
-        "scaffolding": 2,
-        "cnc": 2,
-        "static_analysis": 2,
-        "dynamic_test": 2,
-        "moral_compliance": 2,
-        "final_qc": 2
+        "spec_synthesis": 6,
+        "scaffolding": 6,
+        "cnc": 10,
+        "static_analysis": 6,
+        "dynamic_test": 6,
+        "moral_compliance": 6,
+        "final_qc": 6
       }
     },
     "heavy": {
-      "count": 3,
+      "count": 85,
       "elapsed_ms": {
-        "p50": 225512.09,
-        "p95": 227416.79,
-        "max": 227416.79
+        "p50": 1730.95,
+        "p95": 328977.3,
+        "max": 373646.94
       },
       "total_tokens": {
-        "p50": 2368,
-        "p95": 2616,
+        "p50": 0,
+        "p95": 2073,
         "max": 2616
       },
       "calls_per_model": {
-        "my-coder-ft": 32
+        "my-coder-ft": 32,
+        "gguf-qwen-1.5b": 363,
+        "gguf-my-coder-ft": 100
       },
       "runs_per_station": {
-        "spec_synthesis": 3,
-        "scaffolding": 3,
-        "cnc": 7,
-        "static_analysis": 3,
-        "dynamic_test": 3,
-        "moral_compliance": 3,
-        "final_qc": 3
+        "spec_synthesis": 85,
+        "scaffolding": 85,
+        "cnc": 107,
+        "static_analysis": 31,
+        "dynamic_test": 31,
+        "moral_compliance": 31,
+        "final_qc": 31
       }
     }
   },
   "qc": {
-    "runs_with_qc": 5,
-    "ship": 3,
-    "blocked": 2,
-    "reworks_total": 4,
-    "escalations_total": 0,
-    "verdicts_pass": 3,
-    "verdicts_fail": 6,
+    "runs_with_qc": 37,
+    "ship": 22,
+    "blocked": 15,
+    "reworks_total": 59,
+    "escalations_total": 15,
+    "verdicts_pass": 22,
+    "verdicts_fail": 93,
     "critic_latency_ms": {
-      "p50": 9395.55,
-      "p95": 9996.79,
+      "p50": 785.36,
+      "p95": 8849.51,
       "max": 9996.79
     }
   }
