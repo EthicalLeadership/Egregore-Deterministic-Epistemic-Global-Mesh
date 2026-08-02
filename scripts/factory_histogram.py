@@ -57,6 +57,8 @@ def _group_runs(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             run["stations"].append(ev)
         elif et == "factory.inference":
             run["inferences"].append(ev)
+        elif et == "factory.qc.verdict":
+            run.setdefault("qc_verdicts", []).append(ev)
         elif et == "factory.run.outcome":
             run["outcome"] = ev
     return runs
@@ -135,11 +137,44 @@ def build_histogram(directory: Path) -> dict[str, Any]:
             "runs_per_station": per_station,
         }
 
+    qc_runs = [r for r in runs.values() if r.get("qc_verdicts")]
+    qc_lat = [
+        v.get("latency_ms", 0)
+        for r in qc_runs
+        for v in r["qc_verdicts"]
+        if v.get("tier") == "critic"
+    ]
+    qc_section = {
+        "runs_with_qc": len(qc_runs),
+        "ship": sum(
+            1 for r in qc_runs
+            if (r.get("outcome", {}).get("qc") or {}).get("terminal_state") == "SHIP"
+        ),
+        "blocked": sum(
+            1 for r in qc_runs
+            if (r.get("outcome", {}).get("qc") or {}).get("terminal_state") == "BLOCKED"
+        ),
+        "reworks_total": sum(
+            (r.get("outcome", {}).get("qc") or {}).get("reworks", 0) for r in qc_runs
+        ),
+        "escalations_total": sum(
+            1 for r in qc_runs if (r.get("outcome", {}).get("qc") or {}).get("escalated")
+        ),
+        "verdicts_pass": sum(
+            1 for r in qc_runs for v in r["qc_verdicts"] if v.get("verdict") == "PASS"
+        ),
+        "verdicts_fail": sum(
+            1 for r in qc_runs for v in r["qc_verdicts"] if v.get("verdict") == "FAIL"
+        ),
+        "critic_latency_ms": _percentiles(qc_lat),
+    }
+
     return {
         "source_dir": str(directory),
         "total_runs": sum(len(v) for v in buckets.values()),
         "incomplete_runs": sum(1 for r in runs.values() if "outcome" not in r),
         "buckets": {name: summarize(rs) for name, rs in buckets.items()},
+        "qc": qc_section,
     }
 
 

@@ -121,7 +121,8 @@ def emit(event_type: str, **fields: Any) -> None:
     try:
         ctx = dict(telemetry_context.get() or {})
         station = ctx.pop("current_station", None)
-        payload = ctx
+        # Internal bookkeeping keys (prefixed _) never reach the record.
+        payload = {k: v for k, v in ctx.items() if not k.startswith("_")}
         if station is not None and "station" not in fields:
             fields["station"] = station
         get_recorder().record_event({"event_type": event_type, **payload, **fields})

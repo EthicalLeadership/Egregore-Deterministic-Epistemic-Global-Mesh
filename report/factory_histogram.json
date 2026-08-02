@@ -1,6 +1,6 @@
 {
   "source_dir": "report/factory_telemetry",
-  "total_runs": 3,
+  "total_runs": 4,
   "incomplete_runs": 0,
   "buckets": {
     "trivial": {
@@ -34,47 +34,68 @@
       "runs_per_station": {}
     },
     "structured_final": {
-      "count": 3,
+      "count": 1,
       "elapsed_ms": {
-        "p50": 1.11,
-        "p95": 31572.15,
-        "max": 31572.15
+        "p50": 1074045.14,
+        "p95": 1074045.14,
+        "max": 1074045.14
       },
       "total_tokens": {
-        "p50": 49,
-        "p95": 1155,
-        "max": 1155
+        "p50": 936,
+        "p95": 936,
+        "max": 936
       },
       "calls_per_model": {
-        "my-coder-ft": 7
+        "my-coder-ft": 8
       },
       "runs_per_station": {
-        "spec_synthesis": 2,
-        "scaffolding": 2,
-        "cnc": 3,
-        "static_analysis": 2,
-        "dynamic_test": 2,
-        "moral_compliance": 2,
-        "final_qc": 2,
-        "intake": 1,
-        "parts_mfg": 1,
-        "qc": 1
+        "spec_synthesis": 1,
+        "scaffolding": 1,
+        "cnc": 1,
+        "static_analysis": 1,
+        "dynamic_test": 1,
+        "moral_compliance": 1,
+        "final_qc": 1
       }
     },
     "heavy": {
-      "count": 0,
+      "count": 3,
       "elapsed_ms": {
-        "p50": 0.0,
-        "p95": 0.0,
-        "max": 0.0
+        "p50": 225512.09,
+        "p95": 227416.79,
+        "max": 227416.79
       },
       "total_tokens": {
-        "p50": 0.0,
-        "p95": 0.0,
-        "max": 0.0
+        "p50": 2368,
+        "p95": 2616,
+        "max": 2616
       },
-      "calls_per_model": {},
-      "runs_per_station": {}
+      "calls_per_model": {
+        "my-coder-ft": 32
+      },
+      "runs_per_station": {
+        "spec_synthesis": 3,
+        "scaffolding": 3,
+        "cnc": 7,
+        "static_analysis": 3,
+        "dynamic_test": 3,
+        "moral_compliance": 3,
+        "final_qc": 3
+      }
+    }
+  },
+  "qc": {
+    "runs_with_qc": 4,
+    "ship": 3,
+    "blocked": 1,
+    "reworks_total": 4,
+    "escalations_total": 0,
+    "verdicts_pass": 3,
+    "verdicts_fail": 5,
+    "critic_latency_ms": {
+      "p50": 9218.77,
+      "p95": 9996.79,
+      "max": 9996.79
     }
   }
 }

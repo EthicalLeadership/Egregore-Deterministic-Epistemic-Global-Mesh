@@ -20,7 +20,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # PyYAML has no PEP 561 stubs; ignore for compatibility.
 import yaml  # type: ignore[import-untyped]
@@ -99,6 +99,7 @@ class FactoryRunResponse(BaseModel):
     stations: dict[str, StationOutput]
     provenance: dict[str, Any]
     gates: dict[str, Any] | None = None
+    qc: dict[str, Any] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +178,12 @@ class EgregoreInferenceHost:
             m4=response.m4_passed,
             inference_id=response.inference_id,
         )
+        # Track governance failures for the QC gate (fail-closed input).
+        ctx = telemetry_context.get()
+        if ctx is not None and not all(
+            (response.m1_passed, response.m2_passed, response.m3_passed, response.m4_passed)
+        ):
+            ctx["_m_failure"] = True
         return content.strip(), int(tokens), "egregore"
 
     def health(self) -> dict[str, Any]:
@@ -201,6 +208,19 @@ class EgregoreInferenceHost:
 # ---------------------------------------------------------------------------
 # Profile loading
 # ---------------------------------------------------------------------------
+def _load_policy() -> dict[str, Any]:
+    """Load factory policy (QC thresholds etc.) from config/factory_policy.json."""
+    candidate_paths = [
+        Path(__file__).resolve().parents[3] / "config" / "factory_policy.json",
+        Path("/opt/egregore/config/factory_policy.json"),
+        Path("config/factory_policy.json"),
+    ]
+    for path in candidate_paths:
+        if path.exists():
+            return cast(dict[str, Any], canonical_loads(path.read_text(encoding="utf-8")))
+    return {}  # defaults live in QCGate/policy consumers
+
+
 def _load_profiles() -> dict[str, Any]:
     """Load factory profiles from config/factory_profiles_v2.yaml."""
     candidate_paths = [
@@ -735,6 +755,86 @@ def run_factory(
     return _run_factory_impl(mode, req, request)
 
 
+def _apply_qc_gate(
+    *,
+    response: FactoryRunResponse,
+    req: FactoryRunRequest,
+    request: Request,
+    mode_profile: dict[str, Any],
+    pipeline_version: int,
+    ctx: dict[str, Any],
+):
+    """Run the fail-closed QC gate over the terminal output.
+
+    Any gate-level exception becomes BLOCKED (fail-closed): nothing ships.
+    """
+    from egregore.factory.qc_gate import EgregoreCritic, QCGate
+
+    policy = _load_policy().get("qc", {})
+    host = _get_inference_host(request)
+    critic = EgregoreCritic(
+        host,
+        model_id=str(policy.get("critic_model", "qwen_1.5b")),
+        confidence_threshold=float(policy.get("confidence_threshold", 0.6)),
+    )
+    stations_cfg = mode_profile["stations"]
+
+    def rerun_terminal(rework_prompt: str):
+        """Re-run the terminal generative station with typed violations."""
+        ctx["_m_failure"] = False
+        if pipeline_version == 2:
+            base = {
+                "input": req.input,
+                "spec_synthesis_output": (
+                    response.stations["spec_synthesis"].output + "\n\n" + rework_prompt
+                ),
+                "scaffolding_output": response.stations["scaffolding"].output,
+            }
+            station = _run_station(host, "cnc", stations_cfg["cnc"], base, {})
+        else:
+            compressed = response.stations.get("compression")
+            base_input = compressed.output if compressed else req.input
+            station = _run_station(
+                host, "cnc", stations_cfg["cnc"],
+                {"input": rework_prompt + "\n\nOriginal input:\n" + base_input}, {},
+            )
+        m_flags = {"m1": False, "m2": False, "m3": False, "m4": False} if ctx["_m_failure"] else None
+        return station.output, station.parsed, m_flags
+
+    initial_m = (
+        {"m1": False, "m2": False, "m3": False, "m4": False}
+        if ctx["_m_failure"] else None
+    )
+    cnc_station = response.stations.get("cnc")
+    gate = QCGate(policy=policy, critic=critic, rerun_terminal=rerun_terminal)
+    try:
+        return gate.evaluate(
+            output=response.final_output,
+            constraints=[req.input],
+            m_flags=initial_m,
+            terminal_parsed=(cnc_station.parsed if cnc_station else None),
+        )
+    except Exception as gate_exc:  # noqa: BLE001 — fail-closed
+        logger.error("QC gate error (blocking): %s", gate_exc)
+        from egregore.factory.qc_gate import QCOutcome, QCVerdict, Violation
+
+        return QCOutcome(
+            terminal_state="BLOCKED",
+            m4_emission="DIVERGED",
+            verdict=QCVerdict(
+                verdict="FAIL",
+                confidence=0.0,
+                violations=[Violation(
+                    constraint_id="gate_error",
+                    evidence=str(gate_exc)[:300],
+                )],
+                critic_model="none",
+                tier="deterministic",
+            ),
+            final_output=None,
+        )
+
+
 def _run_factory_impl(
     mode: str,
     req: FactoryRunRequest,
@@ -758,6 +858,7 @@ def _run_factory_impl(
             task_fingerprint=envelope.fingerprint(),
             task_type=str(envelope.task_type),
         )
+    ctx["_m_failure"] = False
     token = telemetry_context.set(ctx)
     telemetry_emit(
         "factory.envelope.in",
@@ -770,6 +871,7 @@ def _run_factory_impl(
     stations_taken: list[str] = []
     ok = True
     error: str | None = None
+    qc_block: dict[str, Any] | None = None
     try:
         pipeline_version = mode_profile.get("pipeline_version", 1)
         if pipeline_version == 2:
@@ -778,6 +880,37 @@ def _run_factory_impl(
             response = _run_pipeline_v1(mode, mode_profile, req, request)
         stations_taken = list(response.stations.keys())
         ctx["_total_tokens"] = response.provenance.get("total_tokens", 0)
+
+        # --- Station 5: fail-closed QC gate on the terminal output --------
+        outcome = _apply_qc_gate(
+            response=response,
+            req=req,
+            request=request,
+            mode_profile=mode_profile,
+            pipeline_version=pipeline_version,
+            ctx=ctx,
+        )
+        qc_block = {
+            "terminal_state": outcome.terminal_state,
+            "m4_emission": outcome.m4_emission,
+            "verdict": outcome.verdict.verdict,
+            "confidence": outcome.verdict.confidence,
+            "tier": outcome.verdict.tier,
+            "violations": [v.model_dump() for v in outcome.verdict.violations],
+            "reworks_used": outcome.reworks_used,
+            "escalated": outcome.escalated,
+            "critic_model": outcome.verdict.critic_model,
+            "critic_latency_ms": outcome.verdict.latency_ms,
+        }
+        if outcome.bypassed:
+            qc_block["bypassed"] = True
+            qc_block["governance_record"] = "QC_BYPASSED"
+        response.qc = qc_block
+        if outcome.terminal_state == "BLOCKED":
+            response.final_output = "[QC BLOCKED] output withheld — see qc.violations"
+        elif outcome.final_output is not None and outcome.final_output != response.final_output:
+            # Reworked/escalated output replaced the original.
+            response.final_output = outcome.final_output
         return response
     except Exception as exc:
         ok = False
@@ -785,6 +918,7 @@ def _run_factory_impl(
         raise
     finally:
         total_tokens = ctx.pop("_total_tokens", 0)
+        ctx.pop("_m_failure", None)
         telemetry_emit(
             "factory.run.outcome",
             stations_taken=stations_taken,
@@ -792,6 +926,16 @@ def _run_factory_impl(
             total_tokens=total_tokens,
             ok=ok,
             error=error,
+            qc=(
+                {
+                    "terminal_state": qc_block["terminal_state"],
+                    "reworks": qc_block["reworks_used"],
+                    "escalated": qc_block["escalated"],
+                    "confidence": qc_block["confidence"],
+                }
+                if qc_block
+                else None
+            ),
         )
         telemetry_context.reset(token)
 

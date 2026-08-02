@@ -47,9 +47,16 @@ class FakeInferenceHost:
 
 
 @pytest.fixture
-def factory_client(tmp_path: Any):
+def factory_client(tmp_path: Any, monkeypatch: pytest.MonkeyPatch):
     from egregore.http_api.http.middleware import api_key_middleware
 
+    # These tests exercise the pipeline, not the QC gate (tested separately).
+    monkeypatch.setenv("EGREGORE_FACTORY_QC", "off")
+    # Keep test telemetry out of the production report dir.
+    monkeypatch.setenv("EGREGORE_FACTORY_TELEMETRY_DIR", str(tmp_path))
+    from egregore.factory import telemetry
+
+    telemetry.reset_recorder()
     api_key_middleware._API_KEYS = {VALID_KEY: ("default", "user", "admin")}
 
     app = create_app(build_container=False)

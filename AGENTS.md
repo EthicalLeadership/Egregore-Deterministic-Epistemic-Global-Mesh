@@ -227,6 +227,26 @@ Histogram bucketer (trivial / micro_solvable / structured_final / heavy):
 .venv/bin/python scripts/factory_histogram.py --diff week1.json week2.json
 ```
 
+## Factory QC gate (Station 5, fail-closed)
+
+Every factory run passes a terminal-output QC gate before shipping
+(`src/egregore/factory/qc_gate.py`). INVARIANT: the gate is **fail-closed** —
+any error, timeout, malformed verdict, or low confidence is a FAIL, and
+BLOCKED runs ship nothing (`final_output` withheld, M4 DIVERGED emitted).
+Telemetry (`factory/telemetry.py`) is deliberately fail-OPEN — the opposite
+failure mode. Do not harmonize the two.
+
+Two tiers: deterministic checks (empty/oversize/forbidden patterns/m1–m4/
+required fields), then a semantic critic (`CriticService` port, currently the
+Egregore backend via `critic_model` config — a dedicated resident 1.5B is
+Phase 6). Rework budget 2 with typed violations injected into the rework
+prompt (never prose), then one heavy escalation pass, then BLOCKED.
+
+Config: `config/factory_policy.json` (`qc` block). Kill switch:
+`EGREGORE_FACTORY_QC=off` — bypassed runs still ship BUT emit a `QC_BYPASSED`
+governance record and a `tier: bypassed` telemetry verdict. The bypass is on
+the record by design.
+
 ## Agent standards
 
 When helping with self-study, curriculum design, or technical learning, all agents must follow the **elite self-study standard** defined in:

@@ -1,0 +1,20 @@
+{
+  "qc": {
+    "fail_closed": true,
+    "confidence_threshold": 0.6,
+    "rework_budget": 2,
+    "escalate_to": "heavy",
+    "deterministic_first": true,
+    "critic_timeout_ms": 60000,
+    "critic_model": "qwen_1.5b",
+    "critic_max_tokens": 256,
+    "critic_temperature": 0.0,
+    "max_output_chars": 50000,
+    "forbidden_patterns": [
+      "as an ai language model",
+      "i cannot comply",
+      "TODO: implement"
+    ],
+    "required_output_fields": ["module"]
+  }
+}

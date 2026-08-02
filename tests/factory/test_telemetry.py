@@ -114,9 +114,11 @@ class _StubInferenceService:
 
 
 @pytest.fixture
-def factory_client(tmp_path: Any):
+def factory_client(tmp_path: Any, monkeypatch: pytest.MonkeyPatch):
     from egregore.http_api.http.middleware import api_key_middleware
 
+    # Telemetry chain is asserted without QC interference (gate has own tests).
+    monkeypatch.setenv("EGREGORE_FACTORY_QC", "off")
     api_key_middleware._API_KEYS = {VALID_KEY: ("default", "user", "admin")}
 
     app = create_app(build_container=False)
