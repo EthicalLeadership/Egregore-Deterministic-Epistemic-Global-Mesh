@@ -1,6 +1,6 @@
 {
   "source_dir": "report/factory_telemetry",
-  "total_runs": 4,
+  "total_runs": 5,
   "incomplete_runs": 0,
   "buckets": {
     "trivial": {
@@ -34,28 +34,28 @@
       "runs_per_station": {}
     },
     "structured_final": {
-      "count": 1,
+      "count": 2,
       "elapsed_ms": {
-        "p50": 1074045.14,
-        "p95": 1074045.14,
-        "max": 1074045.14
+        "p50": 1088653.305,
+        "p95": 1103261.47,
+        "max": 1103261.47
       },
       "total_tokens": {
-        "p50": 936,
-        "p95": 936,
-        "max": 936
+        "p50": 1045.5,
+        "p95": 1155,
+        "max": 1155
       },
       "calls_per_model": {
-        "my-coder-ft": 8
+        "my-coder-ft": 16
       },
       "runs_per_station": {
-        "spec_synthesis": 1,
-        "scaffolding": 1,
-        "cnc": 1,
-        "static_analysis": 1,
-        "dynamic_test": 1,
-        "moral_compliance": 1,
-        "final_qc": 1
+        "spec_synthesis": 2,
+        "scaffolding": 2,
+        "cnc": 2,
+        "static_analysis": 2,
+        "dynamic_test": 2,
+        "moral_compliance": 2,
+        "final_qc": 2
       }
     },
     "heavy": {
@@ -85,15 +85,15 @@
     }
   },
   "qc": {
-    "runs_with_qc": 4,
+    "runs_with_qc": 5,
     "ship": 3,
-    "blocked": 1,
+    "blocked": 2,
     "reworks_total": 4,
     "escalations_total": 0,
     "verdicts_pass": 3,
-    "verdicts_fail": 5,
+    "verdicts_fail": 6,
     "critic_latency_ms": {
-      "p50": 9218.77,
+      "p50": 9395.55,
       "p95": 9996.79,
       "max": 9996.79
     }

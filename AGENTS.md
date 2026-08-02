@@ -247,6 +247,22 @@ Config: `config/factory_policy.json` (`qc` block). Kill switch:
 governance record and a `tier: bypassed` telemetry verdict. The bypass is on
 the record by design.
 
+## Factory policy governance (Phase 3)
+
+`config/factory_policy.json` is the governance contract, loaded by
+`src/egregore/factory/policy.py`. Rules:
+
+- **Malformed policy = BLOCKED** — no station runs, nothing ships (fail-closed).
+- **Precedence: env var > policy file > code defaults.** Env overrides
+  (`EGREGORE_FACTORY_QC_REWORK_BUDGET`, `_CONFIDENCE_THRESHOLD`,
+  `_CRITIC_TIMEOUT_MS`, `_CRITIC_MAX_TOKENS`, `_CRITIC_MODEL`) emit
+  `factory.policy.override` telemetry records.
+- **`policy_hash`** (SHA-256 of canonical merged policy) is embedded in
+  `factory.envelope.in` and every `factory.run.outcome` — slice histograms by
+  regime with it.
+- **Hot reload** by mtime check at each run start (no watcher daemon).
+- `EGREGORE_FACTORY_POLICY` overrides the policy file path (tests).
+
 ## Agent standards
 
 When helping with self-study, curriculum design, or technical learning, all agents must follow the **elite self-study standard** defined in:

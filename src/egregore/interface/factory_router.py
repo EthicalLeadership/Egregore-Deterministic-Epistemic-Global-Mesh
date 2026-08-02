@@ -20,7 +20,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 # PyYAML has no PEP 561 stubs; ignore for compatibility.
 import yaml  # type: ignore[import-untyped]
@@ -208,17 +208,29 @@ class EgregoreInferenceHost:
 # ---------------------------------------------------------------------------
 # Profile loading
 # ---------------------------------------------------------------------------
-def _load_policy() -> dict[str, Any]:
-    """Load factory policy (QC thresholds etc.) from config/factory_policy.json."""
-    candidate_paths = [
-        Path(__file__).resolve().parents[3] / "config" / "factory_policy.json",
-        Path("/opt/egregore/config/factory_policy.json"),
-        Path("config/factory_policy.json"),
-    ]
-    for path in candidate_paths:
-        if path.exists():
-            return cast(dict[str, Any], canonical_loads(path.read_text(encoding="utf-8")))
-    return {}  # defaults live in QCGate/policy consumers
+def _blocked_policy_response(
+    mode: str, exc: Exception, pipeline_version: int = 2
+) -> FactoryRunResponse:
+    """Fail-closed: malformed policy means nothing ships, no station runs."""
+    return FactoryRunResponse(
+        mode=mode,
+        pipeline_version=pipeline_version,
+        final_output="[QC BLOCKED] factory policy malformed — nothing ships",
+        stations={},
+        provenance={"policy_error": str(exc)[:300], "timestamp_ns": time.time_ns()},
+        qc={
+            "terminal_state": "BLOCKED",
+            "m4_emission": "DIVERGED",
+            "verdict": "FAIL",
+            "confidence": 0.0,
+            "tier": "deterministic",
+            "violations": [
+                {"constraint_id": "policy_malformed", "evidence": str(exc)[:300], "severity": "hard"}
+            ],
+            "reworks_used": 0,
+            "escalated": False,
+        },
+    )
 
 
 def _load_profiles() -> dict[str, Any]:
@@ -768,9 +780,10 @@ def _apply_qc_gate(
 
     Any gate-level exception becomes BLOCKED (fail-closed): nothing ships.
     """
+    from egregore.factory.policy import load_policy
     from egregore.factory.qc_gate import EgregoreCritic, QCGate
 
-    policy = _load_policy().get("qc", {})
+    policy = load_policy().data.get("qc", {})
     host = _get_inference_host(request)
     critic = EgregoreCritic(
         host,
@@ -860,12 +873,43 @@ def _run_factory_impl(
         )
     ctx["_m_failure"] = False
     token = telemetry_context.set(ctx)
+
+    # --- Governance: load policy BEFORE anything runs (fail-closed) -------
+    from egregore.factory.policy import PolicyError, load_policy
+
+    try:
+        loaded_policy = load_policy()
+    except PolicyError as exc:
+        logger.error("factory policy malformed (blocking run): %s", exc)
+        telemetry_emit(
+            "factory.run.outcome",
+            stations_taken=[],
+            total_elapsed_ms=0.0,
+            total_tokens=0,
+            ok=False,
+            error=f"policy_malformed: {exc}"[:300],
+            policy_hash=None,
+            qc={"terminal_state": "BLOCKED", "reworks": 0, "escalated": False, "confidence": 0.0},
+        )
+        telemetry_context.reset(token)
+        return _blocked_policy_response(mode, exc)
+    policy_hash = loaded_policy.policy_hash
+    for override_key, override_value in loaded_policy.overrides.items():
+        telemetry_emit(
+            "factory.policy.override",
+            key=override_key,
+            value=override_value,
+            source="env",
+            policy_hash=policy_hash,
+        )
+
     telemetry_emit(
         "factory.envelope.in",
         priority=(str(envelope.priority) if envelope is not None else None),
         capabilities=(list(envelope.required_capabilities) if envelope is not None else []),
         payload_bytes=len(req.input.encode("utf-8", "ignore")),
         source_type=(str(envelope.source.source_type) if envelope is not None else "http"),
+        policy_hash=policy_hash,
     )
     run_start = time.monotonic()
     stations_taken: list[str] = []
@@ -926,6 +970,7 @@ def _run_factory_impl(
             total_tokens=total_tokens,
             ok=ok,
             error=error,
+            policy_hash=policy_hash,
             qc=(
                 {
                     "terminal_state": qc_block["terminal_state"],
