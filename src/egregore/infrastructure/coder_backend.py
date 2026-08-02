@@ -95,8 +95,8 @@ class CoderBackend(ILlmClient):
                     logger.warning(
                         "Less than 7 GB GPU memory free; model load may OOM."
                     )
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("GPU memory probe failed: %s", exc)
 
         self._tokenizer = AutoTokenizer.from_pretrained(
             self.model_path, trust_remote_code=True
@@ -238,3 +238,19 @@ class CoderBackend(ILlmClient):
 
     def delete_model(self, name: str) -> None:
         raise NotImplementedError("CoderBackend does not support deletion.")
+
+    def close(self) -> None:
+        """Release model + tokenizer and free VRAM (residency swap)."""
+        import gc
+
+        self._model = None
+        self._tokenizer = None
+        gc.collect()
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:  # noqa: BLE001
+            logger.debug("torch empty_cache failed during close")
+        logger.info("CoderBackend closed, VRAM released")

@@ -14,6 +14,7 @@ Pipeline versions:
 
 from __future__ import annotations
 
+import gc
 import json
 import logging
 import re
@@ -904,7 +905,6 @@ def _apply_qc_gate(
             )
 
         if escalated:
-
             residency: ResidencyManager = _get_residency(host)
             with residency.heavy_pass() as heavy_backend:
                 heavy_host = EgregoreInferenceHost(
@@ -912,6 +912,11 @@ def _apply_qc_gate(
                     inference_service=_HeavyPassService(heavy_backend),
                 )
                 station = _run(heavy_host)
+                # Drop every reference to the heavy backend BEFORE the swap
+                # context exits, or VRAM is not actually freed and the hot
+                # residents cannot be restored.
+                del heavy_host, heavy_backend
+                gc.collect()
         else:
             station = _run(host)
 
