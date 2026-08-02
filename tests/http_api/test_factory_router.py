@@ -14,42 +14,35 @@ from egregore.http_api.http.app import create_app
 VALID_KEY = "a" * 64
 
 
-class FakeLlm:
-    """Minimal stand-in for llama_cpp.Llama in factory tests."""
-
-    def __init__(self, content: str = "OK", tokens: int = 5) -> None:
-        self.content = content
-        self.tokens = tokens
-
-    def create_chat_completion(
-        self, messages: list[dict[str, str]], **kwargs: Any
-    ) -> dict[str, Any]:
-        return {
-            "choices": [{"message": {"content": self.content}}],
-            "usage": {"total_tokens": self.tokens},
-        }
-
-
-class FakeModelHost:
-    """Lightweight ModelHost replacement that never touches disk or llama-cpp."""
+class FakeInferenceHost:
+    """Lightweight EgregoreInferenceHost replacement that never touches disk or backends."""
 
     def __init__(
-        self, llm: FakeLlm | None = None, model_specs: dict[str, Any] | None = None
+        self, content: str = "OK", tokens: int = 5, model_specs: dict[str, Any] | None = None
     ) -> None:
-        self.llm = llm or FakeLlm()
+        self.content = content
+        self.tokens = tokens
         self.model_specs = model_specs or {}
+        self.inference_service = None
 
-    def get(self, model_id: str) -> FakeLlm:
-        return self.llm
+    def execute(
+        self,
+        model_id: str,
+        prompt: str,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> tuple[str, int, str]:
+        return self.content, self.tokens, "fake"
 
     def health(self) -> dict[str, Any]:
         return {
-            "llama_cpp_available": True,
-            "cached_models": [],
+            "egregore_inference_available": True,
             "configured_models": {
-                mid: {"path": spec.get("path", ""), "exists": False}
+                mid: {"model_id": spec.get("model_id") or spec.get("path") or mid}
                 for mid, spec in self.model_specs.items()
             },
+            "service": {"available": True, "backends": {}},
         }
 
 
@@ -68,8 +61,9 @@ def factory_client(tmp_path: Any):
     with open(profiles_path, encoding="utf-8") as f:
         profiles = yaml.safe_load(f)
 
-    app.state.factory_model_host = FakeModelHost(
-        llm=FakeLlm(content="factory-output", tokens=7),
+    app.state.factory_model_host = FakeInferenceHost(
+        content="factory-output",
+        tokens=7,
         model_specs=profiles.get("models", {}),
     )
 
@@ -95,6 +89,9 @@ def test_factory_health(factory_client: TestClient):
         "qwen_7b",
         "deepseek_coder_6.7b",
     }
+    for spec in data["configured_models"].values():
+        assert "model_id" in spec
+        assert spec["model_id"] == "my-coder-ft"
 
 
 def test_factory_mode_health(factory_client: TestClient):

@@ -43,6 +43,15 @@ from egregore.shared.freeze_state import FreezeController, FreezeState
 
 logger = logging.getLogger("egregore.bootstrap")
 
+try:
+    from egregore.http_api.http.v1.federation import router as federation_router
+except Exception as _federation_import_exc:  # pragma: no cover
+    logger.warning(
+        "Federation router unavailable: %s. Federation endpoints will not be served.",
+        _federation_import_exc,
+    )
+    federation_router = None
+
 
 # ---------- Pydantic Models ----------
 class NodeHealth(BaseModel):
@@ -302,7 +311,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     def _parse_cluster_nodes() -> list[dict[str, Any]]:
         raw = os.environ.get(
             "EGREGORE_CLUSTER_NODES",
-            "pioneer1=127.0.0.1:8080,pioneer2=192.168.1.102:8000,pioneer3=192.168.1.103:8000",
+            "pioneer1=127.0.0.1:8443,pioneer2=192.168.2.10:8443,pioneer3=192.168.2.133:8443",
         )
         nodes: list[dict[str, Any]] = []
         for entry in raw.split(","):
@@ -327,12 +336,15 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
         configured = _parse_cluster_nodes()
         results: list[NodeHealth] = []
         online = 0
-        async with httpx.AsyncClient(timeout=2.0) as client:
+        # Use HTTPS for the federation API port (8443).  The cluster uses
+        # self-signed certs, so verification is disabled for peer health probes.
+        async with httpx.AsyncClient(timeout=2.0, verify=False) as client:  # noqa: S501
             for cfg in configured:
                 node_id = cfg["node_id"]
                 host = cfg["host"]
                 port = cfg["port"]
-                url = f"http://{host}:{port}/health/ready"
+                scheme = "https" if port == 8443 else "http"
+                url = f"{scheme}://{host}:{port}/health/ready"
                 start = time.monotonic()
                 try:
                     resp = await client.get(url)
@@ -429,6 +441,10 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
 
     # Chat WebSocket endpoint (requires api_key cookie/session)
     app.include_router(ws_chat_router)
+
+    # Federation treaty and entropy exchange router.
+    if federation_router is not None:
+        app.include_router(federation_router)
 
     # Mount static files and dashboard
     repo_root = Path(__file__).resolve().parents[3]

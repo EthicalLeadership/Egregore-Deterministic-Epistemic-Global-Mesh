@@ -39,8 +39,8 @@ function sendJSON(res, statusCode, data) {
 }
 
 // Route: GET /api/metrics
-function handleMetrics(req, res) {
-  store.updateMetrics();
+async function handleMetrics(req, res) {
+  await store.updateMetrics();
   sendJSON(res, 200, store.metricsStore.current);
 }
 
@@ -113,9 +113,9 @@ function handleClearLogs(req, res) {
 }
 
 // Route: GET /api/dashboard
-function handleDashboard(req, res) {
-  store.updateMetrics();
-  sendJSON(res, 200, store.getDashboard());
+async function handleDashboard(req, res) {
+  const dashboard = await store.getDashboard();
+  sendJSON(res, 200, dashboard);
 }
 
 // Main server
@@ -136,13 +136,33 @@ const server = http.createServer(async (req, res) => {
   console.log(`${method} ${pathname}`);
 
   try {
-    // GET /api/metrics
-    if (pathname === "/api/metrics" && method === "GET") {
-      return handleMetrics(req, res);
+    // Root endpoint listing
+    if (pathname === "/" && method === "GET") {
+      return sendJSON(res, 200, {
+        service: "Egregore Control Center",
+        endpoints: [
+          "GET  /api/metrics",
+          "GET  /api/health",
+          "GET  /api/services/:name/status",
+          "POST /api/services/:name/:action",
+          "GET  /api/logs",
+          "POST /api/logs/clear",
+          "GET  /api/dashboard",
+        ],
+      });
     }
 
-    // GET /api/health
-    if (pathname === "/api/health" && method === "GET") {
+    // GET /api/metrics
+    if (pathname === "/api/metrics" && method === "GET") {
+      return await handleMetrics(req, res);
+    }
+
+    // GET /api/health (and HEAD for probes)
+    if (pathname === "/api/health" && (method === "GET" || method === "HEAD")) {
+      if (method === "HEAD") {
+        res.statusCode = 200;
+        return res.end();
+      }
       return handleHealth(req, res);
     }
 
@@ -170,7 +190,7 @@ const server = http.createServer(async (req, res) => {
 
     // GET /api/dashboard
     if (pathname === "/api/dashboard" && method === "GET") {
-      return handleDashboard(req, res);
+      return await handleDashboard(req, res);
     }
 
     // 404

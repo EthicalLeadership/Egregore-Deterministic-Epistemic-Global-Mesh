@@ -40,6 +40,30 @@ EGREGORE_CODER_WARMUP=true
 
 ## How to start the services
 
+### Dashboard / Core API stack (current deployment)
+
+The live stack runs as systemd **user** services. The units expect the repo to be checked out at `~/egregore` (the canonical name); `~/blackstar` is kept as a local compatibility symlink.
+
+```bash
+systemctl --user start egregore-core-api       # Core API on http://0.0.0.0:8002
+systemctl --user start egregore-control-center # Control Center on http://0.0.0.0:3001
+systemctl --user start egregore-gateway        # Dashboard gateway on http://0.0.0.0:3000
+systemctl --user start egregore-bootstrap      # Projection Plane HTTPS API on https://0.0.0.0:8443
+systemctl --user start egregore-ems-proxy      # EMS inference proxy on http://0.0.0.0:8001
+systemctl --user start egregore-federation-watcher # Pioneer 2 handshake watcher
+```
+
+Deploy to a new node by copying the units from `deploy/systemd/user/` to `~/.config/systemd/user/` on the target host:
+
+```bash
+rsync -av deploy/systemd/user/ aiops@pioneer-2:.config/systemd/user/
+ssh aiops@pioneer-2 'systemctl --user daemon-reload && systemctl --user enable egregore-core-api egregore-control-center egregore-gateway egregore-bootstrap egregore-federation-watcher'
+```
+
+Dashboard: `http://localhost:3000`
+
+### EMS / native coder backend
+
 Start the EMS proxy:
 
 ```bash
@@ -64,7 +88,7 @@ Or via systemd:
 sudo systemctl start egregore-model-server@coder-ft-v2
 ```
 
-Start the main Egregore server (if needed):
+Start the main Egregore server (legacy TLS entrypoint):
 
 ```bash
 ./start_server.sh
@@ -109,6 +133,45 @@ pip install -e ".[llm-native]"
 ```
 
 The exact versions validated in the deployment venv are also listed at the end of `requirements.txt`.
+
+## Federation / cluster peers
+
+Cluster node addresses are configured in `.env` via `EGREGORE_CLUSTER_NODES`:
+
+```bash
+# Use the bootstrap API (8443) for LAN peers, or the EMS proxy (8001) for WireGuard peers.
+EGREGORE_CLUSTER_NODES=pioneer1=10.200.200.1:8001,pioneer2=10.200.200.2:8001,pioneer3=192.168.2.133:8443
+PIONEER2_HOST=10.200.200.2
+PIONEER2_PORT=8001
+EGREGORE_PORT=8443
+EGREGORE_NODE_ID=pioneer1
+PEER_NODE_ID=pioneer2
+EGREGORE_CONSTITUTION_PATH=config/egregore_constitution.yaml
+
+# When peers are reached via the EMS proxy (port 8001), expose federation endpoints there too.
+EGREGORE_EMS_PROXY_HOST=0.0.0.0
+EGREGORE_MOUNT_FEDERATION_ON_EMS=true
+EGREGORE_SCHEME=http           # peer scheme
+EGREGORE_LOCAL_SCHEME=http     # local scheme
+EGREGORE_LOCAL_PORT=8001       # local federation port
+```
+
+Federation endpoints (`/api/v1/federation/*`) are served by the bootstrap API on port `8443` by default. When `EGREGORE_MOUNT_FEDERATION_ON_EMS=true`, the EMS proxy on port `8001` also serves them, which is useful for WireGuard-only peers. The `egregore-federation-watcher` service polls Pioneer 2 and automatically proposes/ratifies a treaty when the peer comes online.
+
+Check node health:
+
+```bash
+curl -s -k -H "X-API-Key: $(cat secrets/api_key.hex)" https://127.0.0.1:8443/health/nodes
+```
+
+Verify the EMS proxy exposes federation locally:
+
+```bash
+curl -s http://127.0.0.1:8001/api/v1/federation/treaty/active
+curl -s http://127.0.0.1:8001/api/v1/federation/entropy
+```
+
+If the handshake verification loop reports `Peer did not report an active treaty`, the peer may return a list envelope (`{"active_treaties": [...]}`). The watcher in `scripts/federation_handshake_watcher.py` handles both single-object and list-envelope responses.
 
 ## Important constraints
 

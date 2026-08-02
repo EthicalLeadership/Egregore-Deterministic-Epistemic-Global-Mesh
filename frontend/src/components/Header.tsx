@@ -31,7 +31,7 @@ export default function Header({ onOpenLogs, onOpenSettings, isConnected }: Head
           <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${isConnected ? 'bg-[#161922] border-[#1e2129]' : 'bg-amber-500/10 border-amber-500/20'}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-amber-400'}`} />
             <span className={`text-[11px] font-medium ${isConnected ? 'text-slate-400' : 'text-amber-400'}`}>
-              {isConnected ? 'Connected' : 'Demo Mode'}
+              {isConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
 

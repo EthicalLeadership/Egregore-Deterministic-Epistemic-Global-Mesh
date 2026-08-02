@@ -1,0 +1,16 @@
+# /home/kark/.config/systemd/user/egregore-control-center.service
+[Unit]
+Description=Egregore Control Center API (port 3001)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore
+ExecStart=%h/.nvm/versions/node/v22.23.1/bin/node frontend/server/index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:%h/egregore/logs/control-center.log
+StandardError=append:%h/egregore/logs/control-center.log
+
+[Install]
+WantedBy=default.target

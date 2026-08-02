@@ -1,7 +1,7 @@
 """5-Station and 7-Stage Cognitive Factory router for Egregore.
 
 Mounts at /api/v1/factory/{mode} and runs governed, multi-stage inference
-pipelines using local GGUF models via llama-cpp-python.
+pipelines using the Egregore native inference backend.
 
 Pipeline versions:
   v1 (pipeline_version: 1) — classic 5-station wheel:
@@ -18,7 +18,7 @@ import json
 import logging
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +27,12 @@ import yaml  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from egregore.factory.intake.intake_service import IntakeService
+from egregore.factory.schemas.task_envelope import (
+    CreateTaskRequest,
+    TaskEnvelope,
+    TaskType,
+)
 from egregore.shared.canonical import canonical_loads
 
 logger = logging.getLogger("egregore.factory")
@@ -34,15 +40,28 @@ logger = logging.getLogger("egregore.factory")
 router = APIRouter(tags=["factory"])
 
 # ---------------------------------------------------------------------------
-# Optional llama-cpp-python import with graceful degradation
+# Egregore native inference backend
 # ---------------------------------------------------------------------------
 try:
-    from llama_cpp import Llama
+    from egregore.application.inference_service import (
+        InferenceService,
+        build_inference_service_from_env,
+    )
+    from egregore.domain.inference_models import (
+        ChatMessage,
+        ChatRequest,
+        InferenceMode,
+    )
 
-    _LLAMA_AVAILABLE = True
+    _EGREGORE_INFERENCE_AVAILABLE = True
+    _EGREGORE_INFERENCE_ERROR = ""
 except Exception as exc:  # noqa: BLE001
-    _LLAMA_AVAILABLE = False
-    _LLAMA_IMPORT_ERROR = str(exc)
+    _EGREGORE_INFERENCE_AVAILABLE = False
+    _EGREGORE_INFERENCE_ERROR = str(exc)
+    InferenceService = Any  # type: ignore[misc, assignment]
+    ChatMessage = Any  # type: ignore[misc, assignment]
+    ChatRequest = Any  # type: ignore[misc, assignment]
+    InferenceMode = Any  # type: ignore[misc, assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +82,7 @@ class StationOutput(BaseModel):
     compressed: bool | None = None
     verdict: str | None = None
     parsed: dict[str, Any] | None = None
+    backend: str | None = None
 
 
 class FactoryRunResponse(BaseModel):
@@ -75,61 +95,81 @@ class FactoryRunResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Model host: lazy-load and cache GGUF models
+# Model host: dispatch to the Egregore native inference backend
 # ---------------------------------------------------------------------------
 @dataclass
-class ModelHost:
-    """Loads Llama models on first use and caches them for the process lifetime."""
+class EgregoreInferenceHost:
+    """Resolves configured factory models to the Egregore inference backend.
+
+    The factory no longer loads GGUF files via llama-cpp-python. Instead it
+    sends ChatRequest objects to the Egregore InferenceService, which owns the
+    native Coder model and any other registered backends.
+    """
 
     model_specs: dict[str, dict[str, Any]]
-    _cache: dict[str, Any] = field(default_factory=dict, init=False, repr=False)
+    inference_service: InferenceService | None = None
 
-    def get(self, model_id: str) -> Any:
-        if model_id in self._cache:
-            return self._cache[model_id]
-
+    def _resolve_model_id(self, model_id: str) -> str:
+        """Return the Egregore model identifier for a configured factory model."""
         spec = self.model_specs.get(model_id)
         if spec is None:
-            raise HTTPException(status_code=500, detail=f"Unknown model '{model_id}'")
+            raise HTTPException(status_code=500, detail=f"Unknown factory model '{model_id}'")
+        model_id_or_alias = spec.get("model_id") or spec.get("path") or model_id
+        return str(model_id_or_alias)
 
-        path = Path(spec["path"])
-        if not path.exists():
+    def execute(
+        self,
+        model_id: str,
+        prompt: str,
+        system: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> tuple[str, int, str]:
+        """Run a chat completion through Egregore and return (text, tokens, backend)."""
+        if self.inference_service is None:
             raise HTTPException(
                 status_code=503,
-                detail=f"Model '{model_id}' not found at {path}. Run scripts/download_factory_models.sh",
+                detail=f"Egregore inference service is not available: {_EGREGORE_INFERENCE_ERROR}",
             )
 
-        if not _LLAMA_AVAILABLE:
-            raise HTTPException(
-                status_code=503,
-                detail=f"llama-cpp-python is not available: {_LLAMA_IMPORT_ERROR}",
-            )
+        eg_model = self._resolve_model_id(model_id)
+        messages: list[ChatMessage] = []
+        if system:
+            messages.append(ChatMessage(role="system", content=system))
+        messages.append(ChatMessage(role="user", content=prompt))
 
-        logger.info("Loading model %s from %s", model_id, path)
-        start = time.monotonic()
-        llm = Llama(
-            model_path=str(path),
-            n_ctx=spec.get("n_ctx", 8192),
-            n_gpu_layers=spec.get("n_gpu_layers", -1),
-            chat_format=spec.get("chat_format", None),
-            verbose=False,
+        mode = InferenceMode.CREATIVE if (temperature is not None and temperature > 0) else InferenceMode.DETERMINISTIC
+        request = ChatRequest(
+            model=eg_model,
+            messages=messages,
+            mode=mode,
+            max_tokens=max_tokens or 2048,
+            seed=42,
+            stream=False,
         )
-        elapsed = (time.monotonic() - start) * 1000
-        logger.info("Model %s loaded in %.1f ms", model_id, elapsed)
-        self._cache[model_id] = llm
-        return llm
+
+        response = self.inference_service.execute(request)
+        content = response.message.content or ""
+        usage = response.usage or {}
+        tokens = usage.get("total_tokens", usage.get("completion_tokens", 0))
+        return content.strip(), int(tokens), "egregore"
 
     def health(self) -> dict[str, Any]:
+        service_health: dict[str, Any] = {"available": False, "backends": {}}
+        if self.inference_service is not None:
+            try:
+                service_health = self.inference_service.health()
+            except Exception as exc:  # noqa: BLE001
+                service_health = {"available": False, "error": str(exc)}
         return {
-            "llama_cpp_available": _LLAMA_AVAILABLE,
-            "cached_models": list(self._cache.keys()),
+            "egregore_inference_available": _EGREGORE_INFERENCE_AVAILABLE and self.inference_service is not None,
             "configured_models": {
                 mid: {
-                    "path": spec.get("path"),
-                    "exists": Path(spec.get("path", "")).exists(),
+                    "model_id": spec.get("model_id") or spec.get("path") or mid,
                 }
                 for mid, spec in self.model_specs.items()
             },
+            "service": service_health,
         }
 
 
@@ -151,12 +191,21 @@ def _load_profiles() -> dict[str, Any]:
     raise HTTPException(status_code=500, detail="factory_profiles_v2.yaml not found")
 
 
-def _get_model_host(request: Request) -> ModelHost:
-    """Resolve or create the cached ModelHost from app state."""
-    host: ModelHost | None = getattr(request.app.state, "factory_model_host", None)
+def _get_inference_host(request: Request) -> EgregoreInferenceHost:
+    """Resolve or create the cached EgregoreInferenceHost from app state."""
+    host: EgregoreInferenceHost | None = getattr(request.app.state, "factory_model_host", None)
     if host is None:
         profiles = _load_profiles()
-        host = ModelHost(model_specs=profiles.get("models", {}))
+        inference_service: InferenceService | None = getattr(request.app.state, "inference_service", None)
+        if inference_service is None and _EGREGORE_INFERENCE_AVAILABLE:
+            try:
+                inference_service = build_inference_service_from_env()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not build Egregore inference service from env: %s", exc)
+        host = EgregoreInferenceHost(
+            model_specs=profiles.get("models", {}),
+            inference_service=inference_service,
+        )
         request.app.state.factory_model_host = host
     return host
 
@@ -204,34 +253,25 @@ def _extract_json(text: str) -> dict[str, Any] | None:
 
 
 def _call_llm(
-    llm: Any,
+    host: EgregoreInferenceHost,
+    model_id: str,
     prompt: str,
     system: str | None = None,
     max_tokens: int | None = None,
     temperature: float | None = None,
-) -> tuple[str, int]:
-    """Run a single completion via create_chat_completion and return text + tokens."""
-    messages: list[dict[str, str]] = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-
-    kwargs: dict[str, Any] = {}
-    if max_tokens is not None:
-        kwargs["max_tokens"] = max_tokens
-    if temperature is not None:
-        kwargs["temperature"] = temperature
-
-    response = llm.create_chat_completion(messages=messages, **kwargs)
-    choice = response["choices"][0]
-    content = choice["message"].get("content", "")
-    usage = response.get("usage", {})
-    tokens = usage.get("total_tokens", usage.get("completion_tokens", 0))
-    return content.strip(), int(tokens)
+) -> tuple[str, int, str]:
+    """Run a single completion via the Egregore inference backend."""
+    return host.execute(
+        model_id=model_id,
+        prompt=prompt,
+        system=system,
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
 
 
 def _run_station(
-    host: ModelHost,
+    host: EgregoreInferenceHost,
     station_name: str,
     station: dict[str, Any],
     context: dict[str, Any],
@@ -239,7 +279,7 @@ def _run_station(
 ) -> StationOutput:
     """Run a single station, formatting its prompt from the running context."""
     start = time.monotonic()
-    llm = host.get(station["model"])
+    model_id = station["model"]
 
     prompt_template = station.get("prompt", "")
     try:
@@ -256,8 +296,9 @@ def _run_station(
     if temperature is None:
         temperature = station.get("temperature")
 
-    output, tokens = _call_llm(
-        llm,
+    output, tokens, backend = _call_llm(
+        host,
+        model_id=model_id,
         prompt=prompt,
         system=system,
         max_tokens=max_tokens,
@@ -268,10 +309,11 @@ def _run_station(
     parsed = _extract_json(output)
     return StationOutput(
         output=output,
-        model=station["model"],
+        model=model_id,
         tokens=tokens,
         elapsed_ms=elapsed,
         parsed=parsed,
+        backend=backend,
     )
 
 
@@ -285,7 +327,7 @@ def _run_pipeline_v1(
     request: Request,
 ) -> FactoryRunResponse:
     """Run the classic 5-station factory pipeline."""
-    host = _get_model_host(request)
+    host = _get_inference_host(request)
     stations_cfg = mode_profile["stations"]
     station_results: dict[str, StationOutput] = {}
     pipeline_start = time.monotonic()
@@ -339,7 +381,7 @@ def _run_pipeline_v1(
 
 
 def _station_compression(
-    host: ModelHost, station: dict[str, Any], user_input: str
+    host: EgregoreInferenceHost, station: dict[str, Any], user_input: str
 ) -> tuple[str, StationOutput]:
     start = time.monotonic()
     threshold = station.get("threshold_chars", 500)
@@ -352,9 +394,10 @@ def _station_compression(
             compressed=False,
         )
 
-    llm = host.get(station["model"])
-    output, tokens = _call_llm(
-        llm,
+    model_id = station["model"]
+    output, tokens, backend = _call_llm(
+        host,
+        model_id=model_id,
         prompt=station["prompt"].format(input=user_input),
         system=station.get("system"),
         max_tokens=station.get("max_tokens"),
@@ -362,10 +405,11 @@ def _station_compression(
     )
     return output, StationOutput(
         output=output,
-        model=station["model"],
+        model=model_id,
         tokens=tokens,
         elapsed_ms=round((time.monotonic() - start) * 1000, 2),
         compressed=True,
+        backend=backend,
     )
 
 
@@ -379,7 +423,7 @@ def _run_pipeline_v2(
     request: Request,
 ) -> FactoryRunResponse:
     """Run the hardened 7-stage assembly line."""
-    host = _get_model_host(request)
+    host = _get_inference_host(request)
     stations_cfg = mode_profile["stations"]
     station_results: dict[str, StationOutput] = {}
     pipeline_start = time.monotonic()
@@ -488,6 +532,107 @@ def _run_pipeline_v2(
 
 
 # ---------------------------------------------------------------------------
+# Shared intake service
+# ---------------------------------------------------------------------------
+_intake_service: IntakeService | None = None
+
+
+def _get_intake_service() -> IntakeService:
+    global _intake_service
+    if _intake_service is None:
+        _intake_service = IntakeService()
+    return _intake_service
+
+
+# ---------------------------------------------------------------------------
+# Intake endpoints (S1)
+# ---------------------------------------------------------------------------
+@router.post("/v1/intake", response_model=TaskEnvelope)
+def create_task_from_request(
+    req: CreateTaskRequest,
+    request: Request,
+) -> TaskEnvelope:
+    """Normalize any raw input into a canonical TaskEnvelope."""
+    service = _get_intake_service()
+    return service.accept(req, remote_addr=request.client.host if request.client else None)
+
+
+@router.post("/v1/intake/chat", response_model=TaskEnvelope)
+def create_task_from_chat(
+    message: dict[str, Any],
+    request: Request,
+) -> TaskEnvelope:
+    """Normalize an OpenAI-style chat message into a TaskEnvelope."""
+    service = _get_intake_service()
+    return service.accept_chat_message(
+        message,
+        remote_addr=request.client.host if request.client else None,
+    )
+
+
+@router.post("/v1/intake/email", response_model=TaskEnvelope)
+def create_task_from_email(
+    envelope: dict[str, Any],
+    request: Request,
+) -> TaskEnvelope:
+    """Normalize a GDC-style email envelope into a TaskEnvelope."""
+    service = _get_intake_service()
+    return service.accept_email_envelope(
+        envelope,
+        remote_addr=request.client.host if request.client else None,
+    )
+
+
+@router.post("/v1/intake/anchorum", response_model=TaskEnvelope)
+def create_task_from_anchorum(
+    artifact: dict[str, Any],
+    request: Request,
+) -> TaskEnvelope:
+    """Normalize an ANCHORUM artifact record into a TaskEnvelope."""
+    service = _get_intake_service()
+    return service.accept(
+        CreateTaskRequest(
+            source_type="anchorum",
+            source_id=artifact.get("artifact_id") or artifact.get("sha256"),
+            filename=artifact.get("filename"),
+            sha256=artifact.get("sha256"),
+            text=artifact.get("text_preview") or artifact.get("description"),
+            metadata={k: v for k, v in artifact.items() if k not in ("artifact_id", "sha256", "filename", "text_preview")},
+            task_type=TaskType.FORENSIC_QUERY,
+        ),
+        remote_addr=request.client.host if request.client else None,
+    )
+
+
+class EnvelopeRunRequest(BaseModel):
+    """Run the factory from an already-normalized TaskEnvelope."""
+
+    envelope: TaskEnvelope
+    mode: str | None = None
+    max_tokens: int | None = Field(default=None, ge=1, le=8192)
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+
+
+@router.post("/v1/run", response_model=FactoryRunResponse)
+def run_factory_from_envelope(
+    req: EnvelopeRunRequest,
+    request: Request,
+) -> FactoryRunResponse:
+    """Run the factory pipeline starting from a TaskEnvelope."""
+    mode = req.mode or DEFAULT_FLAGSHIP_MODE
+    text = req.envelope.payload.text or ""
+    return _run_factory_impl(
+        mode,
+        FactoryRunRequest(
+            input=text,
+            max_tokens=req.max_tokens,
+            temperature=req.temperature,
+        ),
+        request,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Public endpoints
 # ---------------------------------------------------------------------------
 DEFAULT_FLAGSHIP_MODE = "coding_factory"
@@ -515,7 +660,7 @@ def list_factory_modes() -> dict[str, Any]:
 @router.get("/health")
 def factory_health(request: Request) -> dict[str, Any]:
     """Overall factory health and configured models."""
-    host = _get_model_host(request)
+    host = _get_inference_host(request)
     return host.health()
 
 
@@ -561,27 +706,28 @@ def _run_factory_impl(
 
 @router.get("/{mode}/health")
 def factory_mode_health(mode: str, request: Request) -> dict[str, Any]:
-    """Return whether all models required by a mode are present and loadable."""
+    """Return whether all models required by a mode are configured and reachable."""
     profiles = _load_profiles()
     mode_profile = profiles.get("modes", {}).get(mode)
     if mode_profile is None:
         raise HTTPException(status_code=404, detail=f"Factory mode '{mode}' not found")
 
-    host = _get_model_host(request)
+    host = _get_inference_host(request)
     model_ids = {s["model"] for s in mode_profile["stations"].values()}
     checks = {}
     for mid in model_ids:
         spec = host.model_specs.get(mid, {})
-        path = Path(spec.get("path", ""))
+        model_id = spec.get("model_id") or spec.get("path") or mid
         checks[mid] = {
-            "path": str(path),
-            "exists": path.exists(),
+            "model_id": model_id,
+            "configured": mid in host.model_specs,
         }
 
+    service_ready = host.inference_service is not None
     return {
         "mode": mode,
         "pipeline_version": mode_profile.get("pipeline_version", 1),
-        "llama_cpp_available": _LLAMA_AVAILABLE,
+        "egregore_inference_available": _EGREGORE_INFERENCE_AVAILABLE and service_ready,
         "models": checks,
-        "ready": all(c["exists"] for c in checks.values()),
+        "ready": service_ready and all(c["configured"] for c in checks.values()),
     }

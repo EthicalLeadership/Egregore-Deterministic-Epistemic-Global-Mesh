@@ -16,6 +16,11 @@ interface Metrics {
     tokens_per_sec: number;
     requests_per_min: number;
     avg_latency_ms: number;
+    p50_latency_ms?: number;
+    p95_latency_ms?: number;
+    error_rate?: number;
+    requests_total?: number;
+    errors_total?: number;
   };
   power: {
     gpu_watts: number;
@@ -90,11 +95,15 @@ export default function MetricsGrid({ metrics }: Props) {
     },
     {
       icon: <Box className="h-4 w-4 text-blue-400" />, label: 'Models Loaded',
-      value: inf.active_models, sub: `${inf.tokens_per_sec} tok/s`, color: 'text-white',
+      value: inf.active_models,
+      sub: `${inf.tokens_per_sec.toFixed(1)} tok/s • ${inf.requests_total ?? 0} reqs`,
+      color: 'text-white',
     },
     {
       icon: <Gauge className="h-4 w-4 text-amber-400" />, label: 'Inference',
-      value: `${inf.requests_per_min}/min`, sub: `${inf.avg_latency_ms}ms avg latency`, color: 'text-white',
+      value: `${inf.requests_per_min.toFixed(1)}/min`,
+      sub: `${inf.avg_latency_ms.toFixed(0)}ms avg • p95 ${(inf.p95_latency_ms ?? 0).toFixed(0)}ms`,
+      color: 'text-white',
     },
     {
       icon: <Clock className="h-4 w-4 text-slate-400" />, label: 'Uptime',

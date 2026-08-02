@@ -111,11 +111,24 @@ wss.on('connection', (ws) => {
   ws.on('close', () => clearInterval(interval));
 });
 
-// Serve static dashboard (production)
-app.use(express.static(join(__dirname, '../dist')));
+// Serve static dashboard (production). Never cache index.html; hashed assets are cacheable.
+app.use(
+  express.static(join(__dirname, '../dist'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    },
+  })
+);
 
 // Fallback to index.html for SPA routes
 app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(join(__dirname, '../dist/index.html'));
 });
 

@@ -1,0 +1,17 @@
+# /home/kark/.config/systemd/user/egregore-gateway.service
+[Unit]
+Description=Egregore Dashboard Gateway (port 3000)
+After=network.target egregore-control-center.service egregore-core-api.service
+Wants=egregore-control-center.service egregore-core-api.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore/frontend
+ExecStart=%h/.nvm/versions/node/v22.23.1/bin/node gateway/server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:%h/egregore/logs/gateway.log
+StandardError=append:%h/egregore/logs/gateway.log
+
+[Install]
+WantedBy=default.target

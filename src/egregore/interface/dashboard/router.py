@@ -1,6 +1,7 @@
 """Dashboard router for Plane 2 — real FreezeController wired."""
 
 import logging
+import time
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -13,6 +14,7 @@ from egregore.governance.permissions import Action, PermissionService
 from egregore.http_api.http.middleware.api_key_middleware import is_valid_api_key
 from egregore.interface.dashboard.freeze_protocol import FreezeControllerProtocol
 from egregore.interface.dashboard.key_health import KeyHealth, KeyHealthStatus
+from egregore.interface.dashboard.service import CiHealthReport, CiStatus
 
 
 class SystemStatus(StrEnum):
@@ -287,14 +289,15 @@ async def ci_health(request: Request):
         request,
         "fragments/ci_health.html",
         {
-            "ci": {
-                "status": "UNKNOWN",
-                "last_run": None,
-                "lint_ok": False,
-                "type_ok": False,
-                "security_ok": False,
-                "summary": "No CI data",
-            },
+            "ci": CiHealthReport(
+                status=CiStatus.UNKNOWN,
+                last_run=None,
+                lint_ok=False,
+                type_ok=False,
+                security_ok=False,
+                summary="No CI data",
+            ),
+            "CiStatus": CiStatus,
             "fmt_ts": _fmt_ts,
         },
     )

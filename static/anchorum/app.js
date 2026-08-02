@@ -1,4 +1,3 @@
-const sessionId = "anchorum-" + Math.random().toString(36).slice(2, 10);
 const caseListEl = document.getElementById("case-list");
 const caseDetailEl = document.getElementById("case-detail");
 const refreshBtn = document.getElementById("refresh-cases");
@@ -7,7 +6,6 @@ const chatInput = document.getElementById("chat-input");
 const btnLegal = document.getElementById("btn-legal");
 const btnAsk = document.getElementById("btn-ask");
 
-let ws = null;
 let activeCaseId = null;
 
 function apiUrl(path) {
@@ -92,63 +90,39 @@ function appendMessage(role, html, meta = "") {
   chatLogEl.scrollTop = chatLogEl.scrollHeight;
 }
 
-function ensureWebSocket() {
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const url = `${protocol}//${window.location.host}/ws/chat/${sessionId}`;
-  ws = new WebSocket(url);
-
-  ws.onopen = () => {
-    console.log("ANCHORUM WebSocket connected");
-  };
-
-  ws.onmessage = (event) => {
-    let data;
-    try {
-      data = JSON.parse(event.data);
-    } catch {
-      appendMessage("agent", escapeHtml(event.data), "Egregore");
-      return;
-    }
-    const command = data.command || "agent";
-    const ok = data.ok;
-    const summary = data.summary || "";
-    const detail = data.detail || {};
-
-    let html = escapeHtml(summary).replace(/\n/g, "<br>");
-
-    // Append source list when RAG results are present
-    if (detail.sources && detail.sources.length) {
-      const unique = [...new Set(detail.sources)];
-      html += `<br><br><span class="meta">Sources:</span> ${unique.map(escapeHtml).join(", ")}`;
-    }
-
-    appendMessage(ok ? "agent" : "error", html, `Egregore /${command}`);
-  };
-
-  ws.onerror = (err) => {
-    console.error("WebSocket error", err);
-    appendMessage("error", "Connection error. Please refresh the page.", "System");
-  };
-
-  ws.onclose = () => {
-    ws = null;
-  };
-}
-
-function sendChat(commandPrefix) {
+async function sendChat(commandPrefix) {
   const text = chatInput.value.trim();
   if (!text) return;
-  ensureWebSocket();
-  if (ws.readyState !== WebSocket.OPEN) {
-    appendMessage("error", "WebSocket is not connected yet. Wait a moment and try again.", "System");
-    return;
-  }
-  const message = `${commandPrefix} ${text}`;
+  const mode = commandPrefix === "/legal" ? "legal" : "ask";
   appendMessage("user", escapeHtml(text), "You");
-  ws.send(message);
   chatInput.value = "";
+  const thinking = document.createElement("div");
+  thinking.className = "message agent";
+  thinking.innerHTML = '<span class="meta">Egregore</span>Thinking…';
+  chatLogEl.appendChild(thinking);
+  chatLogEl.scrollTop = chatLogEl.scrollHeight;
+  try {
+    const res = await fetch(apiUrl("/api/v1/anchorum/chat"), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ message: text, mode }),
+    });
+    thinking.remove();
+    if (res.status === 401) {
+      window.location.href = "/dashboard/login";
+      return;
+    }
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      appendMessage("error", escapeHtml(data.detail || `${res.status} ${res.statusText}`), "System");
+      return;
+    }
+    appendMessage("agent", escapeHtml(data.content || "").replace(/\n/g, "<br>"), `Egregore ${commandPrefix}`);
+  } catch (err) {
+    thinking.remove();
+    appendMessage("error", escapeHtml(err.message), "System");
+  }
 }
 
 refreshBtn.addEventListener("click", loadCases);
@@ -159,4 +133,3 @@ chatInput.addEventListener("keydown", (e) => {
 });
 
 loadCases();
-ensureWebSocket();

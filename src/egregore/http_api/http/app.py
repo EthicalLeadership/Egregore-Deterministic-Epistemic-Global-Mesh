@@ -56,6 +56,19 @@ def create_app(build_container: bool = True) -> Any:
     app = FastAPI(title="Egregore API")
     app.add_middleware(APIKeyMiddleware)
 
+    @app.get("/", include_in_schema=False)
+    async def _root() -> dict[str, Any]:
+        return {
+            "service": "Egregore Core API",
+            "version": "0.7.0",
+            "endpoints": {
+                "health": "/health",
+                "ready": "/ready",
+                "chat": "/v1/chat/completions",
+                "models": "/v1/models",
+            },
+        }
+
     # CORS: allow ANCHORUM frontend (port 4173) and local dev servers.
     from fastapi.middleware.cors import CORSMiddleware
 

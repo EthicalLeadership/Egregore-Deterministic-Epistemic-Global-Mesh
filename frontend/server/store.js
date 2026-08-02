@@ -1,74 +1,317 @@
-// In-memory data stores and generators for Egregore Control Center
+// Egregore Control Center — Real backend data store
+//
+// Replaces the previous mock/demo implementation with live data:
+//   - Service status/actions via systemd --user
+//   - CPU / memory / GPU metrics from /proc and nvidia-smi
+//   - Logs from the project's log files
+//
+const { execSync } = require("child_process");
+const fs = require("fs");
+const http = require("http");
+const path = require("path");
 
-let uptimeCounter = 9234;
-let ledgerId = 127;
-let requestCount = 0;
+const LOG_DIR = process.env.EGREGORE_LOG_DIR || path.join(__dirname, "../../logs");
 
-// Default service states
-const servicesStore = {
-  EgregoreOrchestrator: {
-    name: "EgregoreOrchestrator",
-    status: "Running",
-    pid: 4520,
-    uptime_seconds: 9234,
-  },
-  EgregoreBroker: {
-    name: "EgregoreBroker",
-    status: "Running",
-    pid: 4521,
-    uptime_seconds: 9234,
-  },
-  EgregoreAgent: {
-    name: "EgregoreAgent",
-    status: "Running",
-    pid: 4522,
-    uptime_seconds: 9234,
-  },
+const CORE_API_HOST = process.env.EGREGORE_CORE_API_HOST || "127.0.0.1";
+const CORE_API_PORT = parseInt(process.env.EGREGORE_CORE_API_PORT || "8002", 10);
+const CORE_API_KEY = (() => {
+  try {
+    return fs.readFileSync(path.join(__dirname, "../../secrets/api_key.hex"), "utf8").trim();
+  } catch {
+    return "";
+  }
+})();
+
+// Map dashboard-facing service names to systemd user units.
+const SERVICE_MAP = {
+  EgregoreOrchestrator: "egregore-core-api.service",
+  EgregoreBroker: "egregore-gateway.service",
+  EgregoreAgent: "egregore-control-center.service",
 };
 
-// Metrics store — compute resources for local AI orchestration
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function run(cmd, timeout = 5000) {
+  try {
+    return execSync(cmd, { encoding: "utf8", timeout });
+  } catch (err) {
+    return err.stdout || "";
+  }
+}
+
+function parseProcStat() {
+  try {
+    const data = fs.readFileSync("/proc/stat", "utf8");
+    const line = data.split("\n").find((l) => l.startsWith("cpu "));
+    if (!line) return null;
+    const parts = line.trim().split(/\s+/).map(Number);
+    const user = parts[1] || 0;
+    const nice = parts[2] || 0;
+    const sys = parts[3] || 0;
+    const idle = parts[4] || 0;
+    const iowait = parts[5] || 0;
+    const irq = parts[6] || 0;
+    const softirq = parts[7] || 0;
+    const steal = parts[8] || 0;
+    const total = user + nice + sys + idle + iowait + irq + softirq + steal;
+    const active = total - idle - iowait;
+    return { total, active };
+  } catch {
+    return null;
+  }
+}
+
+let lastCpu = null;
+
+function getCpuPercent() {
+  const cur = parseProcStat();
+  if (!cur) return 0;
+  if (!lastCpu) {
+    lastCpu = cur;
+    return 0;
+  }
+  const totalDiff = cur.total - lastCpu.total;
+  const activeDiff = cur.active - lastCpu.active;
+  lastCpu = cur;
+  if (totalDiff <= 0) return 0;
+  return Math.round((activeDiff / totalDiff) * 100);
+}
+
+function getMemoryInfo() {
+  try {
+    const data = fs.readFileSync("/proc/meminfo", "utf8");
+    const lines = data.split("\n");
+    const get = (key) => {
+      const line = lines.find((l) => l.startsWith(key));
+      return line ? parseInt(line.split(/\s+/)[1], 10) * 1024 : 0; // kB → bytes
+    };
+    const total = get("MemTotal");
+    const available = get("MemAvailable") || get("MemFree");
+    const used = total - available;
+    return {
+      total,
+      used,
+      percent: total ? Math.round((used / total) * 100) : 0,
+    };
+  } catch {
+    return { total: 0, used: 0, percent: 0 };
+  }
+}
+
+function getGpuInfo() {
+  try {
+    const out = run(
+      "nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits",
+      3000
+    );
+    const [util, memUsed, memTotal] = out.trim().split(",").map((s) => parseFloat(s.trim()));
+    if (isNaN(util) || isNaN(memUsed) || isNaN(memTotal)) return null;
+    return {
+      util: Math.round(util),
+      memoryUsed: memUsed,
+      memoryTotal: memTotal,
+      memoryPercent: memTotal ? Math.round((memUsed / memTotal) * 100) : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function fetchInferenceMetrics() {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: CORE_API_HOST,
+      port: CORE_API_PORT,
+      path: "/v1/metrics",
+      method: "GET",
+      headers: {
+        "X-API-Key": CORE_API_KEY,
+        Accept: "application/json",
+      },
+      timeout: 2000,
+    };
+
+    const req = http.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        if (res.statusCode !== 200) {
+          return resolve(null);
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve(null);
+    });
+    req.end();
+  });
+}
+
+function getServiceStatus(name) {
+  const unit = SERVICE_MAP[name];
+  if (!unit) return null;
+  try {
+    const active = execSync(`systemctl --user is-active ${unit}`, {
+      encoding: "utf8",
+      timeout: 3000,
+    }).trim();
+    const status = active === "active" ? "Running" : "Stopped";
+
+    let pid = null;
+    let uptimeSeconds = 0;
+    try {
+      const statusOut = execSync(`systemctl --user show ${unit} --property=MainPID`, {
+        encoding: "utf8",
+        timeout: 3000,
+      });
+      pid = parseInt(statusOut.trim().split("=")[1], 10) || null;
+      if (pid && fs.existsSync(`/proc/${pid}/stat`)) {
+        const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+        // Field 22 is starttime in clock ticks since boot.
+        const parts = stat.split(" ");
+        // Account for command name containing spaces/parens by finding the closing parenthesis.
+        const closeIdx = stat.lastIndexOf(")");
+        const after = stat.slice(closeIdx + 2).split(" ");
+        const starttime = parseInt(after[19], 10); // field 22 = index 19 after ')' and space
+        const clkTck = parseInt(run("getconf CLK_TCK").trim(), 10) || 100;
+        const btime = parseInt(
+          fs.readFileSync("/proc/stat", "utf8").split("\n").find((l) => l.startsWith("btime")).split(" ")[1],
+          10
+        );
+        const startEpoch = btime + starttime / clkTck;
+        uptimeSeconds = Math.round(Date.now() / 1000 - startEpoch);
+      }
+    } catch {
+      // ignore
+    }
+
+    return { name, status, pid, uptime_seconds: uptimeSeconds };
+  } catch {
+    return { name, status: "Stopped", pid: null, uptime_seconds: 0 };
+  }
+}
+
+async function performServiceAction(name, action) {
+  const unit = SERVICE_MAP[name];
+  if (!unit) {
+    throw new Error(`Service '${name}' not found`);
+  }
+  if (!["start", "stop", "restart"].includes(action)) {
+    throw new Error(`Invalid action '${action}'. Use: start, stop, restart`);
+  }
+
+  const status = getServiceStatus(name);
+  if (action === "start" && status.status === "Running") {
+    throw new Error(`Service '${name}' is already running`);
+  }
+  if (action === "stop" && status.status === "Stopped") {
+    throw new Error(`Service '${name}' is already stopped`);
+  }
+
+  execSync(`systemctl --user ${action} ${unit}`, { timeout: 30000 });
+  return { success: true, message: `Service ${name} ${action}ed successfully` };
+}
+
+function getLogs({ source, level, tail } = {}) {
+  const logFiles = {
+    EgregoreOrchestrator: "core-api.log",
+    EgregoreBroker: "gateway.log",
+    EgregoreAgent: "control-center.log",
+  };
+
+  const entries = [];
+  const maxTail = tail && tail > 0 ? tail : 500;
+
+  Object.entries(logFiles).forEach(([src, file]) => {
+    if (source && source !== src) return;
+    const filePath = path.join(LOG_DIR, file);
+    if (!fs.existsSync(filePath)) return;
+
+    const lines = fs.readFileSync(filePath, "utf8").split("\n").filter(Boolean);
+    const tailLines = lines.slice(-maxTail);
+    tailLines.forEach((line) => {
+      const lvl =
+        /error|fail|fatal/i.test(line) ? "error" :
+        /warn/i.test(line) ? "warning" :
+        /debug/i.test(line) ? "debug" : "info";
+      if (level && level !== lvl) return;
+      entries.push({
+        timestamp: new Date().toISOString(),
+        source: src,
+        level: lvl,
+        message: line.trim(),
+      });
+    });
+  });
+
+  entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  return { entries, total: entries.length };
+}
+
+function clearLogs() {
+  const files = ["core-api.log", "gateway.log", "control-center.log"].map((f) =>
+    path.join(LOG_DIR, f)
+  );
+  files.forEach((f) => {
+    if (fs.existsSync(f)) {
+      try {
+        fs.writeFileSync(f, "");
+      } catch {
+        // ignore permission issues
+      }
+    }
+  });
+  return { success: true, message: "Logs cleared successfully" };
+}
+
+// ---------------------------------------------------------------------------
+// Metrics / health stores
+// ---------------------------------------------------------------------------
+
 let metricsStore = {
-  nodes: { total: 2, active: 2, offline: 0 },
-  jobs: {
-    queued: 3,
-    assigned: 2,
-    running: 5,
-    completed: 40,
-    failed: 5,
-    total: 55,
-  },
-  queue_depth: { work: 3, retry: 0, dlq: 5 },
+  nodes: { total: 1, active: 1, offline: 0 },
+  jobs: { queued: 0, assigned: 0, running: 0, completed: 0, failed: 0, total: 0 },
+  queue_depth: { work: 0, retry: 0, dlq: 0 },
   compute: {
-    cpu_percent: 34,
-    memory_percent: 62,
-    memory_used_mb: 4892,
-    memory_total_mb: 8192,
-    gpu_percent: 78,
-    gpu_memory_percent: 61,
-    gpu_memory_used_mb: 4896,
-    gpu_memory_total_mb: 8192,
+    cpu_percent: 0,
+    memory_percent: 0,
+    memory_used_mb: 0,
+    memory_total_mb: 0,
+    gpu_percent: 0,
+    gpu_memory_percent: 0,
+    gpu_memory_used_mb: 0,
+    gpu_memory_total_mb: 0,
   },
   inference: {
-    active_models: 2,
-    tokens_per_sec: 42,
-    requests_per_min: 18,
-    avg_latency_ms: 245,
+    active_models: 0,
+    tokens_per_sec: 0,
+    requests_per_min: 0,
+    avg_latency_ms: 0,
   },
   power: {
-    gpu_watts: 195,
-    system_watts: 340,
-    tdp_percent: 78,
+    gpu_watts: 0,
+    system_watts: 0,
+    tdp_percent: 0,
   },
   network: {
-    inter_node_rx_mbps: 45.2,
-    inter_node_tx_mbps: 38.7,
-    internet_rx_mbps: 0.4,
-    internet_tx_mbps: 0.1,
+    inter_node_rx_mbps: 0,
+    inter_node_tx_mbps: 0,
+    internet_rx_mbps: 0,
+    internet_tx_mbps: 0,
   },
-  uptime_seconds: 9234,
+  uptime_seconds: 0,
 };
 
-// Health store
 let healthStore = {
   status: "Healthy",
   checks: [
@@ -79,368 +322,104 @@ let healthStore = {
   degradedTimer: 0,
 };
 
-// Log store
-const logsStore = [];
+async function updateMetrics() {
+  const mem = getMemoryInfo();
+  const gpu = getGpuInfo();
+  const cpu = getCpuPercent();
 
-const LOG_MESSAGES = {
-  EgregoreOrchestrator: [
-    "Orchestrator initialized, ready to dispatch jobs",
-    "Workflow orchestration started for job {jobId}",
-    "Dependency graph built for pipeline {jobId}, {depth} stages",
-    "Orchestrator heartbeat, managing {activeNodes} active pipelines",
-    "Resource allocation updated, cluster utilization: {gpu}%",
-    "Pipeline {jobId} completed orchestration, latency {latency}ms",
-    "Scaling decision: adjusting worker pool to {batchSize} instances",
-    "Orchestrator rebalancing load across nodes",
-    "Checkpoint saved for pipeline {jobId} at stage {retryCount}",
-    "Failover triggered for node agent-{nodeId}, rerouting jobs",
-  ],
-  EgregoreBroker: [
-    "Node {nodeId} heartbeat received, latency {latency}ms",
-    "Job {jobId} assigned to agent-{nodeId}",
-    "Queue depth: {depth} work items, {retry} retry, {dlq} DLQ",
-    "Ledger commit #{ledgerId} confirmed, wallet balance: ${balance}",
-    "Agent agent-{nodeId} registered with broker",
-    "Knowledge token #{tokenId} minted for job {jobId}",
-    "Heartbeat timeout for node agent-{nodeId}, marking degraded",
-    "Job {jobId} completed successfully, result committed to ledger",
-    "Rebalancing queue across {activeNodes} active nodes",
-    "Model ollama:{model} loaded on agent-{nodeId}, ready for inference",
-  ],
-  EgregoreAgent: [
-    "Received job {jobId} from broker, starting execution",
-    "Inference complete on job {jobId}, confidence: {confidence}%",
-    "Memory usage: {memory}MB / {maxMemory}MB",
-    "Heartbeat sent to broker, status: active",
-    "GPU utilization: {gpu}% on device {deviceId}",
-    "Job {jobId} failed, retry attempt {retryCount}/{maxRetries}",
-    "Model {model} loaded successfully, warm start",
-    "Processing batch of {batchSize} inference requests",
-    "Network latency to broker: {latency}ms",
-    "Garbage collection triggered, freed {freed}MB",
-  ],
-};
+  const services = Object.keys(SERVICE_MAP).map(getServiceStatus);
+  const runningServices = services.filter((s) => s.status === "Running").length;
 
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function randomFloat(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function formatMessage(template, source) {
-  let msg = template;
-  msg = msg.replace(/{nodeId}/g, randomInt(1, 3));
-  msg = msg.replace(/{jobId}/g, `job-${randomInt(100, 999)}`);
-  msg = msg.replace(/{latency}/g, randomInt(5, 150));
-  msg = msg.replace(/{depth}/g, randomInt(1, 10));
-  msg = msg.replace(/{retry}/g, randomInt(0, 2));
-  msg = msg.replace(/{dlq}/g, randomInt(0, 8));
-  msg = msg.replace(/{ledgerId}/g, ledgerId);
-  msg = msg.replace(/{balance}/g, (metricsStore.wallet_balance || 0).toFixed(2));
-  msg = msg.replace(/{tokenId}/g, randomInt(1000, 9999));
-  msg = msg.replace(/{activeNodes}/g, metricsStore.nodes.active);
-  msg = msg.replace(/{model}/g, ["llama3.2", "qwen2.5", "mistral", "codellama"][randomInt(0, 3)]);
-  msg = msg.replace(/{confidence}/g, randomInt(85, 99));
-  msg = msg.replace(/{memory}/g, randomInt(200, 800));
-  msg = msg.replace(/{maxMemory}/g, 2048);
-  msg = msg.replace(/{gpu}/g, randomInt(30, 95));
-  msg = msg.replace(/{deviceId}/g, randomInt(0, 1));
-  msg = msg.replace(/{retryCount}/g, randomInt(1, 3));
-  msg = msg.replace(/{maxRetries}/g, 3);
-  msg = msg.replace(/{batchSize}/g, randomInt(1, 8));
-  msg = msg.replace(/{freed}/g, randomInt(50, 200));
-  return msg;
-}
-
-function getLogLevel() {
-  const r = Math.random();
-  if (r < 0.05) return "error";
-  if (r < 0.2) return "warning";
-  if (r < 0.6) return "debug";
-  return "info";
-}
-
-function generateLogEntry(source) {
-  const templates = LOG_MESSAGES[source];
-  const template = templates[randomInt(0, templates.length - 1)];
-  const level = getLogLevel();
-  const now = new Date();
-  // Offset by uptimeCounter seconds to simulate running system
-  const timestamp = new Date(now.getTime() - randomInt(0, 5000));
-
-  return {
-    timestamp: timestamp.toISOString(),
-    source,
-    level,
-    message: formatMessage(template, source),
-  };
-}
-
-function seedLogs(count = 200) {
-  logsStore.length = 0;
-  const sources = ["EgregoreOrchestrator", "EgregoreBroker", "EgregoreAgent"];
-  for (let i = 0; i < count; i++) {
-    const source = sources[i % 3];
-    const entry = generateLogEntry(source);
-    // Backdate entries
-    entry.timestamp = new Date(
-      Date.now() - (count - i) * 3000
-    ).toISOString();
-    logsStore.push(entry);
-  }
-}
-
-function appendLogEntry() {
-  const r = Math.random();
-  let source;
-  if (r < 0.33) {
-    source = "EgregoreOrchestrator";
-  } else if (r < 0.66) {
-    source = "EgregoreBroker";
-  } else {
-    source = "EgregoreAgent";
-  }
-  const entry = generateLogEntry(source);
-  logsStore.push(entry);
-  // Cap at 2000 entries
-  if (logsStore.length > 2000) {
-    logsStore.shift();
-  }
-}
-
-function clamp(val, min, max) {
-  return Math.max(min, Math.min(max, val));
-}
-
-function updateMetrics() {
-  requestCount++;
-  uptimeCounter += 3;
-
-  // Fluctuate jobs
-  const running = randomInt(3, 8);
-  const completed = metricsStore.jobs.completed + randomInt(0, 2);
-  const failed = metricsStore.jobs.failed + (Math.random() < 0.1 ? 1 : 0);
-  const queued = randomInt(1, 8);
-  const assigned = randomInt(1, 4);
-  const total = queued + assigned + running + completed + failed;
-
-  // Fluctuate compute metrics
-  const prevCompute = metricsStore.compute;
-  const cpu = clamp(prevCompute.cpu_percent + randomInt(-5, 5), 10, 95);
-  const mem = clamp(prevCompute.memory_percent + randomInt(-3, 3), 30, 90);
-  const memUsed = Math.round((mem / 100) * prevCompute.memory_total_mb);
-  const gpu = clamp(prevCompute.gpu_percent + randomInt(-8, 8), 5, 98);
-  const gpuMem = clamp(prevCompute.gpu_memory_percent + randomInt(-5, 5), 20, 85);
-  const gpuMemUsed = Math.round((gpuMem / 100) * prevCompute.gpu_memory_total_mb);
-
-  // Fluctuate inference metrics
-  const prevInf = metricsStore.inference;
-  const tps = clamp(prevInf.tokens_per_sec + randomInt(-5, 5), 15, 85);
-  const rpm = clamp(prevInf.requests_per_min + randomInt(-2, 3), 5, 35);
-  const lat = clamp(prevInf.avg_latency_ms + randomInt(-20, 20), 120, 500);
-  // Check if orchestrator and broker are running
-  const orchestratorRunning = servicesStore.EgregoreOrchestrator.status === "Running";
-  const brokerRunning = servicesStore.EgregoreBroker.status === "Running";
-  const systemActive = orchestratorRunning && brokerRunning;
-
-  const models = brokerRunning ? randomInt(1, 4) : 0;
+  const inference = await fetchInferenceMetrics();
 
   metricsStore = {
     nodes: {
-      total: systemActive ? 2 : 0,
-      active: systemActive ? 2 : 0,
-      offline: systemActive ? 0 : 2,
+      total: Object.keys(SERVICE_MAP).length,
+      active: runningServices,
+      offline: Object.keys(SERVICE_MAP).length - runningServices,
     },
     jobs: {
-      queued,
-      assigned,
-      running: brokerRunning ? running : 0,
-      completed: brokerRunning ? completed : metricsStore.jobs.completed,
-      failed: brokerRunning ? failed : metricsStore.jobs.failed,
-      total: brokerRunning ? total : 0,
+      queued: 0,
+      assigned: 0,
+      running: runningServices,
+      completed: inference ? inference.requests_total : 0,
+      failed: inference ? inference.errors_total : 0,
+      total: runningServices + (inference ? inference.requests_total : 0),
     },
-    queue_depth: {
-      work: brokerRunning ? queued : 0,
-      retry: brokerRunning ? randomInt(0, 2) : 0,
-      dlq: brokerRunning ? randomInt(3, 8) : 0,
-    },
-    power: {
-      gpu_watts: clamp(gpu * 2.2 + randomInt(-10, 10), 60, 300),
-      system_watts: clamp(340 + (cpu / 100) * 100 + randomInt(-15, 15), 120, 450),
-      tdp_percent: clamp(Math.round(gpu * 0.85), 15, 95),
-    },
-    network: {
-      inter_node_rx_mbps: parseFloat((brokerRunning ? 30 + Math.random() * 40 : 0).toFixed(1)),
-      inter_node_tx_mbps: parseFloat((brokerRunning ? 25 + Math.random() * 35 : 0).toFixed(1)),
-      internet_rx_mbps: parseFloat((brokerRunning ? 0.2 + Math.random() * 0.6 : 0).toFixed(1)),
-      internet_tx_mbps: parseFloat((brokerRunning ? 0.05 + Math.random() * 0.15 : 0).toFixed(1)),
-    },
+    queue_depth: { work: 0, retry: 0, dlq: 0 },
     compute: {
       cpu_percent: cpu,
-      memory_percent: mem,
-      memory_used_mb: memUsed,
-      memory_total_mb: prevCompute.memory_total_mb,
-      gpu_percent: gpu,
-      gpu_memory_percent: gpuMem,
-      gpu_memory_used_mb: gpuMemUsed,
-      gpu_memory_total_mb: prevCompute.gpu_memory_total_mb,
+      memory_percent: mem.percent,
+      memory_used_mb: Math.round(mem.used / 1024 / 1024),
+      memory_total_mb: Math.round(mem.total / 1024 / 1024),
+      gpu_percent: gpu ? gpu.util : 0,
+      gpu_memory_percent: gpu ? gpu.memoryPercent : 0,
+      gpu_memory_used_mb: gpu ? Math.round(gpu.memoryUsed) : 0,
+      gpu_memory_total_mb: gpu ? Math.round(gpu.memoryTotal) : 0,
     },
     inference: {
-      active_models: models,
-      tokens_per_sec: tps,
-      requests_per_min: rpm,
-      avg_latency_ms: lat,
+      active_models: runningServices > 0 ? 1 : 0,
+      tokens_per_sec: inference ? inference.tokens_per_sec : 0,
+      requests_per_min: inference ? inference.requests_per_min : 0,
+      avg_latency_ms: inference ? inference.avg_latency_ms : 0,
+      p50_latency_ms: inference ? inference.p50_latency_ms : 0,
+      p95_latency_ms: inference ? inference.p95_latency_ms : 0,
+      error_rate: inference ? inference.error_rate : 0,
+      requests_total: inference ? inference.requests_total : 0,
+      errors_total: inference ? inference.errors_total : 0,
     },
-    uptime_seconds: uptimeCounter,
+    power: {
+      gpu_watts: gpu ? Math.round(gpu.util * 2.5) : 0,
+      system_watts: 0,
+      tdp_percent: gpu ? gpu.util : 0,
+    },
+    network: {
+      inter_node_rx_mbps: 0,
+      inter_node_tx_mbps: 0,
+      internet_rx_mbps: 0,
+      internet_tx_mbps: 0,
+    },
+    uptime_seconds: Math.floor(process.uptime()),
   };
 }
 
 function updateHealth() {
-  // 5% chance to degrade
-  if (Math.random() < 0.05 && healthStore.degradedTimer === 0) {
-    const checkIdx = randomInt(0, healthStore.checks.length - 1);
-    healthStore.checks[checkIdx].status = "Degraded";
-    healthStore.checks[checkIdx].description =
-      "Service experiencing elevated latency";
-    healthStore.degradedTimer = randomInt(2, 4);
-  }
+  const services = Object.keys(SERVICE_MAP).map(getServiceStatus);
+  const allRunning = services.every((s) => s.status === "Running");
 
-  // Recover from degradation
-  if (healthStore.degradedTimer > 0) {
-    healthStore.degradedTimer--;
-    if (healthStore.degradedTimer === 0) {
-      healthStore.checks.forEach((check) => {
-        check.status = "Healthy";
-        check.description = `${
-          check.name.charAt(0).toUpperCase() + check.name.slice(1)
-        } operational`;
-      });
-    }
-  }
-
-  // Determine overall status
-  const allHealthy = healthStore.checks.every((c) => c.status === "Healthy");
-  healthStore.status = allHealthy ? "Healthy" : "Degraded";
-}
-
-function getServicesList() {
-  return Object.values(servicesStore);
-}
-
-function getServiceStatus(name) {
-  return servicesStore[name] || null;
-}
-
-async function performServiceAction(name, action) {
-  const service = servicesStore[name];
-  if (!service) {
-    throw new Error(`Service '${name}' not found`);
-  }
-
-  // Simulate NSSM operation delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  if (action === "start") {
-    if (service.status === "Running") {
-      throw new Error(`Service '${name}' is already running`);
-    }
-    service.status = "Running";
-    service.pid = randomInt(4000, 9999);
-    service.uptime_seconds = 0;
-  } else if (action === "stop") {
-    if (service.status === "Stopped") {
-      throw new Error(`Service '${name}' is already stopped`);
-    }
-    service.status = "Stopped";
-    service.pid = null;
-  } else if (action === "restart") {
-    service.status = "Stopped";
-    service.pid = null;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    service.status = "Running";
-    service.pid = randomInt(4000, 9999);
-    service.uptime_seconds = 0;
-  } else {
-    throw new Error(`Invalid action '${action}'. Use: start, stop, restart`);
-  }
-
-  return { success: true, message: `Service ${name} ${action}ed successfully` };
-}
-
-function getLogs({ source, level, tail } = {}) {
-  let entries = [...logsStore];
-
-  if (source) {
-    entries = entries.filter((e) => e.source === source);
-  }
-
-  if (level) {
-    entries = entries.filter((e) => e.level === level);
-  }
-
-  if (tail && tail > 0) {
-    entries = entries.slice(-tail);
-  }
-
-  return { entries, total: entries.length };
-}
-
-function clearLogs() {
-  logsStore.length = 0;
-  seedLogs(50); // Re-seed with minimal entries
-  return { success: true, message: "Logs cleared successfully" };
-}
-
-function getDashboard() {
-  return {
-    metrics: metricsStore,
-    health: { ...healthStore, degradedTimer: undefined },
-    services: getServicesList(),
-    logs_count: logsStore.length,
+  healthStore = {
+    status: allRunning ? "Healthy" : "Degraded",
+    checks: services.map((s) => ({
+      name: s.name,
+      status: s.status === "Running" ? "Healthy" : "Degraded",
+      description:
+        s.status === "Running"
+          ? `${s.name} is running`
+          : `${s.name} is not running`,
+    })),
   };
 }
 
-// Initialize
-seedLogs(200);
-
-// Start background intervals
-setInterval(() => {
-  appendLogEntry();
-}, 3000);
-
-setInterval(() => {
+async function getDashboard() {
+  await updateMetrics();
   updateHealth();
-}, 3000);
+  return {
+    metrics: metricsStore,
+    health: healthStore,
+    services: Object.keys(SERVICE_MAP).map(getServiceStatus),
+    logs_count: getLogs({ tail: 1 }).total,
+  };
+}
 
 module.exports = {
-  metricsStore: {
-    get current() {
-      return metricsStore;
-    },
-  },
-  servicesStore: {
-    get current() {
-      return servicesStore;
-    },
-  },
-  healthStore: {
-    get current() {
-      return { ...healthStore, degradedTimer: undefined };
-    },
-  },
-  logsStore: {
-    get current() {
-      return logsStore;
-    },
-  },
-  updateMetrics,
-  updateHealth,
-  getServicesList,
+  metricsStore: { get current() { return metricsStore; } },
+  healthStore: { get current() { updateHealth(); return healthStore; } },
+  getServicesList: () => Object.keys(SERVICE_MAP).map(getServiceStatus),
   getServiceStatus,
   performServiceAction,
   getLogs,
   clearLogs,
   getDashboard,
+  updateMetrics,
+  updateHealth,
 };

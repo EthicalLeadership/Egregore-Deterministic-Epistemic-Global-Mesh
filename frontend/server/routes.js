@@ -5,7 +5,7 @@ const store = require("./store");
 async function routes(fastify, options) {
   // GET /api/metrics
   fastify.get("/api/metrics", async (request, reply) => {
-    store.updateMetrics();
+    await store.updateMetrics();
     return store.metricsStore.current;
   });
 
@@ -76,7 +76,6 @@ async function routes(fastify, options) {
 
   // GET /api/dashboard
   fastify.get("/api/dashboard", async (request, reply) => {
-    store.updateMetrics();
     return store.getDashboard();
   });
 }

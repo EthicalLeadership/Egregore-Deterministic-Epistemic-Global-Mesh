@@ -1,0 +1,17 @@
+[Unit]
+Description=Egregore EMS proxy (port 8001)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore
+Environment=PYTHONPATH=src
+EnvironmentFile=-%h/egregore/.env
+ExecStart=%h/egregore/.venv/bin/python -m egregore.ems.cli proxy
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:%h/egregore/logs/ems-proxy.log
+StandardError=append:%h/egregore/logs/ems-proxy.log
+
+[Install]
+WantedBy=default.target

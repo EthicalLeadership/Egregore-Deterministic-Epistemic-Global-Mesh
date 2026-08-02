@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -15,6 +16,7 @@ from egregore.domain.inference_models import (
     ChatResponse,
     InferenceMode,
 )
+from egregore.http_api.http.middleware.inference_metrics import INFERENCE_METRICS
 from egregore.shared.canonical import canonical_dumps
 
 router = APIRouter(prefix="/v1", tags=["chat"])
@@ -99,11 +101,23 @@ def _sse_stream(service: InferenceService, request: ChatRequest) -> StreamingRes
     """Generate Server-Sent Events for a streaming chat completion."""
 
     def _generator() -> Any:
+        start = time.perf_counter()
+        error: BaseException | None = None
         try:
             for delta in service.execute_stream(request):
+                # TODO: accumulate token counts if the backend yields them in deltas.
                 yield f"data: {canonical_dumps({'delta': delta})}\n\n"
         except Exception as exc:
+            error = exc
             yield f"data: {canonical_dumps({'error': str(exc)})}\n\n"
+        finally:
+            latency_ms = (time.perf_counter() - start) * 1000
+            INFERENCE_METRICS.record(
+                latency_ms=latency_ms,
+                prompt_tokens=0,
+                completion_tokens=0,
+                error=error is not None,
+            )
         yield f"data: {canonical_dumps({'done': True})}\n\n"
 
     return StreamingResponse(_generator(), media_type="text/event-stream")
@@ -234,12 +248,26 @@ def chat_completions(
         return _sse_stream(service, domain_request)
 
     # Non-streaming path
+    start = time.perf_counter()
+    error = False
+    response: ChatResponse | None = None
     try:
         response = service.execute(domain_request)
     except RuntimeError as exc:
+        error = True
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
+        error = True
         raise HTTPException(status_code=500, detail=f"Inference failed: {exc}") from exc
+    finally:
+        latency_ms = (time.perf_counter() - start) * 1000
+        usage = response.usage if response else {}
+        INFERENCE_METRICS.record(
+            latency_ms=latency_ms,
+            prompt_tokens=usage.get("prompt_tokens", 0),
+            completion_tokens=usage.get("completion_tokens", 0),
+            error=error,
+        )
     return _to_http_response(response)
 
 
@@ -260,6 +288,12 @@ def _to_http_response(response: ChatResponse) -> ChatCompletionResponse:
             "m4_spec_equivalence": response.m4_passed,
         },
     )
+
+
+@router.get("/metrics")
+def inference_metrics() -> dict[str, Any]:
+    """Return rolling-window inference metrics for /v1/chat/completions."""
+    return INFERENCE_METRICS.snapshot()
 
 
 @router.get("/models")

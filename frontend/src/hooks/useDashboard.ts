@@ -1,56 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = ''; // relative paths proxied through the gateway
 
-// Fallback mock data when backend is not running
-const fallbackServices: ServiceStatus[] = [
-  { name: 'EgregoreOrchestrator', status: 'Running', pid: 4520, uptime_seconds: 9240 },
-  { name: 'EgregoreBroker', status: 'Running', pid: 4521, uptime_seconds: 9240 },
-  { name: 'EgregoreAgent', status: 'Running', pid: 4522, uptime_seconds: 9240 },
-];
-
-let fallbackMetrics: Metrics = {
-  nodes: { total: 2, active: 2, offline: 0 },
-  jobs: { queued: 3, assigned: 2, running: 5, completed: 42, failed: 5, total: 57 },
-  queue_depth: { work: 3, retry: 0, dlq: 5 },
-  compute: {
-    cpu_percent: 34,
-    memory_percent: 62,
-    memory_used_mb: 4892,
-    memory_total_mb: 8192,
-    gpu_percent: 78,
-    gpu_memory_percent: 61,
-    gpu_memory_used_mb: 4896,
-    gpu_memory_total_mb: 8192,
-  },
-  inference: {
-    active_models: 2,
-    tokens_per_sec: 42,
-    requests_per_min: 18,
-    avg_latency_ms: 245,
-  },
-  power: {
-    gpu_watts: 195,
-    system_watts: 340,
-    tdp_percent: 78,
-  },
-  network: {
-    inter_node_rx_mbps: 45.2,
-    inter_node_tx_mbps: 38.7,
-    internet_rx_mbps: 0.4,
-    internet_tx_mbps: 0.1,
-  },
-  uptime_seconds: 9240,
-};
-
-const fallbackHealth: HealthData = {
-  status: 'Healthy',
-  checks: [
-    { name: 'database', status: 'Healthy', description: 'Database operational' },
-    { name: 'rabbitmq', status: 'Healthy', description: 'RabbitMQ operational' },
-    { name: 'ollama', status: 'Healthy', description: 'Ollama operational' },
-  ],
-};
+function formatError(err: unknown): string {
+  return err instanceof Error ? err.message : 'Backend unreachable';
+}
 
 export interface ServiceStatus {
   name: string;
@@ -85,6 +39,11 @@ export interface Metrics {
     tokens_per_sec: number;
     requests_per_min: number;
     avg_latency_ms: number;
+    p50_latency_ms?: number;
+    p95_latency_ms?: number;
+    error_rate?: number;
+    requests_total?: number;
+    errors_total?: number;
   };
   power: {
     gpu_watts: number;
@@ -147,37 +106,13 @@ export function useDashboard() {
       setHealth(data.health || null);
       setIsConnected(true);
       setLoading(false);
-    } catch {
-      // Backend unreachable — use fallback mock data with slight fluctuations
-      fallbackMetrics.uptime_seconds += 3;
-      fallbackMetrics.jobs.running = 3 + Math.floor(Math.random() * 6);
-      fallbackMetrics.compute.cpu_percent = Math.max(10, Math.min(95, fallbackMetrics.compute.cpu_percent + Math.floor(Math.random() * 11) - 5));
-      fallbackMetrics.compute.memory_percent = Math.max(30, Math.min(90, fallbackMetrics.compute.memory_percent + Math.floor(Math.random() * 7) - 3));
-      fallbackMetrics.compute.memory_used_mb = Math.round((fallbackMetrics.compute.memory_percent / 100) * fallbackMetrics.compute.memory_total_mb);
-      fallbackMetrics.compute.gpu_percent = Math.max(5, Math.min(98, fallbackMetrics.compute.gpu_percent + Math.floor(Math.random() * 17) - 8));
-      fallbackMetrics.compute.gpu_memory_percent = Math.max(20, Math.min(85, fallbackMetrics.compute.gpu_memory_percent + Math.floor(Math.random() * 11) - 5));
-      fallbackMetrics.compute.gpu_memory_used_mb = Math.round((fallbackMetrics.compute.gpu_memory_percent / 100) * fallbackMetrics.compute.gpu_memory_total_mb);
-      fallbackMetrics.inference.tokens_per_sec = Math.max(15, Math.min(85, fallbackMetrics.inference.tokens_per_sec + Math.floor(Math.random() * 11) - 5));
-      fallbackMetrics.inference.requests_per_min = Math.max(5, Math.min(35, fallbackMetrics.inference.requests_per_min + Math.floor(Math.random() * 6) - 2));
-      fallbackMetrics.inference.avg_latency_ms = Math.max(120, Math.min(500, fallbackMetrics.inference.avg_latency_ms + Math.floor(Math.random() * 41) - 20));
-      fallbackMetrics.inference.active_models = Math.floor(Math.random() * 3) + 1;
-
-      fallbackMetrics.power.gpu_watts = Math.max(60, Math.min(300, fallbackMetrics.power.gpu_watts + Math.floor(Math.random() * 21) - 10));
-      fallbackMetrics.power.system_watts = Math.max(120, Math.min(450, fallbackMetrics.power.system_watts + Math.floor(Math.random() * 31) - 15));
-      fallbackMetrics.power.tdp_percent = Math.max(15, Math.min(95, fallbackMetrics.power.tdp_percent + Math.floor(Math.random() * 7) - 3));
-
-      fallbackMetrics.network.inter_node_rx_mbps = Math.max(0, parseFloat((fallbackMetrics.network.inter_node_rx_mbps + (Math.random() * 8 - 4)).toFixed(1)));
-      fallbackMetrics.network.inter_node_tx_mbps = Math.max(0, parseFloat((fallbackMetrics.network.inter_node_tx_mbps + (Math.random() * 8 - 4)).toFixed(1)));
-      fallbackMetrics.network.internet_rx_mbps = Math.max(0, parseFloat((fallbackMetrics.network.internet_rx_mbps + (Math.random() * 0.4 - 0.2)).toFixed(1)));
-      fallbackMetrics.network.internet_tx_mbps = Math.max(0, parseFloat((fallbackMetrics.network.internet_tx_mbps + (Math.random() * 0.2 - 0.1)).toFixed(1)));
-
-      setServices(fallbackServices);
-      setMetrics({ ...fallbackMetrics });
-      setHealth(fallbackHealth);
+    } catch (err) {
+      // Backend unreachable — surface the error instead of showing demo data
+      addToast(`Dashboard disconnected: ${formatError(err)}`, 'error');
       setIsConnected(false);
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   const performServiceAction = useCallback(
     async (name: string, action: 'start' | 'stop' | 'restart') => {

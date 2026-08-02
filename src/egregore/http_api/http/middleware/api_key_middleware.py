@@ -222,8 +222,10 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
     # Paths that must be reachable without an API key (login page, static assets, health probes)
     PUBLIC_PATHS = {
+        "/",
         "/dashboard/login",
         "/favicon.ico",
+        "/health",
         "/health/ready",
         "/health/live",
         "/health/nodes",

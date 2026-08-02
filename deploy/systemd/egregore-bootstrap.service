@@ -1,0 +1,17 @@
+[Unit]
+Description=Egregore Projection Plane bootstrap API (port 8443)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore
+Environment=PYTHONPATH=src
+EnvironmentFile=-%h/egregore/.env
+ExecStart=%h/egregore/.venv/bin/python -m uvicorn egregore.interface.bootstrap:create_app --factory --host 0.0.0.0 --port 8443 --log-level info --ssl-keyfile certs/dashboard.key --ssl-certfile certs/dashboard.crt
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:%h/egregore/logs/bootstrap.log
+StandardError=append:%h/egregore/logs/bootstrap.log
+
+[Install]
+WantedBy=default.target

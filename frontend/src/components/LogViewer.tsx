@@ -13,25 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-const API_BASE = 'http://localhost:3001';
-
-const fallbackLogs: LogEntry[] = [
-  { timestamp: new Date(Date.now() - 2000).toISOString(), source: 'EgregoreOrchestrator', level: 'info', message: 'Orchestrator initialized, ready to dispatch jobs' },
-  { timestamp: new Date(Date.now() - 5000).toISOString(), source: 'EgregoreBroker', level: 'info', message: 'Node agent-01 heartbeat received, latency 12ms' },
-  { timestamp: new Date(Date.now() - 8000).toISOString(), source: 'EgregoreAgent', level: 'info', message: 'Received job job-247 from broker, starting execution' },
-  { timestamp: new Date(Date.now() - 11000).toISOString(), source: 'EgregoreBroker', level: 'debug', message: 'Queue depth: 3 work items, 0 retry, 5 DLQ' },
-  { timestamp: new Date(Date.now() - 14000).toISOString(), source: 'EgregoreAgent', level: 'info', message: 'Inference complete on job job-247, confidence: 94%' },
-  { timestamp: new Date(Date.now() - 17000).toISOString(), source: 'EgregoreBroker', level: 'info', message: 'Ledger commit #127 confirmed, wallet balance: $100.50' },
-  { timestamp: new Date(Date.now() - 20000).toISOString(), source: 'EgregoreOrchestrator', level: 'info', message: 'Workflow orchestration started for job job-248' },
-  { timestamp: new Date(Date.now() - 23000).toISOString(), source: 'EgregoreAgent', level: 'warning', message: 'Memory usage: 720MB / 2048MB' },
-  { timestamp: new Date(Date.now() - 26000).toISOString(), source: 'EgregoreBroker', level: 'info', message: 'Job job-245 completed successfully, result committed to ledger' },
-  { timestamp: new Date(Date.now() - 29000).toISOString(), source: 'EgregoreAgent', level: 'debug', message: 'GPU utilization: 67% on device 0' },
-  { timestamp: new Date(Date.now() - 32000).toISOString(), source: 'EgregoreOrchestrator', level: 'info', message: 'Resource allocation updated, cluster utilization: 67%' },
-  { timestamp: new Date(Date.now() - 35000).toISOString(), source: 'EgregoreBroker', level: 'error', message: 'Heartbeat timeout for node agent-02, marking degraded' },
-  { timestamp: new Date(Date.now() - 38000).toISOString(), source: 'EgregoreAgent', level: 'info', message: 'Heartbeat sent to broker, status: active' },
-  { timestamp: new Date(Date.now() - 41000).toISOString(), source: 'EgregoreBroker', level: 'info', message: 'Agent agent-01 registered with broker' },
-  { timestamp: new Date(Date.now() - 44000).toISOString(), source: 'EgregoreOrchestrator', level: 'info', message: 'Pipeline job-248 completed orchestration, latency 45ms' },
-];
+const API_BASE = ''; // relative paths proxied through the gateway
 
 const levelColors: Record<string, string> = {
   error: 'text-red-400',
@@ -65,12 +47,10 @@ export default function LogViewer({ isOpen, onClose }: Props) {
       const res = await fetch(`${API_BASE}/api/logs?${params}`);
       const data = await res.json();
       setLogs(data.entries || []);
-    } catch {
-      // Backend unreachable — use filtered fallback logs
-      let entries = [...fallbackLogs];
-      if (source) entries = entries.filter(e => e.source === source);
-      if (level) entries = entries.filter(e => e.level === level);
-      setLogs(entries);
+    } catch (err) {
+      // Backend unreachable — show empty with a console warning
+      console.error('Failed to fetch logs:', err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
