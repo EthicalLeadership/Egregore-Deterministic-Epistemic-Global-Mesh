@@ -879,14 +879,28 @@ def _apply_qc_gate(
     )
     stations_cfg = mode_profile["stations"]
 
+    from egregore.factory.policy import load_policy
+
+    escalation_policy = load_policy().data.get("escalation", {})
+
     def rerun_terminal(rework_prompt: str, escalated: bool = False):
         """Re-run the terminal generative station with typed violations.
 
-        Escalated runs go through the residency swap: hot GGUF residents
-        unload, the HF 8-bit heavy pass loads, runs, unloads, and the hot
-        residents come back. Serialized by the residency lock.
+        Non-escalated reworks run on the hot resident model as-is. The
+        escalated (heavy) pass is differentiated by parameters — larger token
+        budget and temperature 0 per policy.escalation — so it is a genuinely
+        different inference, not the same call twice. The HF 8-bit swap is
+        opt-in via EGREGORE_FACTORY_HEAVY_SWAP=true.
         """
         ctx["_m_failure"] = False
+        overrides = (
+            {
+                "max_tokens": int(escalation_policy.get("heavy_max_tokens", 4096)),
+                "temperature": float(escalation_policy.get("heavy_temperature", 0.0)),
+            }
+            if escalated
+            else {}
+        )
 
         def _run(host_like: Any) -> Any:
             if pipeline_version == 2:
@@ -897,12 +911,12 @@ def _apply_qc_gate(
                     ),
                     "scaffolding_output": response.stations["scaffolding"].output,
                 }
-                return _run_station(host_like, "cnc", stations_cfg["cnc"], base, {})
+                return _run_station(host_like, "cnc", stations_cfg["cnc"], base, overrides)
             compressed = response.stations.get("compression")
             base_input = compressed.output if compressed else req.input
             return _run_station(
                 host_like, "cnc", stations_cfg["cnc"],
-                {"input": rework_prompt + "\n\nOriginal input:\n" + base_input}, {},
+                {"input": rework_prompt + "\n\nOriginal input:\n" + base_input}, overrides,
             )
 
         # Heavy escalation pass. Default: hot GGUF 7B with expanded budget

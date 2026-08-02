@@ -21,6 +21,8 @@
   "escalation": {
     "path": ["micro", "standard", "heavy"],
     "never_skip_station": true,
-    "max_heavy_escalations_per_run": 1
+    "max_heavy_escalations_per_run": 1,
+    "heavy_max_tokens": 4096,
+    "heavy_temperature": 0.0
   }
 }
