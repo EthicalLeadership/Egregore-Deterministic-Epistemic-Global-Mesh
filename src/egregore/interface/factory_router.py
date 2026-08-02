@@ -17,6 +17,7 @@ from __future__ import annotations
 import gc
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -904,7 +905,12 @@ def _apply_qc_gate(
                 {"input": rework_prompt + "\n\nOriginal input:\n" + base_input}, {},
             )
 
-        if escalated:
+        # Heavy escalation pass. Default: hot GGUF 7B with expanded budget
+        # (no swap). The HF 8-bit swap is opt-in via
+        # EGREGORE_FACTORY_HEAVY_SWAP=true — gauntlet evidence (2 wedges in 2
+        # trials) showed the HF free path is not yet reliable enough to be
+        # the default. The swap machinery stays tested and available.
+        if escalated and os.environ.get("EGREGORE_FACTORY_HEAVY_SWAP", "").lower() == "true":
             residency: ResidencyManager = _get_residency(host)
             with residency.heavy_pass() as heavy_backend:
                 heavy_host = EgregoreInferenceHost(
