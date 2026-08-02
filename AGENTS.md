@@ -202,6 +202,31 @@ If the handshake verification loop reports `Peer did not report an active treaty
 - `deploy/systemd/egregore-model-server@.service`
 - `start_server.sh`
 
+## Factory telemetry (Phase 1 measurement)
+
+Every factory run (`POST /api/v1/factory*`) emits canonical-JSONL telemetry via
+`src/egregore/factory/telemetry.py`. Hook points: endpoint entry
+(`factory.envelope.in`), each station (`factory.station`), each LLM call
+(`factory.inference`, with unflattened usage + m1–m4 + inference_id), and
+pipeline exit (`factory.run.outcome`). All events in one run share a `run_id`;
+envelope runs also carry `task_id` / `task_fingerprint`.
+
+Environment:
+
+```bash
+EGREGORE_FACTORY_TELEMETRY_DIR=report/factory_telemetry   # default
+EGREGORE_FACTORY_TELEMETRY=off                             # disable entirely
+```
+
+Files: one `factory_YYYY-MM-DD.jsonl` per UTC day in the telemetry dir.
+
+Histogram bucketer (trivial / micro_solvable / structured_final / heavy):
+
+```bash
+.venv/bin/python scripts/factory_histogram.py            # writes report/factory_histogram.json
+.venv/bin/python scripts/factory_histogram.py --diff week1.json week2.json
+```
+
 ## Agent standards
 
 When helping with self-study, curriculum design, or technical learning, all agents must follow the **elite self-study standard** defined in:

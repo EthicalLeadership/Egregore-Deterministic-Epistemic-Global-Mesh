@@ -33,6 +33,13 @@ from egregore.factory.schemas.task_envelope import (
     TaskEnvelope,
     TaskType,
 )
+from egregore.factory.telemetry import (
+    emit as telemetry_emit,
+)
+from egregore.factory.telemetry import (
+    new_run_context,
+    telemetry_context,
+)
 from egregore.shared.canonical import canonical_loads
 
 logger = logging.getLogger("egregore.factory")
@@ -148,10 +155,28 @@ class EgregoreInferenceHost:
             stream=False,
         )
 
+        start = time.monotonic()
         response = self.inference_service.execute(request)
+        latency_ms = round((time.monotonic() - start) * 1000, 2)
         content = response.message.content or ""
         usage = response.usage or {}
         tokens = usage.get("total_tokens", usage.get("completion_tokens", 0))
+        telemetry_emit(
+            "factory.inference",
+            model_id=model_id,
+            eg_model=eg_model,
+            inference_mode=str(mode),
+            latency_ms=latency_ms,
+            prompt_tokens=int(usage.get("prompt_tokens", 0)),
+            completion_tokens=int(usage.get("completion_tokens", 0)),
+            total_tokens=int(tokens),
+            finish_reason=response.finish_reason,
+            m1=response.m1_passed,
+            m2=response.m2_passed,
+            m3=response.m3_passed,
+            m4=response.m4_passed,
+            inference_id=response.inference_id,
+        )
         return content.strip(), int(tokens), "egregore"
 
     def health(self) -> dict[str, Any]:
@@ -252,6 +277,13 @@ def _extract_json(text: str) -> dict[str, Any] | None:
     return None
 
 
+def _set_current_station(station: str) -> None:
+    """Tag the active telemetry context with the station now executing."""
+    ctx = telemetry_context.get()
+    if ctx is not None:
+        ctx["current_station"] = station
+
+
 def _call_llm(
     host: EgregoreInferenceHost,
     model_id: str,
@@ -296,6 +328,7 @@ def _run_station(
     if temperature is None:
         temperature = station.get("temperature")
 
+    _set_current_station(station_name)
     output, tokens, backend = _call_llm(
         host,
         model_id=model_id,
@@ -307,6 +340,14 @@ def _run_station(
     elapsed = round((time.monotonic() - start) * 1000, 2)
 
     parsed = _extract_json(output)
+    telemetry_emit(
+        "factory.station",
+        station=station_name,
+        elapsed_ms=elapsed,
+        tokens=tokens,
+        model_id=model_id,
+        ok=True,
+    )
     return StationOutput(
         output=output,
         model=model_id,
@@ -395,6 +436,7 @@ def _station_compression(
         )
 
     model_id = station["model"]
+    _set_current_station("compression")
     output, tokens, backend = _call_llm(
         host,
         model_id=model_id,
@@ -403,11 +445,20 @@ def _station_compression(
         max_tokens=station.get("max_tokens"),
         temperature=station.get("temperature"),
     )
+    elapsed = round((time.monotonic() - start) * 1000, 2)
+    telemetry_emit(
+        "factory.station",
+        station="compression",
+        elapsed_ms=elapsed,
+        tokens=tokens,
+        model_id=model_id,
+        ok=True,
+    )
     return output, StationOutput(
         output=output,
         model=model_id,
         tokens=tokens,
-        elapsed_ms=round((time.monotonic() - start) * 1000, 2),
+        elapsed_ms=elapsed,
         compressed=True,
         backend=backend,
     )
@@ -629,6 +680,7 @@ def run_factory_from_envelope(
             temperature=req.temperature,
         ),
         request,
+        envelope=req.envelope,
     )
 
 
@@ -687,8 +739,9 @@ def _run_factory_impl(
     mode: str,
     req: FactoryRunRequest,
     request: Request,
+    envelope: TaskEnvelope | None = None,
 ) -> FactoryRunResponse:
-    """Route to the correct pipeline implementation."""
+    """Route to the correct pipeline implementation (with telemetry)."""
     profiles = _load_profiles()
     mode_profile = profiles.get("modes", {}).get(mode)
     if mode_profile is None:
@@ -698,10 +751,49 @@ def _run_factory_impl(
             detail=f"Factory mode '{mode}' not found. Available: {available}",
         )
 
-    pipeline_version = mode_profile.get("pipeline_version", 1)
-    if pipeline_version == 2:
-        return _run_pipeline_v2(mode, mode_profile, req, request)
-    return _run_pipeline_v1(mode, mode_profile, req, request)
+    ctx = new_run_context(mode=mode)
+    if envelope is not None:
+        ctx.update(
+            task_id=envelope.task_id,
+            task_fingerprint=envelope.fingerprint(),
+            task_type=str(envelope.task_type),
+        )
+    token = telemetry_context.set(ctx)
+    telemetry_emit(
+        "factory.envelope.in",
+        priority=(str(envelope.priority) if envelope is not None else None),
+        capabilities=(list(envelope.required_capabilities) if envelope is not None else []),
+        payload_bytes=len(req.input.encode("utf-8", "ignore")),
+        source_type=(str(envelope.source.source_type) if envelope is not None else "http"),
+    )
+    run_start = time.monotonic()
+    stations_taken: list[str] = []
+    ok = True
+    error: str | None = None
+    try:
+        pipeline_version = mode_profile.get("pipeline_version", 1)
+        if pipeline_version == 2:
+            response = _run_pipeline_v2(mode, mode_profile, req, request)
+        else:
+            response = _run_pipeline_v1(mode, mode_profile, req, request)
+        stations_taken = list(response.stations.keys())
+        ctx["_total_tokens"] = response.provenance.get("total_tokens", 0)
+        return response
+    except Exception as exc:
+        ok = False
+        error = str(exc)
+        raise
+    finally:
+        total_tokens = ctx.pop("_total_tokens", 0)
+        telemetry_emit(
+            "factory.run.outcome",
+            stations_taken=stations_taken,
+            total_elapsed_ms=round((time.monotonic() - run_start) * 1000, 2),
+            total_tokens=total_tokens,
+            ok=ok,
+            error=error,
+        )
+        telemetry_context.reset(token)
 
 
 @router.get("/{mode}/health")

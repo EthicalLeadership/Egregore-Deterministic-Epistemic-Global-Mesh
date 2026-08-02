@@ -1,0 +1,80 @@
+{
+  "source_dir": "report/factory_telemetry",
+  "total_runs": 3,
+  "incomplete_runs": 0,
+  "buckets": {
+    "trivial": {
+      "count": 0,
+      "elapsed_ms": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "total_tokens": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "calls_per_model": {},
+      "runs_per_station": {}
+    },
+    "micro_solvable": {
+      "count": 0,
+      "elapsed_ms": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "total_tokens": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "calls_per_model": {},
+      "runs_per_station": {}
+    },
+    "structured_final": {
+      "count": 3,
+      "elapsed_ms": {
+        "p50": 1.11,
+        "p95": 31572.15,
+        "max": 31572.15
+      },
+      "total_tokens": {
+        "p50": 49,
+        "p95": 1155,
+        "max": 1155
+      },
+      "calls_per_model": {
+        "my-coder-ft": 7
+      },
+      "runs_per_station": {
+        "spec_synthesis": 2,
+        "scaffolding": 2,
+        "cnc": 3,
+        "static_analysis": 2,
+        "dynamic_test": 2,
+        "moral_compliance": 2,
+        "final_qc": 2,
+        "intake": 1,
+        "parts_mfg": 1,
+        "qc": 1
+      }
+    },
+    "heavy": {
+      "count": 0,
+      "elapsed_ms": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "total_tokens": {
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.0
+      },
+      "calls_per_model": {},
+      "runs_per_station": {}
+    }
+  }
+}
