@@ -279,7 +279,7 @@ class QCGate:
         *,
         policy: dict[str, Any],
         critic: CriticService | None,
-        rerun_terminal: Callable[[str], tuple[str, dict[str, Any] | None, dict[str, bool] | None]],
+        rerun_terminal: Callable[..., tuple[str, dict[str, Any] | None, dict[str, bool] | None]],
     ) -> None:
         self._policy = policy
         self._critic = critic
@@ -320,11 +320,13 @@ class QCGate:
                 break
             reworks += 1
             rework_prompt = self._rework_prompt(verdict.violations)
-            current_output, current_parsed, current_m = self._rerun_terminal(rework_prompt)
+            current_output, current_parsed, current_m = self._rerun_terminal(
+                rework_prompt, False
+            )
 
         # Budget exhausted → one heavy escalation pass, then final judgment.
         escalated_prompt = self._rework_prompt(verdict.violations, escalated=True)
-        esc_output, esc_parsed, esc_m = self._rerun_terminal(escalated_prompt)
+        esc_output, esc_parsed, esc_m = self._rerun_terminal(escalated_prompt, True)
         esc_verdict = self._check(esc_output, constraints, esc_m, esc_parsed)
         self._emit(esc_verdict, escalated=True)
         if esc_verdict.verdict == "PASS":

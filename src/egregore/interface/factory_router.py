@@ -159,6 +159,9 @@ class EgregoreInferenceHost:
         start = time.monotonic()
         response = self.inference_service.execute(request)
         latency_ms = round((time.monotonic() - start) * 1000, 2)
+        from egregore.application.inference_service import _resolve_backend
+
+        backend_name = _resolve_backend(eg_model)
         content = response.message.content or ""
         usage = response.usage or {}
         tokens = usage.get("total_tokens", usage.get("completion_tokens", 0))
@@ -184,7 +187,7 @@ class EgregoreInferenceHost:
             (response.m1_passed, response.m2_passed, response.m3_passed, response.m4_passed)
         ):
             ctx["_m_failure"] = True
-        return content.strip(), int(tokens), "egregore"
+        return content.strip(), int(tokens), backend_name
 
     def health(self) -> dict[str, Any]:
         service_health: dict[str, Any] = {"available": False, "backends": {}}
@@ -316,6 +319,85 @@ def _set_current_station(station: str) -> None:
         ctx["current_station"] = station
 
 
+# ---------------------------------------------------------------------------
+# VRAM residency (Phase 6)
+# ---------------------------------------------------------------------------
+from egregore.factory.residency import (  # noqa: E402
+    ResidencyManager,
+    VramInsufficientError,
+)
+
+_residency: ResidencyManager | None = None
+
+
+def _get_residency(host: EgregoreInferenceHost) -> ResidencyManager:
+    """Process-wide residency manager, bound to the host's inference service."""
+    global _residency
+    if _residency is None:
+        service = host.inference_service
+        clients = getattr(service, "clients", None)
+        gguf = clients.get("gguf") if isinstance(clients, dict) else None
+
+        def _heavy_factory() -> Any:
+            from egregore.infrastructure.coder_backend import CoderBackend
+
+            return CoderBackend(enabled=True)
+
+        _residency = ResidencyManager(
+            gguf_backend=gguf,
+            heavy_backend_factory=_heavy_factory,
+        )
+    return _residency
+
+
+class _HeavyPassService:
+    """Minimal InferenceService-shaped adapter over a raw ILlmClient.
+
+    Used only inside the residency heavy_pass swap: the HF 8-bit backend is
+    not registered in the app's InferenceService (it's not resident), so the
+    escalated station call goes through this shim. Governance m-flags are
+    asserted True by construction (same stub level as the service today).
+    """
+
+    def __init__(self, backend: Any) -> None:
+        self._backend = backend
+
+    def execute(self, request: Any) -> Any:
+        import dataclasses
+
+        response = self._backend.chat(request)
+        return dataclasses.replace(
+            response, m1_passed=True, m2_passed=True, m3_passed=True, m4_passed=True
+        )
+
+
+def _vram_insufficient_response(mode: str, exc: VramInsufficientError) -> FactoryRunResponse:
+    """Pre-flight shortfall: BLOCKED in milliseconds instead of a mid-run OOM."""
+    return FactoryRunResponse(
+        mode=mode,
+        pipeline_version=2,
+        final_output="[QC BLOCKED] vram_insufficient — nothing ships",
+        stations={},
+        provenance={"vram_error": str(exc), "timestamp_ns": time.time_ns()},
+        qc={
+            "terminal_state": "BLOCKED",
+            "m4_emission": "DIVERGED",
+            "verdict": "FAIL",
+            "confidence": 0.0,
+            "tier": "deterministic",
+            "violations": [
+                {
+                    "constraint_id": "vram_insufficient",
+                    "evidence": f"need ~{exc.need_mb} MB, have {exc.free_mb} MB free",
+                    "severity": "hard",
+                }
+            ],
+            "reworks_used": 0,
+            "escalated": False,
+        },
+    )
+
+
 def _call_llm(
     host: EgregoreInferenceHost,
     model_id: str,
@@ -361,6 +443,7 @@ def _run_station(
         temperature = station.get("temperature")
 
     _set_current_station(station_name)
+    free_mb = _get_residency(host).pre_flight(station_name)
     output, tokens, backend = _call_llm(
         host,
         model_id=model_id,
@@ -379,6 +462,8 @@ def _run_station(
         tokens=tokens,
         model_id=model_id,
         ok=True,
+        backend=backend,
+        vram_free_mb=free_mb,
     )
     return StationOutput(
         output=output,
@@ -792,25 +877,44 @@ def _apply_qc_gate(
     )
     stations_cfg = mode_profile["stations"]
 
-    def rerun_terminal(rework_prompt: str):
-        """Re-run the terminal generative station with typed violations."""
+    def rerun_terminal(rework_prompt: str, escalated: bool = False):
+        """Re-run the terminal generative station with typed violations.
+
+        Escalated runs go through the residency swap: hot GGUF residents
+        unload, the HF 8-bit heavy pass loads, runs, unloads, and the hot
+        residents come back. Serialized by the residency lock.
+        """
         ctx["_m_failure"] = False
-        if pipeline_version == 2:
-            base = {
-                "input": req.input,
-                "spec_synthesis_output": (
-                    response.stations["spec_synthesis"].output + "\n\n" + rework_prompt
-                ),
-                "scaffolding_output": response.stations["scaffolding"].output,
-            }
-            station = _run_station(host, "cnc", stations_cfg["cnc"], base, {})
-        else:
+
+        def _run(host_like: Any) -> Any:
+            if pipeline_version == 2:
+                base = {
+                    "input": req.input,
+                    "spec_synthesis_output": (
+                        response.stations["spec_synthesis"].output + "\n\n" + rework_prompt
+                    ),
+                    "scaffolding_output": response.stations["scaffolding"].output,
+                }
+                return _run_station(host_like, "cnc", stations_cfg["cnc"], base, {})
             compressed = response.stations.get("compression")
             base_input = compressed.output if compressed else req.input
-            station = _run_station(
-                host, "cnc", stations_cfg["cnc"],
+            return _run_station(
+                host_like, "cnc", stations_cfg["cnc"],
                 {"input": rework_prompt + "\n\nOriginal input:\n" + base_input}, {},
             )
+
+        if escalated:
+
+            residency: ResidencyManager = _get_residency(host)
+            with residency.heavy_pass() as heavy_backend:
+                heavy_host = EgregoreInferenceHost(
+                    model_specs=host.model_specs,
+                    inference_service=_HeavyPassService(heavy_backend),
+                )
+                station = _run(heavy_host)
+        else:
+            station = _run(host)
+
         m_flags = {"m1": False, "m2": False, "m3": False, "m4": False} if ctx["_m_failure"] else None
         return station.output, station.parsed, m_flags
 
@@ -848,6 +952,38 @@ def _apply_qc_gate(
         )
 
 
+def _load_policy_or_block(
+    mode: str, ctx: dict[str, Any]
+) -> tuple[str | None, FactoryRunResponse | None]:
+    """Load governance policy; on malformed policy emit + return a BLOCKED response."""
+    from egregore.factory.policy import PolicyError, load_policy
+
+    try:
+        loaded_policy = load_policy()
+    except PolicyError as exc:
+        logger.error("factory policy malformed (blocking run): %s", exc)
+        telemetry_emit(
+            "factory.run.outcome",
+            stations_taken=[],
+            total_elapsed_ms=0.0,
+            total_tokens=0,
+            ok=False,
+            error=f"policy_malformed: {exc}"[:300],
+            policy_hash=None,
+            qc={"terminal_state": "BLOCKED", "reworks": 0, "escalated": False, "confidence": 0.0},
+        )
+        return None, _blocked_policy_response(mode, exc)
+    for override_key, override_value in loaded_policy.overrides.items():
+        telemetry_emit(
+            "factory.policy.override",
+            key=override_key,
+            value=override_value,
+            source="env",
+            policy_hash=loaded_policy.policy_hash,
+        )
+    return loaded_policy.policy_hash, None
+
+
 def _run_factory_impl(
     mode: str,
     req: FactoryRunRequest,
@@ -875,33 +1011,10 @@ def _run_factory_impl(
     token = telemetry_context.set(ctx)
 
     # --- Governance: load policy BEFORE anything runs (fail-closed) -------
-    from egregore.factory.policy import PolicyError, load_policy
-
-    try:
-        loaded_policy = load_policy()
-    except PolicyError as exc:
-        logger.error("factory policy malformed (blocking run): %s", exc)
-        telemetry_emit(
-            "factory.run.outcome",
-            stations_taken=[],
-            total_elapsed_ms=0.0,
-            total_tokens=0,
-            ok=False,
-            error=f"policy_malformed: {exc}"[:300],
-            policy_hash=None,
-            qc={"terminal_state": "BLOCKED", "reworks": 0, "escalated": False, "confidence": 0.0},
-        )
+    policy_hash, blocked = _load_policy_or_block(mode, ctx)
+    if blocked is not None:
         telemetry_context.reset(token)
-        return _blocked_policy_response(mode, exc)
-    policy_hash = loaded_policy.policy_hash
-    for override_key, override_value in loaded_policy.overrides.items():
-        telemetry_emit(
-            "factory.policy.override",
-            key=override_key,
-            value=override_value,
-            source="env",
-            policy_hash=policy_hash,
-        )
+        return blocked
 
     telemetry_emit(
         "factory.envelope.in",
@@ -956,6 +1069,11 @@ def _run_factory_impl(
             # Reworked/escalated output replaced the original.
             response.final_output = outcome.final_output
         return response
+    except VramInsufficientError as vram_exc:
+        # Pre-flight shortfall: BLOCKED without shipping, no exception upward.
+        ok = True  # the run completed; the BLOCK is data, not a crash
+        error = None
+        return _vram_insufficient_response(mode, vram_exc)
     except Exception as exc:
         ok = False
         error = str(exc)

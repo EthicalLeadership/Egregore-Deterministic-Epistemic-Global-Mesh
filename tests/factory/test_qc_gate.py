@@ -59,7 +59,7 @@ class PassCritic:
         )
 
 
-def _noop_rerun(prompt: str):
+def _noop_rerun(prompt: str, escalated: bool = False):
     return GOOD_OUTPUT, {"module": GOOD_OUTPUT}, None
 
 
@@ -268,7 +268,7 @@ def test_m3_verdict_never_reenters_as_input(_telemetry_tmp):
     prompts: list[str] = []
     critic = FailThenPassCritic(fails=1)
 
-    def rerun(prompt: str):
+    def rerun(prompt: str, escalated: bool = False):
         prompts.append(prompt)
         return GOOD_OUTPUT, {"module": GOOD_OUTPUT}, None
 

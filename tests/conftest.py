@@ -18,6 +18,22 @@ os.environ.setdefault("EGREGORE_REPO_ROOT", _repo_root)
 os.environ.setdefault(
     "ANCHORUM_REPORT_DIR", os.path.join(_repo_root, "ANCHORUM_reports")
 )
+
+
+@pytest.fixture(autouse=True)
+def _fake_vram(monkeypatch: pytest.MonkeyPatch):
+    """Tests never touch the real GPU: pre-flight always sees headroom."""
+    from egregore.factory import residency as residency_mod
+
+    monkeypatch.setattr(residency_mod, "vram_free_mb", lambda: 8000)
+    # Reset the process-wide residency singleton so host bindings stay fresh.
+    try:
+        from egregore.interface import factory_router
+
+        factory_router._residency = None
+    except ImportError:
+        pass
+    yield
 os.environ.setdefault(
     "ANCHORUM_ZARC_PATH", os.path.join(_tmp_root, "anchorum", "reports", "zarc")
 )

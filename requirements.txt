@@ -1553,3 +1553,4 @@ transformers==5.14.1
 torch==2.13.0
 bitsandbytes==0.50.0
 accelerate==1.14.0
+llama-cpp-python==0.3.34

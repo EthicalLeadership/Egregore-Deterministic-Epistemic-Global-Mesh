@@ -5,13 +5,12 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from egregore.domain.inference_models import (
     ChatRequest,
     ChatResponse,
-    InferenceRecord,
 )
 from egregore.interface.llm_ports import ILlmClient
 
@@ -22,6 +21,7 @@ ANTHROPIC_MODEL_PREFIXES = ("claude-",)
 DEEPSEEK_MODEL_PREFIXES = ("deepseek-",)
 LOCAL_MODEL_PREFIXES = ("kimi-", "local-")
 EGREGORE_MODEL_PREFIXES = ("egregore-", "coder-", "architect-", "my-coder")
+GGUF_MODEL_PREFIXES = ("gguf-",)
 
 
 def _resolve_backend(model: str, default_backend: str = "egregore") -> str:
@@ -33,6 +33,8 @@ def _resolve_backend(model: str, default_backend: str = "egregore") -> str:
         return "deepseek"
     if any(lower.startswith(prefix) for prefix in LOCAL_MODEL_PREFIXES):
         return "local"
+    if any(lower.startswith(prefix) for prefix in GGUF_MODEL_PREFIXES):
+        return "gguf"
     if any(lower.startswith(prefix) for prefix in EGREGORE_MODEL_PREFIXES):
         return "egregore"
     return default_backend
@@ -46,8 +48,8 @@ def build_inference_service_from_env() -> InferenceService:
     optional database dependencies.
     """
     from egregore.infrastructure.anthropic_client import AnthropicClient
-    from egregore.infrastructure.deepseek_client import DeepSeekClient
     from egregore.infrastructure.coder_backend import CoderBackend
+    from egregore.infrastructure.deepseek_client import DeepSeekClient
     from egregore.infrastructure.local_model_client import LocalModelClient
 
     clients: dict[str, ILlmClient] = {}
@@ -70,6 +72,26 @@ def build_inference_service_from_env() -> InferenceService:
             logger.warning("CoderBackend health check failed")
     except Exception as exc:
         logger.warning("Egregore native backend unavailable: %s", exc)
+
+    # ------------------------------------------------------------------
+    # GGUF backend (llama.cpp) — hot residency layout (Phase 6).
+    # Serves the Q4_K_M fleet with full GPU offload at ~half the VRAM of
+    # the 8-bit HF path. Registered as "gguf"; models are lazy-loaded.
+    # ------------------------------------------------------------------
+    try:
+        from egregore.infrastructure.gguf_backend import GgufBackend
+
+        gguf_backend = GgufBackend()
+        if gguf_backend.health():
+            clients["gguf"] = gguf_backend
+            logger.info("GGUF backend registered (llama.cpp): %s", gguf_backend.list_models())
+            # Residency layout: when the 8-bit HF backend is disabled, the
+            # Q4_K_M GGUF fleet IS the egregore backend (~half the VRAM).
+            if "egregore" not in clients:
+                clients["egregore"] = gguf_backend
+                logger.info("GGUF backend promoted to primary 'egregore' client")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("GGUF backend unavailable: %s", exc)
 
     # Local HuggingFace-format models (e.g. Kimi K2 on the USB SSD).
     local_models_dir = os.environ.get("EGREGORE_LOCAL_MODELS_DIR", "")
@@ -127,13 +149,11 @@ class InferenceService:
                 f"Available backends: {list(self.clients)}"
             )
 
-        # M1: Projection access check
+        # Governance checkpoints M1 (projection access), M2 (registry
+        # completeness), M3 (non-reentry), M4 (spec equivalence).
         m1_passed = self._m1_check(request)
-        # M2: Registry completeness
         m2_passed = self._m2_check(request, client)
-        # M3: Non-reentry
         m3_passed = self._m3_check(request)
-        # M4: Spec equivalence
         m4_passed = self._m4_check(request)
 
         # Run inference

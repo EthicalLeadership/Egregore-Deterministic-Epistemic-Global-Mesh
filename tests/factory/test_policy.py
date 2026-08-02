@@ -289,7 +289,7 @@ def test_gate_respects_budget_override(tmp_path: Path, monkeypatch: pytest.Monke
 
     reruns: list[str] = []
 
-    def rerun(prompt: str):
+    def rerun(prompt: str, escalated: bool = False):
         reruns.append(prompt)
         return "out", {"module": "out"}, None
 

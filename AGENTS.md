@@ -202,6 +202,31 @@ If the handshake verification loop reports `Peer did not report an active treaty
 - `deploy/systemd/egregore-model-server@.service`
 - `start_server.sh`
 
+## VRAM residency (Phase 6)
+
+The 8-bit HF backend is NOT resident (`EGREGORE_CODER_BACKEND_ENABLED=false`
+in `.env`). The hot path is the llama.cpp GGUF fleet via
+`src/egregore/infrastructure/gguf_backend.py` (`GgufBackend`, full GPU
+offload, lazy per-model load):
+
+- `my-coder-ft` -> 7B Q4_K_M (standard stations)
+- `qwen-1.5b` -> 1.5B Q4_K_M (QC critic, ~230 ms verdicts)
+
+Configured by `EGREGORE_GGUF_MODELS` (name=path,...) and `EGREGORE_GGUF_CTX`.
+Routing: `gguf-` prefix -> `"gguf"` client; when the HF backend is disabled
+the GGUF backend is promoted to the primary `"egregore"` client.
+
+`src/egregore/factory/residency.py`:
+- **Pre-flight** per station: shortfall raises `VramInsufficientError` ->
+  BLOCKED with `vram_insufficient` (milliseconds, not a mid-run OOM).
+- **Heavy pass swap**: escalation unloads hot residents, loads HF 8-bit,
+  runs, unloads, restores residents. Serialized by a lock.
+
+Known issue: the legacy `my_coder_ft-q4_k_m.gguf` has a vocab-padding defect
+(will not load); a clean re-conversion from the fixed HF dir needs tokenizer
+surgery (byte_to_token crash). Stock deepseek-coder Q4_K_M serves the
+standard path until then.
+
 ## Factory telemetry (Phase 1 measurement)
 
 Every factory run (`POST /api/v1/factory*`) emits canonical-JSONL telemetry via

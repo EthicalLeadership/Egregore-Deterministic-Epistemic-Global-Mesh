@@ -1,12 +1,14 @@
 models:
+  # Residency layout (Phase 6): standard stations and the critic run on the
+  # llama.cpp GGUF fleet (hot, ~6.7 GB); "gguf-" prefix routes to GgufBackend.
   qwen_1.5b:
-    model_id: my-coder-ft
+    model_id: gguf-qwen-1.5b
     family: qwen2
   qwen_7b:
-    model_id: my-coder-ft
+    model_id: gguf-my-coder-ft
     family: qwen2
   deepseek_coder_6.7b:
-    model_id: my-coder-ft
+    model_id: gguf-my-coder-ft
     family: deepseek
 modes:
   coding_factory:
