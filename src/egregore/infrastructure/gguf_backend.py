@@ -135,6 +135,8 @@ class GgufBackend(ILlmClient):
                 messages=messages,
                 max_tokens=request.max_tokens,
                 temperature=temperature,
+                # Fixed seed is the foundation of replay determinism (Phase 7).
+                seed=request.seed,
             )
 
         choice = result["choices"][0]

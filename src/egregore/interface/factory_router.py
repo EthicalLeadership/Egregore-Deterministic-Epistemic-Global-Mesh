@@ -948,6 +948,10 @@ def _apply_qc_gate(
         {"m1": False, "m2": False, "m3": False, "m4": False}
         if ctx["_m_failure"] else None
     )
+    # Per-mode output contract: case_report produces {summary, ...}, not {module}.
+    by_mode = policy.get("required_output_fields_by_mode", {})
+    if response.mode in by_mode:
+        policy = {**policy, "required_output_fields": by_mode[response.mode]}
     cnc_station = response.stations.get("cnc")
     gate = QCGate(policy=policy, critic=critic, rerun_terminal=rerun_terminal)
     try:

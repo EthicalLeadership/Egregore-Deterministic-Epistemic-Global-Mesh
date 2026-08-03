@@ -119,7 +119,11 @@ def test_heavy_pass_serializes(monkeypatch: pytest.MonkeyPatch):
 # GGUF backend (mocked llama)
 # ---------------------------------------------------------------------------
 class FakeLlama:
+    def __init__(self) -> None:
+        self.last_kwargs: dict[str, Any] = {}
+
     def create_chat_completion(self, **kwargs: Any) -> dict[str, Any]:
+        self.last_kwargs = kwargs
         return {
             "choices": [
                 {
@@ -175,6 +179,14 @@ def test_gguf_lazy_load_and_unload(gguf_backend):
 def test_gguf_unknown_model_fails(gguf_backend):
     with pytest.raises(RuntimeError, match="no model 'nope'"):
         gguf_backend.chat(_chat_request("nope"))
+
+
+def test_gguf_seed_passed_for_determinism(gguf_backend):
+    """Replay (Phase 7) requires the request seed to reach llama.cpp."""
+    gguf_backend.chat(_chat_request("my-coder-ft"))
+    llm = gguf_backend._instances["my-coder-ft"]
+    assert llm.last_kwargs.get("seed") == 42  # ChatRequest default seed
+    assert llm.last_kwargs.get("temperature") == 0.0  # DETERMINISTIC default
 
 
 def test_gguf_model_registry(gguf_backend):

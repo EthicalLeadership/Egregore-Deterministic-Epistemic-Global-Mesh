@@ -267,3 +267,77 @@ modes:
           Response: {cnc_output}
 
           Verdict:'
+  case_report:
+    name: ANCHORUM Case Report
+    description: Lawyer-facing forensic case narrative from ANCHORUM findings.
+    pipeline_version: 1
+    stations:
+      intake:
+        model: qwen_1.5b
+        max_tokens: 12
+        temperature: 0.0
+        system: You classify forensic case material. Reply with exactly one label.
+        prompt: 'Classify the dominant finding type in this case material as one
+          of: metadata_anomaly, timeline_conflict, entity_pattern, mixed. Reply
+          with only the label.
+
+
+          Material: {input}
+
+          Label:'
+      parts_mfg:
+        model: qwen_1.5b
+        max_tokens: 384
+        temperature: 0.0
+        system: You extract evidence facts from forensic case material with no
+          embellishment.
+        prompt: 'List the concrete evidence facts in this case material as a bulleted
+          list: artifact names, counts, dates, anomaly types. Facts only, no
+          interpretation.
+
+
+          Material: {input}
+
+          Facts:'
+      compression:
+        model: qwen_1.5b
+        max_tokens: 256
+        temperature: 0.0
+        threshold_chars: 800
+        system: You compress forensic material into typed constraints, never prose
+          summary.
+        prompt: 'Extract the constraints any case narrative must satisfy from this
+          material as JSON: {{"must_include": [...], "must_not_contradict": [...],
+          "severity_focus": "..."}}.
+
+
+          {input}
+
+          Constraints JSON:'
+      cnc:
+        model: qwen_7b
+        max_tokens: 2048
+        temperature: 0.0
+        system: You write precise, lawyer-facing forensic case narratives. Every
+          claim must trace to the provided evidence. No speculation.
+        prompt: 'Write the case narrative as strict JSON with keys: summary, key_findings
+          (list), severity_assessment, recommended_actions (list). Base every statement
+          on the evidence below.
+
+
+          Evidence: {input}
+
+          Narrative JSON:'
+      qc:
+        model: qwen_1.5b
+        max_tokens: 5
+        temperature: 0.0
+        system: You are a forensic quality reviewer. Reply with one word.
+        prompt: 'Review this case narrative. If it contains speculation, untraceable
+          claims, contradictions, or malformed JSON, reply ONLY ''FAIL''. Otherwise
+          reply ONLY ''PASS''.
+
+
+          Narrative: {cnc_output}
+
+          Verdict:'

@@ -16,7 +16,10 @@
       "i cannot comply",
       "TODO: implement"
     ],
-    "required_output_fields": ["module"]
+    "required_output_fields": ["module"],
+    "required_output_fields_by_mode": {
+      "case_report": ["summary"]
+    }
   },
   "escalation": {
     "path": ["micro", "standard", "heavy"],

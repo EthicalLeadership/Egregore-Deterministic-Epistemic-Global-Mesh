@@ -1,0 +1,57 @@
+{
+  "runs_total": 98,
+  "by_policy_hash": {
+    "27680d316f00f72f4981fe8fe917c16f8dc8cca6f180028224e7ca04662de18c": {
+      "runs": 5,
+      "ship": 5,
+      "blocked": 0,
+      "blocked_rate": "0.0%",
+      "fail_families": {}
+    },
+    "4aba63a6a2bb60066b2dbd08bf6fd15299d1fd9e4e32d0330e0e5af5c70e0109": {
+      "runs": 70,
+      "ship": 11,
+      "blocked": 5,
+      "blocked_rate": "7.1%",
+      "fail_families": {
+        "model_contract": 37,
+        "compression": 1
+      }
+    },
+    "daa927f1c15384ee0c038c9eb726e15cadfcc4b209188d0eb93aa996dea134d1": {
+      "runs": 19,
+      "ship": 8,
+      "blocked": 11,
+      "blocked_rate": "57.9%",
+      "fail_families": {
+        "model_contract": 44,
+        "compression": 13,
+        "infrastructure": 1
+      }
+    },
+    "pre-policy": {
+      "runs": 4,
+      "ship": 3,
+      "blocked": 1,
+      "blocked_rate": "25.0%",
+      "fail_families": {
+        "model_contract": 5
+      }
+    }
+  },
+  "traffic": {
+    "synthetic": {
+      "total": 90,
+      "blocked": 15,
+      "blocked_rate": "16.7%"
+    },
+    "real": {
+      "total": 8,
+      "blocked": 2,
+      "blocked_rate": "25.0%"
+    }
+  },
+  "critic_p95_by_day": {
+    "2026-08-02": 8849.51
+  }
+}
