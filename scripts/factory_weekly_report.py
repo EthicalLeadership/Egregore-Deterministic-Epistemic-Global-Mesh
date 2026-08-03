@@ -35,7 +35,58 @@ FAMILY_MAP = {
     "vram_insufficient": "infrastructure",
     "low_confidence": "critic_calibration",
     "policy_malformed": "governance",
+    "citation_missing": "retrieval",
 }
+
+# Pre-registered decision table (config/factory_decision_table.json).
+# The read applies itself mechanically — no after-the-fact rationalization.
+_DECISION_TABLE_PATH = Path(__file__).resolve().parents[1] / "config" / "factory_decision_table.json"
+
+
+def apply_decision_table(
+    families: dict[str, int],
+    *,
+    table: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply the pre-registered decision table to FAIL-family counts.
+
+    Returns verdict + evidence. UNDERPOWERED when below minimum sample.
+    """
+    min_events = int(table.get("minimum_sample", {}).get("min_fail_events", 20))
+    total_fails = sum(families.values())
+    result: dict[str, Any] = {
+        "fail_events": total_fails,
+        "families": dict(sorted(families.items(), key=lambda kv: -kv[1])),
+        "minimum_sample": min_events,
+    }
+    if total_fails < min_events:
+        result["verdict"] = "UNDERPOWERED"
+        result["action"] = (
+            f"extend the window — {total_fails} FAIL events < minimum {min_events}; "
+            "do not conclude"
+        )
+        return result
+
+    family_defs = table.get("families", {})
+    retrieval = sum(families.get(cid, 0) for cid in family_defs.get("retrieval", []))
+    compression = sum(families.get(cid, 0) for cid in family_defs.get("compression", []))
+    half = total_fails / 2.0
+    result["retrieval_events"] = retrieval
+    result["compression_events"] = compression
+
+    if retrieval >= half and retrieval > 0:
+        result["verdict"] = "PHASE_4"
+        result["action"] = "build one retrieval surface (retrieval-class dominates)"
+    elif compression >= half and compression > 0:
+        result["verdict"] = "PHASE_5"
+        result["action"] = "compression, structured-only (compression-class dominates)"
+    else:
+        result["verdict"] = "LINE_HEALTHY"
+        result["action"] = (
+            "no station build justified — throughput frontier: "
+            "1.5B draft + 7B target speculative decoding"
+        )
+    return result
 
 
 def load_events(directory: Path) -> list[dict[str, Any]]:
@@ -114,8 +165,27 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:  # noqa: C901 
         ordered = sorted(values)
         return ordered[min(len(ordered) - 1, int(len(ordered) * 0.95))]
 
+    # --- Pre-registered decision read: post-cutoff FAIL events only -------
+    decision: dict[str, Any] = {"verdict": "NO_TABLE"}
+    cutoff_utc = ""
+    if _DECISION_TABLE_PATH.exists():
+        table = json.loads(_DECISION_TABLE_PATH.read_text(encoding="utf-8"))
+        cutoff_utc = table.get("regime_cutoff", {}).get("timestamp_utc", "")
+        post_families: dict[str, int] = defaultdict(int)
+        for run in runs.values():
+            for ev in run:
+                if ev["event_type"] != "factory.qc.verdict" or ev.get("verdict") != "FAIL":
+                    continue
+                if cutoff_utc and str(ev.get("ts", "")) < cutoff_utc:
+                    continue  # pre-grammar regime: trend line only
+                for v in ev.get("violations", []):
+                    post_families[family_of(str(v.get("constraint_id", "?")))] += 1
+        decision = apply_decision_table(dict(post_families), table=table)
+
     return {
         "runs_total": sum(r["total"] for r in regime_runs.values()),
+        "decision": decision,
+        "regime_cutoff_utc": cutoff_utc,
         "by_policy_hash": {
             ph: {
                 "runs": stats["total"],

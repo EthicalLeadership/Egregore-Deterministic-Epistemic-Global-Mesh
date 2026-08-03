@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "registered_at": "2026-08-02T22:07:29-04:00",
+  "registered_commit": "250a7a7",
+  "note": "Pre-registered BEFORE week-end data arrives. Do not edit thresholds after the fact — edits are regime changes and must be recorded as new versions.",
+  "regime_cutoff": {
+    "commit": "250a7a7",
+    "timestamp_utc": "2026-08-03T02:07:29+00:00",
+    "rule": "FAIL events before this timestamp predate the grammar critic and citation gate. EXCLUDE from the family read; keep only for the trend line."
+  },
+  "families": {
+    "retrieval": ["citation_missing", "low_confidence"],
+    "compression": ["empty_output", "output_too_long", "missing_required_fields"],
+    "model_contract": ["malformed_verdict", "forbidden_pattern"],
+    "governance": ["governance_m_flags", "policy_malformed"],
+    "infrastructure": ["critic_error", "critic_timeout", "gate_error", "vram_insufficient"],
+    "critic_calibration": ["low_confidence"]
+  },
+  "minimum_sample": {
+    "min_fail_events": 20,
+    "rule": "If total FAIL events < 20 the read is UNDERPOWERED — extend the window, do not conclude. A family dominating 6 events is noise."
+  },
+  "decision": [
+    {
+      "outcome": "retrieval-class >= 50% of FAIL events (and min sample met)",
+      "verdict": "Phase 4 — build one retrieval surface"
+    },
+    {
+      "outcome": "compression-class >= 50% of FAIL events (and min sample met)",
+      "verdict": "Phase 5 — compression, structured-only"
+    },
+    {
+      "outcome": "both families quiet / underpowered",
+      "verdict": "Line healthy — no station build justified. Next frontier is throughput: 1.5B draft + 7B target speculative decoding (llama.cpp native; both models already resident)."
+    }
+  ]
+}

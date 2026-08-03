@@ -75,3 +75,52 @@ def test_unknown_constraint_id_defaults_to_model_contract():
     assert wr.family_of("write python function number 3") == "model_contract"
     assert wr.family_of("0") == "model_contract"
     assert wr.family_of("vram_insufficient") == "infrastructure"
+    assert wr.family_of("citation_missing") == "retrieval"
+
+
+# ---------------------------------------------------------------------------
+# Pre-registered decision table
+# ---------------------------------------------------------------------------
+TABLE = {
+    "minimum_sample": {"min_fail_events": 20},
+    "families": {
+        "retrieval": ["citation_missing", "low_confidence"],
+        "compression": ["empty_output", "output_too_long", "missing_required_fields"],
+    },
+}
+
+
+def test_decision_underpowered_below_minimum():
+    r = wr.apply_decision_table({"citation_missing": 19}, table=TABLE)
+    assert r["verdict"] == "UNDERPOWERED"
+    assert "extend the window" in r["action"]
+
+
+def test_decision_retrieval_dominates():
+    r = wr.apply_decision_table(
+        {"citation_missing": 12, "empty_output": 5, "malformed_verdict": 3}, table=TABLE
+    )
+    assert r["verdict"] == "PHASE_4"
+    assert r["retrieval_events"] == 12
+
+
+def test_decision_compression_dominates():
+    r = wr.apply_decision_table(
+        {"citation_missing": 3, "empty_output": 15, "malformed_verdict": 2}, table=TABLE
+    )
+    assert r["verdict"] == "PHASE_5"
+
+
+def test_decision_quiet_is_healthy():
+    r = wr.apply_decision_table(
+        {"citation_missing": 3, "empty_output": 2, "malformed_verdict": 15}, table=TABLE
+    )
+    assert r["verdict"] == "LINE_HEALTHY"
+    assert "speculative decoding" in r["action"]
+
+
+def test_decision_exactly_half_is_dominant():
+    r = wr.apply_decision_table(
+        {"citation_missing": 10, "empty_output": 10}, table=TABLE
+    )
+    assert r["verdict"] == "PHASE_4"  # >= 50% counts, retrieval wins ties by order
