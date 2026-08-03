@@ -55,7 +55,7 @@ def family_of(constraint_id: str) -> str:
     return "model_contract"
 
 
-def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
+def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:  # noqa: C901 — report aggregation, complexity acceptable
     runs: dict[str, dict[str, Any]] = {}
     for ev in events:
         rid = ev.get("run_id")
@@ -72,7 +72,7 @@ def build_report(events: list[dict[str, Any]]) -> dict[str, Any]:
     real = {"total": 0, "blocked": 0}
     critic_by_day: dict[str, list[float]] = defaultdict(list)
 
-    for rid, run in runs.items():
+    for run in runs.values():
         outcome = next((e for e in run if e["event_type"] == "factory.run.outcome"), None)
         policy_hash = (outcome or {}).get("policy_hash") or "pre-policy"
         is_synthetic = False

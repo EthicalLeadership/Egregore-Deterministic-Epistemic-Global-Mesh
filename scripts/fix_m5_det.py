@@ -2,7 +2,6 @@
 """Fix M5-DET wall-clock usage in the four cell-aware modules."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

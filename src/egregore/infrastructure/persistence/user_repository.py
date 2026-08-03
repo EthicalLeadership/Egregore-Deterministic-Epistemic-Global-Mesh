@@ -79,7 +79,6 @@ def _hash_api_key(key: str) -> str:
 
 
 def _now_ns() -> int:
-    import datetime
 
     return time.time_ns()
 

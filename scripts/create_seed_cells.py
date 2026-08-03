@@ -18,7 +18,7 @@ import json
 import sys
 from pathlib import Path
 
-from egregore.governance.cell_protocol import CellProtocolController, STAGES
+from egregore.governance.cell_protocol import STAGES, CellProtocolController
 
 SEED_CELL_IDS = [
     "math_calculus",

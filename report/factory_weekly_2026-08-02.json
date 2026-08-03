@@ -1,12 +1,14 @@
 {
-  "runs_total": 98,
+  "runs_total": 103,
   "by_policy_hash": {
     "27680d316f00f72f4981fe8fe917c16f8dc8cca6f180028224e7ca04662de18c": {
-      "runs": 5,
-      "ship": 5,
-      "blocked": 0,
-      "blocked_rate": "0.0%",
-      "fail_families": {}
+      "runs": 10,
+      "ship": 7,
+      "blocked": 3,
+      "blocked_rate": "30.0%",
+      "fail_families": {
+        "model_contract": 18
+      }
     },
     "4aba63a6a2bb60066b2dbd08bf6fd15299d1fd9e4e32d0330e0e5af5c70e0109": {
       "runs": 70,
@@ -41,9 +43,9 @@
   },
   "traffic": {
     "synthetic": {
-      "total": 90,
-      "blocked": 15,
-      "blocked_rate": "16.7%"
+      "total": 95,
+      "blocked": 18,
+      "blocked_rate": "18.9%"
     },
     "real": {
       "total": 8,
@@ -52,6 +54,7 @@
     }
   },
   "critic_p95_by_day": {
-    "2026-08-02": 8849.51
+    "2026-08-02": 8849.51,
+    "2026-08-03": 2126.45
   }
 }

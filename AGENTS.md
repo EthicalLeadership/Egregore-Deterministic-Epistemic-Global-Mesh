@@ -222,10 +222,24 @@ the GGUF backend is promoted to the primary `"egregore"` client.
 - **Heavy pass swap**: escalation unloads hot residents, loads HF 8-bit,
   runs, unloads, restores residents. Serialized by a lock.
 
-Known issue: the legacy `my_coder_ft-q4_k_m.gguf` has a vocab-padding defect
-(will not load); a clean re-conversion from the fixed HF dir needs tokenizer
-surgery (byte_to_token crash). Stock deepseek-coder Q4_K_M serves the
-standard path until then.
+Fine-tune salvage (2026-08-02): `my_coder_ft_fixed-Q4_K_M.gguf` was
+re-converted from the fixed HF dir with `byte_fallback: false` and a
+converter whitelist entry (hash `d08ba653…` → `deepseek-coder` pre-tokenizer
+in `~/llama.cpp/convert_hf_to_gguf.py`). It is now the resident 7B. The
+legacy corrupt GGUFs are quarantined under
+`/mnt/blackstar/archive/quarantine/2026-08-02/`.
+
+## Phase 7 — replay + weekly report
+
+- `scripts/factory_replay.py --case MOLSON-2026 --mode case_report` runs a
+  workload twice (temperature 0, seed fixed) and byte-compares outputs plus
+  volatile-stripped telemetry traces. MOLSON-2026: DETERMINISTIC.
+  GDC-86849-02: DIVERGED by 1 token / 5980.
+- `case_report` factory mode: 5-station legal narrative (v1 profile).
+  Per-mode output contracts via `required_output_fields_by_mode` in
+  `config/factory_policy.json`.
+- `scripts/factory_weekly_report.py` prints FAIL families per `policy_hash`,
+  synthetic-vs-real BLOCKED rate, and critic p95 trend from telemetry.
 
 ## Factory telemetry (Phase 1 measurement)
 

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from egregore.ems.lifecycle import EmsLifecycle
 from egregore.ems.registry import EmsRegistry, ModelStatus, build_registry_from_env

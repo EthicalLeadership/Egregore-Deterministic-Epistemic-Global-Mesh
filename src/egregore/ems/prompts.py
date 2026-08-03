@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 # Project-aware system prompt used for the Coder agent.
 # Keep it grounded in real project imports and conventions found in the codebase.
 DEEPSEEK_CODER_SYSTEM_PROMPT = (

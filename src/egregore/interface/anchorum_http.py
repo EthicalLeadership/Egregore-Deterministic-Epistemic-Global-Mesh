@@ -8,7 +8,6 @@ bootstrap on port 8443.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import time
@@ -26,7 +25,8 @@ from starlette.responses import Response
 
 from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
 from egregore.interface.anchorum_router import router as anchorum_router
-from egregore.interface.dashboard import DashboardService, DashboardServiceProvider, router as dashboard_router
+from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
+from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
 
 logger = logging.getLogger("egregore.anchorum_http")
