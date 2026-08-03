@@ -134,6 +134,7 @@ class EgregoreInferenceHost:
         system: str | None = None,
         max_tokens: int | None = None,
         temperature: float | None = None,
+        grammar: str | None = None,
     ) -> tuple[str, int, str]:
         """Run a chat completion through Egregore and return (text, tokens, backend)."""
         if self.inference_service is None:
@@ -156,6 +157,7 @@ class EgregoreInferenceHost:
             max_tokens=max_tokens or 2048,
             seed=42,
             stream=False,
+            grammar=grammar,
         )
 
         start = time.monotonic()
@@ -952,6 +954,18 @@ def _apply_qc_gate(
     by_mode = policy.get("required_output_fields_by_mode", {})
     if response.mode in by_mode:
         policy = {**policy, "required_output_fields": by_mode[response.mode]}
+
+    # Citation-presence gating for evidence-grounded modes: extract the
+    # anomaly ids present in the input digest and require the narrative to
+    # cite at least min_citations of them.
+    if response.mode == "case_report":
+        evidence_ids = sorted(set(re.findall(r"\b[0-9a-f]{16}\b", req.input)))
+        if evidence_ids:
+            policy = {
+                **policy,
+                "required_evidence_ids": evidence_ids,
+                "min_citations": min(int(policy.get("min_citations", 2)), len(evidence_ids)),
+            }
     cnc_station = response.stations.get("cnc")
     gate = QCGate(policy=policy, critic=critic, rerun_terminal=rerun_terminal)
     try:

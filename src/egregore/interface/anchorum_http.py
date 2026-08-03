@@ -72,7 +72,8 @@ def _case_context(case_id: str) -> str:
             for f in findings:
                 desc = str(f.get("description", ""))[:160]
                 atype = f.get("anomaly_type", "?")
-                lines.append(f"- [{atype}] {desc}")
+                aid = f.get("anomaly_id", "")
+                lines.append(f"- [{atype}] (id: {aid}) {desc}")
     med = report.get("medium_findings", [])
     low = report.get("low_findings", [])
     lines.append(f"\nOther findings: {len(med)} medium, {len(low)} low.")

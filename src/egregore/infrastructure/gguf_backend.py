@@ -130,6 +130,12 @@ class GgufBackend(ILlmClient):
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
         temperature = 0.0 if request.mode == InferenceMode.DETERMINISTIC else 0.7
 
+        grammar = None
+        if request.grammar:
+            from llama_cpp import LlamaGrammar
+
+            grammar = LlamaGrammar.from_string(request.grammar, verbose=False)
+
         with self._lock:
             result = llm.create_chat_completion(
                 messages=messages,
@@ -137,6 +143,7 @@ class GgufBackend(ILlmClient):
                 temperature=temperature,
                 # Fixed seed is the foundation of replay determinism (Phase 7).
                 seed=request.seed,
+                grammar=grammar,
             )
 
         choice = result["choices"][0]

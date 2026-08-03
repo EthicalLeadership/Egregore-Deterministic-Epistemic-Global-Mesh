@@ -121,7 +121,31 @@ def run_deterministic_checks(
                 )
             )
 
+    violations.extend(check_citations(output, policy=policy))
     return violations
+
+
+def check_citations(output: str, *, policy: dict[str, Any]) -> list[Violation]:
+    """Citation-presence: output must reference evidence ids from the input.
+
+    Makes retrieval misses detectable and strengthens the provenance chain.
+    """
+    required_ids = policy.get("required_evidence_ids", [])
+    if not required_ids:
+        return []
+    present = sum(1 for rid in required_ids if str(rid) in output)
+    min_citations = int(policy.get("min_citations", 1))
+    if present < min_citations:
+        return [
+            Violation(
+                constraint_id="citation_missing",
+                evidence=(
+                    f"output cites {present}/{len(required_ids)} evidence ids; "
+                    f"need >= {min_citations}"
+                ),
+            )
+        ]
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +207,8 @@ class EgregoreCritic:
             f"OUTPUT TO JUDGE:\n{output[:8000]}\n\n"
             "Return the strict JSON verdict now."
         )
+        from egregore.factory.critic_grammar import VERDICT_GBNF
+
         start = time.monotonic()
         try:
             text, _tokens, _backend = self._host.execute(
@@ -191,6 +217,7 @@ class EgregoreCritic:
                 system=_CRITIC_SYSTEM,
                 max_tokens=max_tokens,
                 temperature=0.0,
+                grammar=VERDICT_GBNF,
             )
         except Exception as exc:  # noqa: BLE001 — fail-closed
             latency = round((time.monotonic() - start) * 1000, 2)
@@ -226,10 +253,17 @@ class EgregoreCritic:
         return verdict
 
     def _parse_verdict(self, text: str, latency_ms: float) -> QCVerdict:
-        """Strict parse. Malformed verdict → FAIL (contract: no verdict, no ship)."""
+        """Strict parse. Malformed verdict → FAIL (contract: no verdict, no ship).
+
+        Repair tier (deterministic, runs before declaring malformed): strip
+        prose around the JSON object, remove trailing commas, normalize
+        single quotes. Only if repair also fails is the verdict malformed.
+        """
         from egregore.interface.factory_router import _extract_json
 
         parsed = _extract_json(text or "")
+        if not isinstance(parsed, dict):
+            parsed = self._repair_json(text or "")
         if not isinstance(parsed, dict):
             return _fail_verdict(
                 self._model_id, latency_ms, "malformed_verdict",
@@ -261,6 +295,34 @@ class EgregoreCritic:
             return _fail_verdict(
                 self._model_id, latency_ms, "malformed_verdict", str(exc)[:300]
             )
+
+    @staticmethod
+    def _repair_json(text: str) -> dict[str, Any] | None:
+        """Deterministic salvage of near-JSON critic output.
+
+        Handles the observed 1.5B lapses: prose before/after the object,
+        trailing commas, single-quoted keys/strings, missing outer braces.
+        """
+        import json as _json
+        import re
+
+        candidate = text.strip()
+        # Strip markdown fences and leading/trailing prose around the object.
+        candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.MULTILINE)
+        start = candidate.find("{")
+        end = candidate.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return None
+        candidate = candidate[start : end + 1]
+        # Single quotes -> double quotes (keys and simple string values).
+        candidate = re.sub(r"'([^'\\]*)'", r'"\1"', candidate)
+        # Trailing commas before } or ].
+        candidate = re.sub(r",(\s*[}\]])", r"\1", candidate)
+        try:
+            parsed = _json.loads(candidate)
+        except (ValueError, TypeError):
+            return None
+        return parsed if isinstance(parsed, dict) else None
 
 
 # ---------------------------------------------------------------------------

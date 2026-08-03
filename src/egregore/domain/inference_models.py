@@ -31,6 +31,8 @@ class ChatRequest:
     # CBI-0 scope declaration
     declared_agents: list[str] = field(default_factory=list)
     declared_models: list[str] = field(default_factory=list)
+    # Optional GBNF grammar (string) for constrained sampling — critic use.
+    grammar: str | None = None
 
 
 @dataclass(frozen=True)
