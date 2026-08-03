@@ -59,6 +59,7 @@ class AnchorumApp(tk.Tk):
         self._build_chat_tab(nb)
         self._build_batch_tab(nb)
         self._build_system_tab(nb)
+        self._build_factory_tab(nb)
 
         self.status = ttk.Label(self, text="Ready", anchor=tk.W, padding=(6, 2))
         self.status.pack(fill=tk.X, side=tk.BOTTOM)
@@ -215,6 +216,12 @@ class AnchorumApp(tk.Tk):
         widget.insert(tk.END, text)
         widget.config(state=tk.DISABLED)
 
+    def _build_factory_tab(self, nb: ttk.Notebook) -> None:
+        from factory_tab import FactoryTab
+
+        tab = FactoryTab(nb, self._set_status)
+        nb.add(tab, text="Factory")
+
     # ------------------------------------------------------------ plumbing
     def _bg(self, fn, *args) -> None:
         threading.Thread(target=fn, args=args, daemon=True).start()
@@ -232,7 +239,8 @@ class AnchorumApp(tk.Tk):
         self._q.put((fn, args))
 
     def _set_status(self, text: str) -> None:
-        self.status.config(text=text)
+        if hasattr(self, "status"):
+            self.status.config(text=text)
 
     def _append_chat(self, tag: str, who: str, text: str) -> None:
         self.chat_log.config(state=tk.NORMAL)
