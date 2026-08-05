@@ -5,6 +5,7 @@ Uses a zarc-like JSONL format where each line is a canonical JSON block.
 
 from __future__ import annotations
 
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
 from egregore.domain.execution_block import ExecutionBlock
@@ -19,8 +20,20 @@ class BlockStore:
         self._store_path.parent.mkdir(parents=True, exist_ok=True)
 
     def append(self, block: ExecutionBlock) -> None:
-        """Append a block to the store."""
-        line = canonical_dumps(block.__dict__, default=str)
+        """Append a block to the store.
+
+        Records and the causal vector are serialized via ``asdict`` (not the
+        lossy ``default=str`` repr path) so the chain remains independently
+        verifiable from the persisted representation.
+        """
+        obj = dict(block.__dict__)
+        obj["records"] = [
+            asdict(r) if is_dataclass(r) else r for r in block.records
+        ]
+        obj["causal_vector"] = (
+            asdict(block.causal_vector) if block.causal_vector is not None else None
+        )
+        line = canonical_dumps(obj, default=str)
         with self._store_path.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
             f.flush()

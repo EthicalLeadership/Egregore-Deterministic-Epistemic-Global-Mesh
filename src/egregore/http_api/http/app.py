@@ -93,6 +93,7 @@ def create_app(build_container: bool = True) -> Any:
             container = EgregoreContainer.from_env()
             app.state.inference_service = container.inference_service
             app.state.code_factory = container.code_factory
+            app.state.container = container
         except Exception as exc:  # noqa: BLE001
             warnings.warn(
                 f"Failed to bootstrap EgregoreContainer: {exc}. "
@@ -101,6 +102,7 @@ def create_app(build_container: bool = True) -> Any:
                 stacklevel=2,
             )
             app.state.inference_service = None
+            app.state.container = None
 
     # Defensive: skip None routers (modules may return None when FastAPI is missing)
     _routers = [
@@ -164,6 +166,30 @@ def create_app(build_container: bool = True) -> Any:
     # ANCHORUM Stage-4 ingest endpoint (mounted at root so the connector can POST /ingest).
     if ingest_router is not None:
         app.include_router(ingest_router)
+
+    # Anchor public verification API (fail-closed; real TSA verification).
+    if getattr(app.state, "container", None) is not None:
+        try:
+            from egregore.services.anchor_orchestrator.api import (
+                create_anchor_router,
+            )
+
+            app.include_router(
+                create_anchor_router(
+                    anchor_store=app.state.container.anchor_store,
+                    orchestrator=app.state.container.anchor_orchestrator,
+                    trust_dir=os.environ.get(
+                        "EGREGORE_TSA_TRUST_DIR", "config/tsa_trust"
+                    ),
+                ),
+                prefix="/api/v1",
+            )
+        except Exception as exc:  # noqa: BLE001
+            warnings.warn(
+                f"Failed to mount anchor verification router: {exc}.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
 
     # Serve vertical pages from the repo's `static/` folder:
     #   /services/<vertical>/  ->  static/<vertical>/index.html

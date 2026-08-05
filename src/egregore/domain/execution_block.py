@@ -6,17 +6,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from egregore.domain.causal_vector import CausalVector
 
-@dataclass
-class CausalVector:
-    """Causal metadata linking a block to its execution trace and distributed context."""
-
-    trace_id: str = ""
-    span_id: str = ""
-    parent_span_id: str = ""
-    vector: dict[str, int] = field(default_factory=dict)
-    distributed: bool = False
-    cross_node: bool = False
+__all__ = ["CausalVector", "ExecutionBlock", "generate_block_id"]
 
 
 def generate_block_id(
@@ -77,6 +69,8 @@ class ExecutionBlock:
     def __post_init__(self) -> None:
         if self.causal_vector is None:
             self.causal_vector = CausalVector()
+        elif isinstance(self.causal_vector, dict):
+            self.causal_vector = CausalVector(**self.causal_vector)
         if self.created_at_ns == 0 and self.created_at != 0:
             self.created_at_ns = self.created_at
         if self.record_count == 0 and self.records:

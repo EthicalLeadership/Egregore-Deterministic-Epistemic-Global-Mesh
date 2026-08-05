@@ -302,6 +302,73 @@ the record by design.
 - **Hot reload** by mtime check at each run start (no watcher daemon).
 - `EGREGORE_FACTORY_POLICY` overrides the policy file path (tests).
 
+## Blueprint gap components (added 2026-08-03)
+
+Four components tracked against the BlackStar-era construction blueprint:
+
+- **Micro-Blocks (SEL-X ExecutionBlock)** — `domain/execution_block.py` (chain
+  model), `application/block_builder.py` (merkle + Ed25519 block signing via
+  injected `signer`), `infrastructure/block_store.py` / `postgres_block_store.py`
+  (persist `block_signature`). `CausalVector` is single-sourced in
+  `domain/causal_vector.py` (re-exported from `execution_block`).
+  Verify any chain offline: `python scripts/verify_block_chain.py <blocks.zarc>
+  [--pubkey HEX]` (fail-closed; checks linkage, merkle roots, integrity hashes,
+  signatures).
+- **HSM signing** — `infrastructure/pkcs11_signing_backend.py`
+  (`Pkcs11SigningBackend` implements `ISigningBackend`; `Pkcs11KeyManager`
+  refuses private-key export by design). Env-selected:
+  `EGREGORE_SIGNING_BACKEND=pkcs11|local` plus `EGREGORE_PKCS11_MODULE`,
+  `_SLOT`, `_TOKEN_LABEL`, `_KEY_LABEL`, `_PIN`. Wired in
+  `application/container.py` (`container.signing_backend` / `get_signer()`).
+  Optional dependency: `pip install -e ".[hsm]"` (PyKCS11). SoftHSM tests:
+  `EGREGORE_TEST_SOFTHSM=1 pytest tests/infrastructure/test_pkcs11_signing_backend.py`.
+- **Governance DSL** — deterministic expression-tree rules (JSON/YAML).
+  Evaluator: `domain/governance_dsl.py` (pure, fail-closed); loader:
+  `application/governance_policy_loader.py` (`GovernanceRuleSet` implements
+  `IPolicyLogic`, `policy_hash` via canonical JSON). Verdicts: deny wins >
+  require_escalation > allow; no match → deny. Docs: `docs/governance/dsl.md`;
+  example: `config/governance_rules.example.json`.
+- **WorkTree** — deterministic work decomposition trees.
+  `domain/work_tree.py` (derived node IDs, fail-closed rollup: any child
+  FAILED/REJECTED → parent FAILED), `interface/work_tree_ports.py`
+  (`IWorkDecomposition`, `IWorkTreeStore`, `WorkSpec`),
+  `application/work_tree_service.py` (dispatches leaves to
+  `DistributedScheduler`, emits exactly one hash-chained `ExecutionRecord`
+  per terminal tree; all timestamps injected).
+
+## Evidence / court-grade (Trust Core E1, added 2026-08-03)
+
+Evidentiary layer over `.zarc` (overlay — no line-format change; historical
+hashes stay valid). Evidence narrative for affidavits: `docs/evidence/court_grade.md`.
+
+- **TSA verification** — `infrastructure/tsa_verifier.py`: real RFC 3161
+  verification (messageImprint, nonce echo, CMS signature, pinned trust
+  chain, time-stamping EKU) producing `TsaVerificationReport`. Pinned
+  anchors live in `config/tsa_trust/` (empty dir = no token verifies, by
+  design). `TimestampToken.verified` is now honest: only tier-2 tokens with
+  a passing report are True. `TsaForgeryError` never falls back — it
+  triggers the freeze controller via `AnchorOrchestrator`.
+- **Chain of custody** — `domain/custody.py` + `application/custody_log.py`:
+  acquire/transfer/examine/seal/export/verify as `engine="custody"` `.zarc`
+  events; continuity validated fail-closed at write time (unlawful
+  transfers are refused, not flagged).
+- **Witness checkpoints** — `domain/witness_checkpoint.py` +
+  `application/witness_service.py`: Merkle commitment over chain entry
+  hashes, origin signature via `ISigningBackend` (HSM-capable), k-of-n
+  witness cosignatures; checkpoint self-committed to the chain as
+  `engine="witness"`. Per-entry inclusion proofs for auditors
+  (`prove_entry` / `verify_entry_inclusion`).
+- `asn1crypto` is now a core dependency (pyproject).
+- **Anchor verification API** — `services/anchor_orchestrator/api.py`:
+  `GET /api/v1/anchor/{anchor_id}/verify` is REAL and fail-closed (record
+  lookup via `anchor_store.get_by_id`, binding check, `TsaVerificationReport`
+  for tier-2, honest self-asserted verdicts for tier-1/mock). Mounted in
+  `http_api/http/app.py` when the container boots. Trust dir env:
+  `EGREGORE_TSA_TRUST_DIR` (default `config/tsa_trust`).
+- **Pinned TSA anchor**: `config/tsa_trust/freetsa_root.pem` (FreeTSA root,
+  live-verified 2026-08-03). Pinning/rotation/compromise procedure:
+  `docs/evidence/tsa_pinning.md`.
+
 ## Agent standards
 
 When helping with self-study, curriculum design, or technical learning, all agents must follow the **elite self-study standard** defined in:

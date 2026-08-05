@@ -17,6 +17,9 @@ from egregore.application.inference_service import (
     build_inference_service_from_env,
 )
 from egregore.infrastructure.block_store import BlockStore
+from egregore.infrastructure.pkcs11_signing_backend import (
+    build_signing_backend_from_env,
+)
 from egregore.infrastructure.persistence.sqlite_anchor_store import SQLiteAnchorStore
 from egregore.infrastructure.persistence.sqlite_dossier_adapter import (
     SQLiteTransactionalPersistence,
@@ -48,6 +51,7 @@ class EgregoreContainer:
     freeze_controller: FreezeController
     inference_service: InferenceService
     code_factory: CodeFactoryService
+    signing_backend: object | None = None  # ISigningBackend; None = unsigned
     anchor_orchestrator: AnchorOrchestrator = field(init=False)
 
     def __post_init__(self) -> None:
@@ -94,13 +98,16 @@ class EgregoreContainer:
             )
             anchor_store = SQLiteAnchorStore(db_path)
 
-        # Timestamp client: TSA with fallback, or mock
+        # Timestamp client: TSA with fallback, or mock.
+        # EGREGORE_TSA_TRUST_DIR pins the TSA trust anchors; without it no
+        # tier-2 token verifies (fail-closed, see config/tsa_trust/README.md).
         tsa_url = os.environ.get("EGREGORE_TSA_URL")
+        tsa_trust_dir = os.environ.get("EGREGORE_TSA_TRUST_DIR", "config/tsa_trust")
         signing_key_hex = os.environ.get("EGREGORE_SIGNING_KEY_HEX")
         if tsa_url and signing_key_hex:
             fallback = LocalFallbackTimestampClient(signing_key_hex)
             timestamp_client: ITimestampClient = RFC3161TimestampClient(
-                tsa_url, fallback=fallback
+                tsa_url, fallback=fallback, trust_dir=tsa_trust_dir
             )
         elif signing_key_hex:
             timestamp_client = LocalFallbackTimestampClient(signing_key_hex)
@@ -108,6 +115,10 @@ class EgregoreContainer:
             timestamp_client = MockTimestampClient()
 
         freeze_controller = FreezeController()
+
+        # Signing backend: local Ed25519 (default) or HSM via PKCS#11.
+        # Fail-closed: selecting pkcs11 with missing config raises HsmError.
+        signing_backend = build_signing_backend_from_env()
 
         inference_service = build_inference_service_from_env()
         code_factory = CodeFactoryService(inference_service)
@@ -120,7 +131,12 @@ class EgregoreContainer:
             freeze_controller=freeze_controller,
             inference_service=inference_service,
             code_factory=code_factory,
+            signing_backend=signing_backend,
         )
+
+    def get_signer(self) -> object | None:
+        """Return the configured ISigningBackend (or None when unsigned)."""
+        return self.signing_backend
 
     @classmethod
     def for_testing(cls, tmp_path: Path) -> EgregoreContainer:

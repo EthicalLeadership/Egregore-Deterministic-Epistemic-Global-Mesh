@@ -59,6 +59,25 @@ class SQLiteAnchorStore:
             )
             conn.commit()
 
+    def get_by_id(self, anchor_id: str) -> AnchorRecord | None:
+        with sqlite3.connect(str(self._db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT * FROM anchor_records WHERE anchor_id = ? LIMIT 1",
+                (anchor_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            return AnchorRecord(
+                anchor_id=str(row["anchor_id"]),
+                tier=str(row["tier"]),
+                block_hash=str(row["block_hash"]),
+                notarization=str(row["notarization"]),
+                public_verify=bool(row["public_verify"]),
+                timestamp_ns=int(row["timestamp_ns"]),
+                metadata=ast.literal_eval(str(row["metadata"])),
+            )
+
     def get_by_block_hash(self, block_hash: str) -> AnchorRecord | None:
         with sqlite3.connect(str(self._db_path)) as conn:
             conn.row_factory = sqlite3.Row

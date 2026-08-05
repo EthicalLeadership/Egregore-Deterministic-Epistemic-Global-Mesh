@@ -40,6 +40,7 @@ dependencies = [
     # Cryptography / provenance
     "pynacl>=1.5",
     "cryptography>=42.0",
+    "asn1crypto>=1.5",
 
     # Structured logging and deterministic utilities
     "canonicaljson>=2.0.0",
@@ -64,6 +65,9 @@ dev = [
 ]
 llm = [
     "llama-cpp-python>=0.2.0",
+]
+hsm = [
+    "PyKCS11>=1.5",
 ]
 llm-native = [
     "transformers>=4.45.0",

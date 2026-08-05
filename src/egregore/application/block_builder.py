@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from egregore.domain.execution_block import (
     CausalVector,
@@ -78,8 +78,10 @@ class ExecutionBlockBuilder:
         self._first_buffered_ns = None
 
         # Build Merkle tree over canonical record bytes.
+        # asdict() keeps this symmetric with BlockStore serialization so the
+        # merkle root can be recomputed from the persisted representation.
         leaves = [
-            canonical_dumps(record.__dict__, default=str).encode("utf-8")
+            canonical_dumps(asdict(record), default=str).encode("utf-8")
             for record in records
         ]
         tree = MerkleTree(leaves)

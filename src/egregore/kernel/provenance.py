@@ -147,6 +147,10 @@ class Provenance:
             prev_expected = sha256_hex((line + "\n").encode("utf-8"))
         return True
 
+    def iter_lines(self) -> Iterable[str]:
+        """Public read of raw canonical lines (for checkpointing/auditing)."""
+        return self._iter_lines()
+
     def _iter_lines(self) -> Iterable[str]:
         if not self.zarc_path.exists():
             return []

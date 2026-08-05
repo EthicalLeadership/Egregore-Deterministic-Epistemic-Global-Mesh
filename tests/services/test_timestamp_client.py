@@ -17,7 +17,8 @@ def test_mock_timestamp_client() -> None:
     client = MockTimestampClient()
     resp = client.timestamp("a" * 64)
     assert resp.source == "mock"
-    assert resp.verified is True
+    # Mock tokens are self-asserted: not independently verified.
+    assert resp.verified is False
     assert len(resp.token) > 0
 
 
@@ -27,7 +28,9 @@ def test_local_fallback_signature_is_verifiable() -> None:
     data_hash = "a" * 64
     resp = client.timestamp(data_hash)
     assert resp.source == "local"
-    assert resp.verified is True
+    # Local tier-1 tokens are self-signed: verifiable with the pubkey
+    # (checked below) but not verified by a trusted authority.
+    assert resp.verified is False
 
     import ast
     import base64

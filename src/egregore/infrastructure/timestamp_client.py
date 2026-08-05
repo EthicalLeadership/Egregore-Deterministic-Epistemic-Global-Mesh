@@ -57,12 +57,22 @@ class LocalFallbackTimestampClient:
         }
         token = base64.b64encode(str(token_obj).encode("utf-8")).decode("utf-8")
         return TimestampResponse(
-            token=token, timestamp_ns=timestamp_ns, verified=True, source="local"
+            token=token,
+            timestamp_ns=timestamp_ns,
+            # Self-asserted: locally verifiable with the pubkey, but not
+            # independently verified by a trusted authority.
+            verified=False,
+            source="local",
         )
 
 
 class RFC3161TimestampClient:
-    """RFC 3161 timestamp client with automatic local fallback."""
+    """RFC 3161 timestamp client with automatic local fallback.
+
+    Granted tokens are cryptographically verified (messageImprint, nonce,
+    CMS signature, pinned trust chain, time-stamping EKU) before use.
+    Verification failures never fall back — they raise.
+    """
 
     def __init__(
         self,
@@ -70,10 +80,12 @@ class RFC3161TimestampClient:
         *,
         timeout_seconds: float = 10.0,
         fallback: ITimestampClient | None = None,
+        trust_dir: str | None = None,
     ) -> None:
         self._url = url
         self._timeout = timeout_seconds
         self._fallback = fallback
+        self._trust_dir = trust_dir
 
     def timestamp(self, data_hash: str) -> TimestampResponse:
         try:
@@ -86,12 +98,18 @@ class RFC3161TimestampClient:
             return self._fallback.timestamp(data_hash)
 
     def _timestamp_with_tsa(self, data_hash: str) -> TimestampResponse:
+        import secrets
+        from pathlib import Path
+
         from asn1crypto import algos, tsp
+
+        from egregore.infrastructure.tsa_verifier import verify_tsa_token
 
         digest = bytes.fromhex(data_hash)
         if len(digest) != 32:
             raise TimestampError("RFC3161 client expects a SHA-256 hex hash")
 
+        nonce = int.from_bytes(secrets.token_bytes(8), "big")
         hash_algorithm = algos.DigestAlgorithm({"algorithm": "sha256"})
         message_imprint = tsp.MessageImprint(
             {
@@ -104,6 +122,7 @@ class RFC3161TimestampClient:
                 "version": "v1",
                 "message_imprint": message_imprint,
                 "cert_req": True,
+                "nonce": nonce,
             }
         )
         der_request = req.dump()
@@ -125,9 +144,26 @@ class RFC3161TimestampClient:
             )
 
         token_bytes = resp["time_stamp_token"].dump()
+        report = verify_tsa_token(
+            token_bytes=token_bytes,
+            expected_hash_hex=data_hash,
+            nonce=nonce,
+            trust_dir=Path(self._trust_dir) if self._trust_dir else None,
+        )
+        if not report.verdict:
+            raise TimestampError(
+                "TSA token failed verification: " + "; ".join(report.failures)
+            )
+        if report.gen_time_iso is None:
+            raise TimestampError("TSA token missing gen_time after verification")
+        from datetime import datetime
+
+        timestamp_ns = int(
+            datetime.fromisoformat(report.gen_time_iso).timestamp() * 1_000_000_000
+        )
         return TimestampResponse(
             token=base64.b64encode(token_bytes).decode("utf-8"),
-            timestamp_ns=time.time_ns(),
+            timestamp_ns=timestamp_ns,
             verified=True,
             source="tsa",
         )

@@ -38,6 +38,9 @@ env/
 .env.*.local
 secrets/
 *.pem
+# Pinned TSA trust anchors are public CA certificates, not secrets — they
+# MUST be committed or a fresh clone has an empty trust dir (fail-closed).
+!config/tsa_trust/*.pem
 *.key
 *.crt
 *.p12

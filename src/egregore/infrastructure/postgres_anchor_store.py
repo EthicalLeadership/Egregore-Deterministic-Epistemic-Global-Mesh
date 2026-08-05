@@ -69,6 +69,19 @@ class PostgresAnchorStore:
             )
             conn.commit()
 
+    def get_by_id(self, anchor_id: str) -> AnchorRecord | None:
+        with psycopg2.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM anchor_records WHERE anchor_id = %s LIMIT 1",
+                (anchor_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return None
+            cols = [desc[0] for desc in cur.description]
+            data = dict(zip(cols, row, strict=False))
+            return AnchorRecord(**data)
+
     def get_by_block_hash(self, block_hash: str) -> AnchorRecord | None:
         with psycopg2.connect(self._dsn) as conn, conn.cursor() as cur:
             cur.execute(

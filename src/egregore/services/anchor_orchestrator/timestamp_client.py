@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Protocol
 
 
@@ -19,11 +21,21 @@ class TimestampError(Exception):
     pass
 
 
+class TsaForgeryError(TimestampError):
+    """A granted TSA token failed cryptographic verification.
+
+    This is never eligible for local fallback: silently downgrading a
+    suspected forgery would mask the attack. Callers (anchor orchestrator)
+    route this to the freeze controller.
+    """
+
+
 @dataclass
 class TimestampToken:
     cms_bytes: bytes
     timestamp_iso: str
     tier: int
+    verification: object | None = None  # TsaVerificationReport for tier-2
 
     @property
     def source(self) -> str:
@@ -35,7 +47,14 @@ class TimestampToken:
 
     @property
     def verified(self) -> bool:
-        return True
+        """True only when a trusted-authority verification report passed.
+
+        Mock and local tier-1 tokens are self-asserted: they are checkable
+        but not independently verified, so they report False.
+        """
+        if self.verification is None:
+            return False
+        return bool(getattr(self.verification, "verdict", False))
 
     @property
     def token(self) -> str:
@@ -97,19 +116,29 @@ class LocalFallbackTimestampClient(ITimestampClient):
 
 
 class RFC3161TimestampClient(ITimestampClient):
-    """RFC 3161 timestamp client with optional local fallback."""
+    """RFC 3161 timestamp client with optional local fallback.
+
+    Every granted token is cryptographically verified (messageImprint, nonce,
+    CMS signature, pinned trust chain, time-stamping EKU) before use.
+    Network/parse failures may fall back to the local tier; verification
+    failures raise :class:`TsaForgeryError` and never fall back.
+    """
 
     def __init__(
         self,
         tsa_url: str = "https://freetsa.org/tsr",
         fallback: ITimestampClient | None = None,
+        trust_dir: str | Path | None = None,
     ):
         self.tsa_url = tsa_url
         self.fallback = fallback
+        self.trust_dir = Path(trust_dir) if trust_dir is not None else None
 
     def timestamp(self, data_hash: str) -> TimestampToken:
         try:
             return self._call_tsa(data_hash)
+        except TsaForgeryError:
+            raise
         except Exception as exc:
             if self.fallback is None:
                 raise TimestampError(
@@ -121,7 +150,10 @@ class RFC3161TimestampClient(ITimestampClient):
         import requests
         from asn1crypto import algos, core, tsp
 
+        from egregore.infrastructure.tsa_verifier import verify_tsa_token
+
         hash_bytes = bytes.fromhex(data_hash)
+        nonce = int.from_bytes(secrets.token_bytes(8), "big")
         req = tsp.TimeStampReq(
             {
                 "version": 1,
@@ -132,6 +164,7 @@ class RFC3161TimestampClient(ITimestampClient):
                     "hashed_message": core.OctetString(hash_bytes),
                 },
                 "cert_req": True,
+                "nonce": nonce,
             }
         )
 
@@ -154,16 +187,22 @@ class RFC3161TimestampClient(ITimestampClient):
         if token is None:
             raise TimestampError("TSA response missing time_stamp_token")
 
-        try:
-            signed_data = token["content"]
-            e_content = signed_data["encap_content_info"]["e_content"]
-            tst_info = e_content.native
+        report = verify_tsa_token(
+            token_bytes=token.dump(),
+            expected_hash_hex=data_hash,
+            nonce=nonce,
+            trust_dir=self.trust_dir,
+        )
+        if not report.verdict:
+            raise TsaForgeryError(
+                "TSA token failed verification: " + "; ".join(report.failures)
+            )
+        if report.gen_time_iso is None:
+            raise TsaForgeryError("TSA token missing gen_time after verification")
 
-            if isinstance(tst_info, dict):
-                gen_time = str(tst_info.get("gen_time", datetime.now(UTC).isoformat()))
-            else:
-                gen_time = datetime.now(UTC).isoformat()
-        except Exception:
-            gen_time = datetime.now(UTC).isoformat()
-
-        return TimestampToken(cms_bytes=token.dump(), timestamp_iso=gen_time, tier=2)
+        return TimestampToken(
+            cms_bytes=token.dump(),
+            timestamp_iso=report.gen_time_iso,
+            tier=2,
+            verification=report,
+        )

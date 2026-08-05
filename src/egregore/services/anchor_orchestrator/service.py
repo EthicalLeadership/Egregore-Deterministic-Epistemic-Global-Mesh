@@ -108,14 +108,22 @@ class AnchorOrchestrator:
             timestamp_ns = time.time_ns()
 
         source = "rfc3161" if response.tier >= 2 else "local_fallback"
+        tsa_report = None
+        if response.verification is not None:
+            tsa_report = response.verification.to_canonical()
         record = AnchorRecord(
             anchor_id=anchor_id,
             tier=str(response.tier),
             block_hash=block_hash,
             notarization=response.cms_bytes.hex(),
-            public_verify=(response.tier >= 2),
+            public_verify=response.verified,
             timestamp_ns=timestamp_ns,
-            metadata={"source": source, "tier": str(response.tier)},
+            metadata={
+                "source": source,
+                "tier": str(response.tier),
+                "verified": response.verified,
+                "tsa_report": tsa_report,
+            },
         )
         self._anchor_store.append(record)
         return record

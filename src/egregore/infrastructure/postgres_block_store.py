@@ -278,7 +278,7 @@ class PostgresBlockStore:
             "merkle_root": block.merkle_root,
             "record_count": len(block.records),
             "block_hash": block.integrity_hash or "",
-            "block_signature": "",  # reserved for future block-level signing
+            "block_signature": block.block_signature or "",
             "causal_vector": asdict(block.causal_vector),
             "records": [asdict(r) for r in block.records],
             "created_at_ns": block.created_at_ns,
@@ -312,5 +312,6 @@ class PostgresBlockStore:
             merkle_root=row["merkle_root"],
             previous_block_hash=row["previous_block_hash"],
             causal_vector=causal_vector,
+            block_signature=row.get("block_signature") or "",
             integrity_hash=row["block_hash"],
         )
