@@ -17,10 +17,10 @@ is a single commit, and the system can be rebuilt by replaying the chain.
 
 | Plane | RPO Target | RTO Target | Justification |
 |-------|------------|------------|---------------|
-| Core Plane (dossier commits) | `[ASK USER: e.g., zero data loss — every commit is a checkpoint]` | `[ASK USER: e.g., 15 minutes]` | Each `commit_generate_t2()` is durable in `.zarc` before ACK |
-| Projection Plane (read models) | `[ASK USER: e.g., bounded by last replay — can be reconstructed from Core Plane]` | `[ASK USER: e.g., 1 hour]` | Read models are rebuilt deterministically from `.zarc` |
-| Intake / ingestion queue | `[ASK USER: e.g., last NATS JetStream persisted message]` | `[ASK USER: e.g., 30 minutes]` | JetStream streams are configured with file retention |
-| Configuration / secrets | `[ASK USER: e.g., zero data loss — versioned separately]` | `[ASK USER: e.g., 15 minutes]` | Signing keys and KEK must be available before replay |
+| Core Plane (dossier commits) | Zero data loss — every commit is a signed checkpoint | 15 minutes | Each `commit_generate_t2()` is durable in `.zarc` before ACK |
+| Projection Plane (read models) | Replay-bound — reconstructed from the Core Plane `.zarc` chain | 1 hour | Read models are rebuilt deterministically from `.zarc` |
+| Intake / ingestion queue | Last NATS JetStream persisted message | 30 minutes | JetStream streams are configured with file retention |
+| Configuration / secrets | Zero data loss — versioned and vaulted separately | 15 minutes | Signing keys and KEK must be available before replay |
 
 Measurement: RTO is from incident declaration to `/ready` returning `200` on
 the failover target.
@@ -53,13 +53,16 @@ Implementation references:
 
 | Step | Action | Owner | Time budget |
 |------|--------|-------|-------------|
-| 1. Declare incident | On-call confirms Core Plane unavailable per `docs/runbook.md` | On-call engineer | `[ASK USER: minutes]` |
-| 2. Promote backup | Make latest `.zarc` chain available to Red Dart | SRE | `[ASK USER: minutes]` |
-| 3. Restore secrets | Inject signing key + KEK into Red Dart environment | Security/SRE | `[ASK USER: minutes]` |
+| 1. Declare incident | On-call confirms Core Plane unavailable per `docs/runbook.md` | On-call engineer | 5 min |
+| 2. Promote backup | Make latest `.zarc` chain available to Red Dart | SRE | 15 min |
+| 3. Restore secrets | Inject signing key + KEK into Red Dart environment | Security/SRE | 10 min |
 | 4. Replay chain | `ZarcJournal` loads state from `.zarc` | System | Bounded by chain length |
-| 5. Validate determinism | Run `tests/test_gate5_invariants.py` and `tests/test_cbi_0_enforcement.py` | CI/governance | `[ASK USER: minutes]` |
-| 6. Redirect traffic | Update DNS/gateway to Red Dart endpoints | SRE | `[ASK USER: minutes]` |
-| 7. Smoke tests | `/ready` + `obs.pulse.<node_id>` | On-call | `[ASK USER: minutes]` |
+| 5. Validate determinism | Run `tests/test_gate5_invariants.py` and `tests/test_cbi_0_enforcement.py` | CI/governance | 10 min |
+| 6. Redirect traffic | Update DNS/gateway to Red Dart endpoints | SRE | 10 min |
+| 7. Smoke tests | `/ready` + `obs.pulse.<node_id>` | On-call | 5 min |
+
+Total manual failover budget: 55 minutes plus chain-replay time, inside the
+1-hour Projection Plane RTO target.
 
 Failback to Pioneer 1 follows the same steps in reverse once the primary site
 is healthy. The `.zarc` chain is the single source of truth, so divergent

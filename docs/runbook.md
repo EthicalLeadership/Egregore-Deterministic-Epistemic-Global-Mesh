@@ -27,10 +27,13 @@ switches before reverting code or data.
 
 | Role | Primary | Secondary | SLA | Contact |
 |------|---------|-----------|-----|---------|
-| On-call Engineer | `[ASK USER: name]` | `[ASK USER: name]` | `[ASK USER: minutes]` | `[ASK USER: contact]` |
-| SRE / Platform Lead | `[ASK USER: name]` | `[ASK USER: name]` | `[ASK USER: minutes]` | `[ASK USER: contact]` |
-| Security / Governance Owner | `[ASK USER: name]` | `[ASK USER: name]` | `[ASK USER: minutes]` | `[ASK USER: contact]` |
-| Product / Legal Stakeholder | `[ASK USER: name]` | `[ASK USER: name]` | `[ASK USER: minutes]` | `[ASK USER: contact]` |
+| On-call Engineer | Lead Engineer | SRE / Platform Lead | 5 min (SEV1), 15 min (SEV2) | Signal `#oncall` |
+| SRE / Platform Lead | SRE / Platform Lead | Lead Engineer | 30 min | Signal direct → phone |
+| Security / Governance Owner | Security / Governance Owner | Founder | 1 h | Signal direct → email |
+| Product / Legal Stakeholder | Product / Legal Stakeholder | Founder | Next business day | Email |
+
+Named individuals per role are recorded in the private ops roster (kept out of
+the repo for privacy); see `docs/oncall.md` for the rotation schedule.
 
 Escalation path: On-call → SRE → Security/Governance → Product/Legal.
 

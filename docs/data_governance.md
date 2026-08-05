@@ -39,11 +39,11 @@ driven by case type and legal jurisdiction.
 
 | Artifact type | Retention period | Rationale | Destruction |
 |---------------|------------------|-----------|-------------|
-| General legal dossier `.zarc` | `[ASK USER: e.g., 7 years post-case closure]` | Statute of limitations + appeals window | Cryptographic shred after hold release |
-| Medical record `.zarc` | `[ASK USER: e.g., indefinite or jurisdiction-mandated period]` | HIPAA / provincial health record requirements | Requires medical records officer approval |
-| Case-law extracts | `[ASK USER: e.g., 7 years or life of case]` | Derived from public sources but may contain annotations | Anonymize before destruction |
-| Intake email raw copies | `[ASK USER: e.g., 30 days after extraction]` | Transient ingestion artifact | Deleted after canonical extraction verified |
-| Failed ingestion logs | `[ASK USER: e.g., 90 days]` | Debugging + compliance evidence | Purged automatically |
+| General legal dossier `.zarc` | 7 years post-case closure | Quebec civil prescription period + appeals window | Cryptographic shred after hold release |
+| Medical record `.zarc` | Indefinite while the case is active; 7 years post-case closure | Quebec provincial health record requirements (HIPAA-equivalent) | Requires medical records officer approval |
+| Case-law extracts | 7 years post-case closure (aligned with the parent dossier) | Derived from public sources but may contain annotations | Anonymize before destruction |
+| Intake email raw copies | 30 days after canonical extraction verified | Transient ingestion artifact | Deleted after canonical extraction verified |
+| Failed ingestion logs | 90 days | Debugging + compliance evidence | Purged automatically |
 
 Implementation note: `ZarcJournal` in `src/egregore/infrastructure/zarc_journal.py`
 appends only; physical deletion of `.zarc` files is a governed operational
@@ -120,8 +120,8 @@ precedence and logs the conflict.
 - **Quarterly:** consent reconciliation, access review, retention log review
 - **Annually:** full policy review and jurisdiction update
 
-Last review: `[ASK USER: date]`  
-Next review: `[ASK USER: date]`
+Last review: 2026-08-04  
+Next review: 2026-11-04 (quarterly cadence)
 
 ---
 

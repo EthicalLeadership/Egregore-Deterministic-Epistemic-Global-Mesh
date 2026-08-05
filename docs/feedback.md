@@ -12,7 +12,7 @@ Loops**.
 
 | Channel | Owner | SLA | Escalation |
 |---------|-------|-----|------------|
-| `[ASK USER: channel]` | `[ASK USER: owner]` | `[ASK USER: SLA]` | `[ASK USER: escalation]` |
+| GitHub Issues (private repo) | Product / Legal Stakeholder | Acknowledge within 2 business days | SEV-critical reports escalate to primary on-call via Signal `#oncall` |
 
 Feedback categories:
 
@@ -36,11 +36,11 @@ All feedback tickets must include:
 | Retro type | Cadence | Attendees | Output |
 |------------|---------|-----------|--------|
 | Incident retro | Within 48 h of SEV1/SEV2 | Primary, Secondary, SRE, Governance | Post-mortem + action items |
-| Sprint retro | `[ASK USER: cadence]` | Engineering, Product | Retro board notes |
-| Architecture retro | `[ASK USER: cadence]` | Architecture board, SRE, Security | ADR or fitness-function update |
-| Quarterly review | `[ASK USER: cadence]` | All stakeholders | Roadmap + OKR adjustments |
+| Sprint retro | Weekly (Friday) | Engineering, Product | Retro board notes |
+| Architecture retro | Monthly (first Monday) | Architecture board, SRE, Security | ADR or fitness-function update |
+| Quarterly review | Quarterly | All stakeholders | Roadmap + OKR adjustments |
 
-Retro notes are stored in `[ASK USER: location]`.
+Retro notes are stored in `docs/audits/retros/`.
 
 ---
 
@@ -166,11 +166,11 @@ Track these metrics monthly:
 
 | Metric | Source | Target |
 |--------|--------|--------|
-| Feedback-to-ticket conversion | `[ASK USER: source]` | `[ASK USER: target]` |
+| Feedback-to-ticket conversion | GitHub Issues (private repo) | ≥ 90% of feedback items triaged to tickets within 1 week |
 | Incident retro completion rate | Post-mortem tracker | 100% for SEV1/SEV2 |
 | ADRs from incidents | `docs/adr/` | ≥ 1 per quarter |
 | Fitness function pass rate | CI | 100% on main |
-| Mean time from incident to code fix | Issue tracker | `[ASK USER: target]` |
+| Mean time from incident to code fix | Issue tracker | ≤ 5 business days for SEV1/SEV2 |
 
 ---
 

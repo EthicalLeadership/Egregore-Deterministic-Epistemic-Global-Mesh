@@ -11,13 +11,17 @@ Egregore platform. It pairs with `docs/runbook.md` for incident response.
 
 | Week / Period | Primary | Secondary |
 |---------------|---------|-----------|
-| `[ASK USER: period]` | `[ASK USER: name]` | `[ASK USER: name]` |
-| `[ASK USER: period]` | `[ASK USER: name]` | `[ASK USER: name]` |
-| `[ASK USER: period]` | `[ASK USER: name]` | `[ASK USER: name]` |
+| Week A (odd ISO weeks) | Lead Engineer | SRE / Platform Lead |
+| Week B (even ISO weeks) | SRE / Platform Lead | Lead Engineer |
+| Holiday coverage | Lead Engineer | Founder |
 
-- Rotation tool: `[ASK USER: tool]`
-- Calendar integration: `[ASK USER: calendar]`
-- Override policy: `[ASK USER: override policy]`
+The rotation is weekly, alternating on Monday 09:00 ET. Named individuals per
+role are recorded in the private ops roster (kept out of the repo for
+privacy); buyers and auditors may request the roster under NDA.
+
+- Rotation tool: Shared ops calendar (role-based entries, updated at handoff)
+- Calendar integration: `#oncall` Signal group pinned event + shared calendar
+- Override policy: Overrides must be announced in the `#oncall` Signal group at least 24 h in advance; same-day swaps require both parties to confirm in writing
 
 ---
 
@@ -25,10 +29,10 @@ Egregore platform. It pairs with `docs/runbook.md` for incident response.
 
 | Tier | Responsibility | Contact | SLA |
 |------|---------------|---------|-----|
-| Primary on-call | First response, triage, SEV1-4 acknowledgment | `[ASK USER: contact]` | `[ASK USER: minutes]` |
-| Secondary on-call | Backup if primary unreachable; complex investigations | `[ASK USER: contact]` | `[ASK USER: minutes]` |
-| SRE escalation | Infrastructure, deployment, rollback execution | `[ASK USER: contact]` | `[ASK USER: minutes]` |
-| Governance escalation | CBI-0, Anchorum, M4 divergence, legal data concerns | `[ASK USER: contact]` | `[ASK USER: minutes]` |
+| Primary on-call | First response, triage, SEV1-4 acknowledgment | Signal `#oncall` (primary paging channel) | 5 min for SEV1; 15 min for SEV2 |
+| Secondary on-call | Backup if primary unreachable; complex investigations | Signal `#oncall` | 15 min |
+| SRE escalation | Infrastructure, deployment, rollback execution | Signal direct message → phone call | 30 min |
+| Governance escalation | CBI-0, Anchorum, M4 divergence, legal data concerns | Signal direct message → email (audit trail) | 1 h |
 
 If the primary does not acknowledge a SEV1/SEV2 page within the SLA, the page
 automatically routes to the secondary. If the secondary does not acknowledge,

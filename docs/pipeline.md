@@ -328,7 +328,8 @@ Every deploy must record:
 | Build provenance | npm + pip install logs | CI artifact |
 | Deploy target | `NODE_ID`, `CLUSTER_NAME` | Runtime env |
 
-Minimum retention: `[ASK USER: retention period]`.
+Minimum retention: 7 years, aligned with the legal dossier `.zarc` retention
+schedule in `docs/data_governance.md`.
 
 ---
 
@@ -370,8 +371,13 @@ Detailed rollback steps: `DEPLOYMENT.md`.
 
 ## CI/CD Notes
 
-- GitHub Actions: `[ASK USER: confirm if .github/workflows/ exists; add stages above if it does]`
-- If no CI exists, run the stages manually or via the npm scripts in `package.json`.
+- GitHub Actions: `.github/workflows/ci.yml` exists and runs the gate stages
+  above (architecture purity, CBI-0, Gate 5 invariants) on every push.
+  The rework budget for any failed gate is 2 remediation attempts; a third
+  failure escalates to the architecture board before merge is reconsidered
+  (aligned with the factory QC rework budget in `config/factory_policy.json`).
+- Where CI coverage is missing for a stage, run it manually or via the npm
+  scripts in `package.json` (`npm run test:arch`, `npm test`).
 - The gate tests are intentionally fast and dependency-light so they can run in
   any environment where `src/` is importable.
 
