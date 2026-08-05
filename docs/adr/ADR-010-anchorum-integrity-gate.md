@@ -30,6 +30,6 @@ Implementation: `src/egregore/governance/anchorum_integrity_gate.py`.
 
 | Role | Name | Date | Status |
 |------|------|------|--------|
-| Architecture Lead | Samuel Tessier | 2026-06-18 | Approved |
-| Security Lead | Samuel Tessier | 2026-06-18 | Approved |
-| SRE Lead | Samuel Tessier | 2026-06-18 | Approved |
+| Architecture Lead | Egregor | 2026-06-18 | Approved |
+| Security Lead | Egregor | 2026-06-18 | Approved |
+| SRE Lead | Egregor | 2026-06-18 | Approved |
