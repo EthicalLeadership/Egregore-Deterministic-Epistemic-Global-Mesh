@@ -1,0 +1,40 @@
+{
+  "audit_id": "QAV-1781582005254247104",
+  "timestamp": "2026-06-16T03:53:25.254259+00:00",
+  "dimensions": {
+    "performance": {
+      "status": "PASS",
+      "p50_ms": 0.14579499838873744,
+      "p95_ms": 35.00416499446146,
+      "p99_ms": 35.00416499446146,
+      "sample_count": 10
+    },
+    "security": {
+      "status": "PASS",
+      "cbi0_loaded": true,
+      "m1": true,
+      "m2": true,
+      "m3": true,
+      "m4": true
+    },
+    "resilience": {
+      "status": "FAIL",
+      "core_healthy": false,
+      "gateway_healthy": false
+    },
+    "patterns": {
+      "status": "PASS",
+      "patterns_found": 6,
+      "patterns": {
+        "circuit_breaker": true,
+        "retry": true,
+        "timeout": true,
+        "bulkhead": true,
+        "fallback": true,
+        "health_check": true
+      }
+    }
+  },
+  "overall_score": 75.0,
+  "overall_pass": false
+}

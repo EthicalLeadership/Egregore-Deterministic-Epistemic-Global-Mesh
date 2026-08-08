@@ -1,0 +1,32 @@
+{
+  "audit_id": "QAV-1781581325569804523",
+  "timestamp": "2026-06-16T03:42:05.571398",
+  "dimensions": {
+    "performance": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    },
+    "budget": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    },
+    "security": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    },
+    "resilience": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    },
+    "patterns": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    },
+    "scalability": {
+      "status": "NOT_IMPLEMENTED",
+      "score": 0
+    }
+  },
+  "overall_score": 0,
+  "overall_pass": false
+}

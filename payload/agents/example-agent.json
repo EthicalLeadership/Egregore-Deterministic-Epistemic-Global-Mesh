@@ -1,0 +1,5 @@
+{
+  "description": "Example scaffold agent that echoes the instruction and context. Replace with Claude/Kimi logic.",
+  "timeout": 60,
+  "allowed_roles": ["admin", "operator"]
+}

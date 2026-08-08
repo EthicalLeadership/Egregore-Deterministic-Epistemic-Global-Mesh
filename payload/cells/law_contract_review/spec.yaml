@@ -1,0 +1,132 @@
+cell_id: law_contract_review
+version: 1.0.0
+taxonomy:
+  root: university
+  branch: social_sciences
+  leaf: law
+  specialty: contract_review
+owner: university_faculty_law
+type: university
+tier: 4
+max_load: 0.7
+advisory_cells:
+  - medicine_diagnosis
+purpose: |
+  The law_contract_review cell reads a contract clause or short agreement and
+  emits a risk assessment: identifies ambiguous terms, flags unfair provisions,
+  and estimates enforceability. It is advisory only and not a substitute for
+  licensed legal counsel.
+
+inputs:
+  - name: input
+    type: string
+    description: Contract clause or agreement text.
+    schema: { type: string, minLength: 20, maxLength: 50000 }
+    required: true
+
+outputs:
+  - name: risk_assessment
+    type: object
+    description: Structured contract risk analysis.
+    schema:
+      type: object
+      properties:
+        overall_risk: { type: string }
+        ambiguous_terms: { type: array }
+        flagged_clauses: { type: array }
+        recommendations: { type: array }
+
+output_format:
+  stream_type: legal_risk_assessment
+  claim_field: overall_risk
+  claim_map:
+    low: positive
+    medium: neutral
+    high: negative
+    critical: negative
+  schema:
+    type: object
+    properties:
+      overall_risk: { type: string }
+      ambiguous_terms: { type: array }
+      flagged_clauses: { type: array }
+      recommendations: { type: array }
+
+pipeline:
+  description: |
+    2-stage pipeline: extract risk factors, then aggregate into a structured
+    legal risk assessment.
+  stages:
+    - stage_id: risk_extraction
+      name: Risk Factor Extraction
+      model: qwen_1.5b
+      system: |
+        You are a legal-analysis teaching assistant. Read the contract text and
+        return JSON with arrays: ambiguous_terms, flagged_clauses,
+        recommendations. Output only JSON.
+      prompt: |
+        Contract text:
+        {input}
+
+        Return JSON only.
+      output_format: json
+      max_tokens: 1024
+      temperature: 0.0
+
+    - stage_id: aggregation
+      name: Risk Aggregation
+      model: qwen_1.5b
+      system: |
+        You aggregate contract risk analysis into a final JSON report with
+        overall_risk (low|medium|high|critical), ambiguous_terms,
+        flagged_clauses, recommendations. Output only JSON.
+      prompt: |
+        Extracted factors:
+        {risk_extraction_output}
+
+        Return final JSON report with keys overall_risk, ambiguous_terms, flagged_clauses, recommendations.
+      output_format: json
+      max_tokens: 768
+      temperature: 0.0
+      depends_on: [risk_extraction]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Legal risk extraction and aggregation.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+
+verification:
+  static_tools: [json_schema]
+  dynamic_tools: []
+  rules:
+    - rule_id: disclaimer_required
+      description: Output must remind the user that this is not legal advice.
+      severity: high
+      check: contains_disclaimer
+    - rule_id: structured_output
+      description: Output must be valid JSON with the expected fields.
+      severity: critical
+      check: json_schema
+
+moral_compliance:
+  egregore_laws:
+    - law_id: no_unauthorized_practice
+      description: The cell must not claim to provide licensed legal advice.
+      enforcement: disclaimer_prefix
+    - law_id: fairness
+      description: Flagging must be based on textual evidence, not bias.
+      enforcement: evidence_citation
+
+dependencies: []
+
+artifacts:
+  stage_gates:
+    plan: cells/law_contract_review/spec.yaml
+    draw: cells/law_contract_review/artifacts/draw.json
+    layout: cells/law_contract_review/artifacts/layout.json
+    erect: cells/law_contract_review/artifacts/erect.json
+    build: cells/law_contract_review/artifacts/build.json
+    finish: cells/law_contract_review/artifacts/finish.json
+    inspect: cells/law_contract_review/artifacts/inspect.json
+    deliver: cells/law_contract_review/artifacts/deliver.json

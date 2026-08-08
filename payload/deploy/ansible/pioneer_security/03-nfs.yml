@@ -1,0 +1,85 @@
+---
+- name: Phase 03 | Configure NFS Server on Pioneer-2
+  hosts: pioneer_nfs_server
+  become: true
+
+  tasks:
+    - name: Install NFS server package
+      ansible.builtin.apt:
+        name: nfs-kernel-server
+        state: present
+        update_cache: true
+
+    - name: Ensure NFS export root exists
+      ansible.builtin.file:
+        path: "{{ pioneer_nfs_export_root }}"
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0755"
+
+    - name: Ensure NFS subdirectories exist
+      ansible.builtin.file:
+        path: "{{ pioneer_nfs_export_root }}/{{ item }}"
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0755"
+      loop:
+        - models
+        - data
+
+    - name: Deploy exports configuration
+      ansible.builtin.template:
+        src: templates/nfs-exports.j2
+        dest: /etc/exports.d/pioneer.exports
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload exports
+
+    - name: Ensure NFS service is enabled
+      ansible.builtin.systemd:
+        name: nfs-kernel-server
+        enabled: true
+        state: started
+
+    - name: Allow NFS traffic from LAN
+      community.general.ufw:
+        rule: allow
+        src: "{{ pioneer_lan_cidr }}"
+        port: "{{ pioneer_nfs_port }}"
+        proto: tcp
+        comment: "NFS from LAN"
+
+  handlers:
+    - name: reload exports
+      ansible.builtin.command: exportfs -ra
+      changed_when: false
+
+- name: Phase 03 | Mount NFS Share on Clients
+  hosts: pioneer:!pioneer_nfs_server
+  become: true
+
+  tasks:
+    - name: Install NFS client package
+      ansible.builtin.apt:
+        name: nfs-common
+        state: present
+        update_cache: true
+
+    - name: Ensure mount directory exists
+      ansible.builtin.file:
+        path: "{{ pioneer_nfs_export_root }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Persist and mount shared cluster storage
+      ansible.posix.mount:
+        path: "{{ pioneer_nfs_export_root }}"
+        src: "{{ pioneer_nfs_server_ip }}:{{ pioneer_nfs_export_root }}"
+        fstype: nfs
+        opts: defaults,_netdev
+        state: mounted

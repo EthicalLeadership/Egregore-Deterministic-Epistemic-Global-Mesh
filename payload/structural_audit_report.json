@@ -1,0 +1,672 @@
+{
+  "project_root": "/mnt/egregore/vol-hdd-a/home_data_egregore/egregore",
+  "summary": {
+    "total_controls": 22,
+    "grade_distribution": {
+      "PRESENT": 22,
+      "PARTIAL": 0,
+      "MISSING": 0,
+      "N/A": 0
+    },
+    "present_rate": "22/22",
+    "partial_rate": "0/22",
+    "missing_rate": "0/22",
+    "c1_present": 3,
+    "c2_present": 5,
+    "c3_present": 3,
+    "c4_present": 4,
+    "c4+_present": 4,
+    "c5_present": 1,
+    "c6_present": 1,
+    "c7_present": 1,
+    "c1_total": 3,
+    "c2_total": 5,
+    "c3_total": 3,
+    "c4_total": 4,
+    "c4+_total": 4,
+    "c5_total": 1,
+    "c6_total": 1,
+    "c7_total": 1
+  },
+  "previous_summary": {
+    "total_controls": 22,
+    "grade_distribution": {
+      "PRESENT": 22,
+      "PARTIAL": 0,
+      "MISSING": 0,
+      "N/A": 0
+    },
+    "present_rate": "22/22",
+    "partial_rate": "0/22",
+    "missing_rate": "0/22",
+    "c1_present": 3,
+    "c2_present": 5,
+    "c3_present": 3,
+    "c4_present": 4,
+    "c4+_present": 4,
+    "c5_present": 1,
+    "c6_present": 1,
+    "c7_present": 1,
+    "c1_total": 3,
+    "c2_total": 5,
+    "c3_total": 3,
+    "c4_total": 4,
+    "c4+_total": 4,
+    "c5_total": 1,
+    "c6_total": 1,
+    "c7_total": 1
+  },
+  "delta": {
+    "status": "delta_computed",
+    "changes": [],
+    "improved": 0
+  },
+  "controls": [
+    {
+      "id": "C1.1",
+      "name": "Context Diagram",
+      "category": "C1",
+      "grade": "PRESENT",
+      "evidence": [
+        "C4/system-boundary language in 15 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "src/egregore/domain/execution_context.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C1.2",
+      "name": "API Contract",
+      "category": "C1",
+      "grade": "PRESENT",
+      "evidence": [
+        "OpenAPI/Swagger spec file(s): 1"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/openapi.json",
+        "src/egregore/interface/bootstrap.py",
+        "src/egregore/services/anchor_orchestrator/api.py",
+        "src/egregore/http_api/http/app.py",
+        "src/egregore/http_api/http/v1/auth.py",
+        "src/egregore/http_api/http/v1/ws_chat.py",
+        "src/egregore/http_api/http/v1/chat.py",
+        "src/egregore/http_api/http/v1/workflows.py",
+        "src/egregore/http_api/http/v1/intake.py",
+        "src/egregore/http_api/http/v1/dossiers.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C1.3",
+      "name": "Decision Records (ADR)",
+      "category": "C1",
+      "grade": "PRESENT",
+      "evidence": [
+        "Structured ADR format in 19 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/adr/ADR-002-layered-architecture.md",
+        "docs/adr/ADR-006-fastapi-vertical-routing.md",
+        "docs/adr/ADR-008-local-vertical-inference.md",
+        "docs/adr/ADR-010-anchorum-integrity-gate.md",
+        "docs/adr/ADR-003-cbi0-governance-checkpoints.md",
+        "docs/adr/ADR-004-deterministic-timestamps-replay.md",
+        "docs/adr/ADR-009-dual-deployment-targets.md",
+        "docs/adr/ADR-007-feature-flag-kill-switches.md",
+        "docs/adr/ADR-005-nats-jetstream-transport.md",
+        "docs/adr/ADR-001-zarc-provenance-chain.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C2.1",
+      "name": "Run Book / SOS",
+      "category": "C2",
+      "grade": "PRESENT",
+      "evidence": [
+        "Incident/escalation language in 8 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/runbook.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C2.2",
+      "name": "Performance Budget",
+      "category": "C2",
+      "grade": "PRESENT",
+      "evidence": [
+        "Explicit budget metrics in 6 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "tests/test_lang_benchmark.py",
+        "src/egregore/kernel/scheduler/tu_budget.py",
+        "tests/kernel/scheduler/test_tu_budget.py",
+        "tests/test_tu_validation.py",
+        "tests/test_lang_benchmark.py",
+        "tests/test_distributed_scheduler.py",
+        "src/egregore/application/job_router.py",
+        "src/egregore/application/execution_guard.py",
+        "src/egregore/application/inference_service.py",
+        "src/egregore/application/placement_scorer.py",
+        "src/egregore/domain/scheduler_models.py",
+        "src/egregore/domain/job_models.py",
+        "src/egregore/domain/node_profile.py",
+        "src/egregore/domain/units.py",
+        "src/egregore/domain/hardware_work_unit.py",
+        "src/egregore/dt1/dt1_field_compute_comparative_report.py",
+        "src/egregore/dt1/deterministic_runner_adapter.py",
+        "src/egregore/interface/model_host_ports.py",
+        "src/egregore/interface/dni_2_quarantine.py",
+        "src/egregore/interface/hardware_ports.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C2.3",
+      "name": "Security Model",
+      "category": "C2",
+      "grade": "PRESENT",
+      "evidence": [
+        "Security docs + crypto implementation in 63 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "tests/test_execution_authority.py",
+        "src/egregore/infrastructure/encryption.py",
+        "src/egregore/application/rbac_authz_provider.py",
+        "src/egregore/http_api/http/v1/auth.py",
+        "src/egregore/domain/legal_agent/execution_authority.py",
+        "egregore_selx_audit.py",
+        "honest_qav_audit.py",
+        "tests/test_arch_enforcement.py",
+        "tests/test_cbi_projection_binding.py",
+        "tests/test_external_ledger_to_zarc.py",
+        "tests/test_key_management.py",
+        "tests/test_federation_mesh.py",
+        "tests/test_thermal_governor.py",
+        "tests/test_document_intake.py",
+        "tests/test_local_model_catalog.py",
+        "src/egregore/governance/cbi0_governance.py",
+        "src/egregore/governance/dag_signer.py",
+        "src/egregore/governance/anchorum_integrity_gate.py",
+        "src/egregore/infrastructure/encryption.py",
+        "src/egregore/infrastructure/gguf_catalog.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C2.4",
+      "name": "Resilience Patterns",
+      "category": "C2",
+      "grade": "PRESENT",
+      "evidence": [
+        "Resilience patterns in 44 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "bcf_pioneer1_real.py",
+        "honest_qav_audit.py",
+        "DEPLOYMENT.md",
+        "AUDIT_REPORT.md",
+        "bcf_minimal.py",
+        "project_info__1.md",
+        ".aider.chat.history.md",
+        "bcf_fixed.py",
+        "project_info__2.md",
+        "docs/disaster_recovery.md",
+        "tests/test_dt1_kimik2_integration.py",
+        "tests/test_panelmesh_phase1_orchestrator.py",
+        "tests/test_panelmesh_phase1_runtime.py",
+        "tests/test_dossier_generate_service.py",
+        "tests/test_imap_connector.py",
+        "src/egregore/governance/anchorum_integrity_gate.py",
+        "src/egregore/infrastructure/ollama_client.py",
+        "src/egregore/infrastructure/imap_connector.py",
+        "src/egregore/infrastructure/timestamp_client.py",
+        "src/egregore/infrastructure/key_management.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C2.5",
+      "name": "Scalability Analysis",
+      "category": "C2",
+      "grade": "PRESENT",
+      "evidence": [
+        "Horizontal scaling/scaling primitives in 23 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "frontend/tsconfig.node.json",
+        "tests/test_dossiers_vertical_routing.py",
+        "tests/test_local_vertical_inference.py",
+        "src/egregore/infrastructure/inter_node_messenger.py",
+        "src/egregore/infrastructure/cluster_kek.py",
+        "src/egregore/application/local_vertical_inference.py",
+        "src/egregore/application/node_registry.py",
+        "src/egregore/domain/node_profile.py",
+        "src/egregore/infrastructure/distributed/cluster_aggregator.py",
+        "docs/adr/ADR-006-fastapi-vertical-routing.md",
+        "docs/adr/ADR-008-local-vertical-inference.md",
+        "tests/application/test_node_registry.py",
+        "tests/infrastructure/distributed/test_cluster_aggregator.py",
+        "docs/disaster_recovery.md",
+        "tests/test_pulse_adapter.py",
+        "tests/test_dt1_kimik2_integration.py",
+        "tests/test_nats_broker.py",
+        "tests/test_integration_adapters.py",
+        "tests/test_causal_policy_engine.py",
+        "src/egregore/infrastructure/kimik2_loader_adapter.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C3.1",
+      "name": "Use Cases Governed",
+      "category": "C3",
+      "grade": "PRESENT",
+      "evidence": [
+        "State machine/governed behavior in 98 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "requirements.txt",
+        "requirements-dev.txt",
+        "requirements-selx.txt",
+        ".aider.chat.history.md",
+        ".audit_history.json",
+        "egregore_selx_audit.py",
+        "project_info__1.md",
+        "project_info__2.md",
+        "docs/pipeline.md",
+        "docs/feedback.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "docs/disaster_recovery.md",
+        "tests/test_cbi_0_enforcement.py",
+        "tests/test_arch_enforcement.py",
+        "tests/test_cbi_projection_binding.py",
+        "tests/test_semantics_observability_kernel.py",
+        "tests/test_dt1_kimik2_integration.py",
+        "tests/test_legal_agent_biok_integration.py",
+        "tests/test_semantics_executor_observability_guard.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C3.2",
+      "name": "Error Handling",
+      "category": "C3",
+      "grade": "PRESENT",
+      "evidence": [
+        "Exception handling + degradation strategies in 41 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "bcf_pioneer1_real.py",
+        "honest_qav_audit.py",
+        "probe_pioneer1.py",
+        "bcf_minimal.py",
+        "signoff_adrs.py",
+        "bcf_fixed.py",
+        "tools/generate_archive_inventory.py",
+        "tests/test_cbi_projection_binding.py",
+        "tests/test_semantics_observability_kernel.py",
+        "tests/test_dt1_kimik2_integration.py",
+        "tests/test_legal_agent_biok_integration.py",
+        "tests/test_lang_determinism.py",
+        "tests/test_canon_yaml_schema.py",
+        "tests/test_panelmesh_phase1_runtime.py",
+        "tests/test_nats_broker.py",
+        "tests/test_legal_agent_pipeline.py",
+        "tests/test_integration_adapters.py",
+        "tests/test_execution_authority.py",
+        "tests/test_phase2_policy_versioning.py",
+        "tests/test_local_vertical_inference.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C3.3",
+      "name": "Sequence Diagrams",
+      "category": "C3",
+      "grade": "PRESENT",
+      "evidence": [
+        "Sequence diagram syntax in 21 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/architecture/09_data_flows.md",
+        "DEPLOYMENT.md",
+        "AUDIT_REPORT.md",
+        "project_info__1.md",
+        ".aider.chat.history.md",
+        "project_info__2.md",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/feedback.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "docs/disaster_recovery.md",
+        "atgca/README.md",
+        "docs/adr/ADR-006-fastapi-vertical-routing.md",
+        "docs/adr/ADR-010-anchorum-integrity-gate.md",
+        "docs/adr/ADR-003-cbi0-governance-checkpoints.md",
+        "docs/architecture/README.md",
+        "docs/architecture/09_data_flows.md",
+        "docs/architecture/06_infrastructure_adapters.md",
+        "docs/architecture/07_interfaces_transport.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4.1",
+      "name": "Monitoring & Observability",
+      "category": "C4",
+      "grade": "PRESENT",
+      "evidence": [
+        "Telemetry implementation in 132 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "config/prometheus.yml",
+        "tests/test_semantics_observability_kernel.py",
+        "tests/test_semantics_executor_observability_guard.py",
+        "tests/test_local_model_catalog.py",
+        "src/egregore/infrastructure/gguf_catalog.py",
+        "src/egregore/infrastructure/local_model_catalog.py",
+        "src/egregore/application/cbi_0_projection_access_monitor.py",
+        "src/egregore/infrastructure/telemetry/telemetry_collector.py",
+        "src/egregore/infrastructure/telemetry/phase0_pulse_agent.py",
+        "src/egregore/infrastructure/telemetry/__init__.py",
+        "src/egregore/infrastructure/metrics/tu_metrics.py",
+        "src/egregore/infrastructure/metrics/__init__.py",
+        "src/egregore/kernel/scheduler/dt_monitor.py",
+        "src/egregore/domain/semantics/observability.py",
+        "docs/architecture/geological_model.md",
+        "docs/architecture/01_geological_model.md",
+        "tests/infrastructure/metrics/test_tu_metrics.py",
+        "tests/kernel/scheduler/test_dt_monitor.py",
+        "README.md",
+        "bcf_pioneer1_real.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4.2",
+      "name": "Rollback Strategy",
+      "category": "C4",
+      "grade": "PRESENT",
+      "evidence": [
+        "Rollback strategies in 10 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "src/egregore/application/feature_flag_registry.py",
+        "docs/adr/ADR-009-dual-deployment-targets.md",
+        "docs/adr/ADR-007-feature-flag-kill-switches.md",
+        "docs/pipeline.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "tests/test_dt1_subjects.py",
+        "src/egregore/application/guard_policy.py",
+        "src/egregore/application/execution_guard.py",
+        "src/egregore/application/feature_flag_registry.py",
+        "src/egregore/dt1/subjects.py",
+        "src/egregore/infrastructure/persistence/postgresql_dossier_adapter.py",
+        "docs/adr/ADR-007-feature-flag-kill-switches.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4.3",
+      "name": "Deployment Pipeline",
+      "category": "C4",
+      "grade": "PRESENT",
+      "evidence": [
+        "CI config + docs/pipeline.md with stage/gate structure"
+      ],
+      "gaps": [],
+      "files_found": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/ci.yml",
+        "docker-compose.yml",
+        "Dockerfile",
+        "docs/pipeline.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4.4",
+      "name": "On-Call Coverage",
+      "category": "C4",
+      "grade": "PRESENT",
+      "evidence": [
+        "Rotation/escalation language in 19 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/oncall.md",
+        "project_info__1.md",
+        "project_info__2.md",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/feedback.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "docs/disaster_recovery.md",
+        "docs/adr/ADR-002-layered-architecture.md",
+        "docs/adr/ADR-006-fastapi-vertical-routing.md",
+        "docs/adr/ADR-008-local-vertical-inference.md",
+        "docs/adr/ADR-010-anchorum-integrity-gate.md",
+        "docs/adr/ADR-003-cbi0-governance-checkpoints.md",
+        "docs/adr/ADR-004-deterministic-timestamps-replay.md",
+        "docs/adr/ADR-009-dual-deployment-targets.md",
+        "docs/adr/ADR-007-feature-flag-kill-switches.md",
+        "docs/adr/ADR-005-nats-jetstream-transport.md",
+        "docs/adr/ADR-001-zarc-provenance-chain.md",
+        "docs/architecture/04_application_runtime.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4+.1",
+      "name": "ADR Records (Stakeholder Sign-off)",
+      "category": "C4+",
+      "grade": "PRESENT",
+      "evidence": [
+        "Stakeholder sign-off language in 17 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/adr/ADR-002-layered-architecture.md",
+        "docs/adr/ADR-006-fastapi-vertical-routing.md",
+        "docs/adr/ADR-008-local-vertical-inference.md",
+        "docs/adr/ADR-010-anchorum-integrity-gate.md",
+        "docs/adr/ADR-003-cbi0-governance-checkpoints.md",
+        "docs/adr/ADR-004-deterministic-timestamps-replay.md",
+        "docs/adr/ADR-009-dual-deployment-targets.md",
+        "docs/adr/ADR-007-feature-flag-kill-switches.md",
+        "docs/adr/ADR-005-nats-jetstream-transport.md",
+        "docs/adr/ADR-001-zarc-provenance-chain.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4+.2",
+      "name": "Review Board Sign-Up",
+      "category": "C4+",
+      "grade": "PRESENT",
+      "evidence": [
+        "Board charter/quorum in 3 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/data_governance.md",
+        "docs/adr/ADR-003-cbi0-governance-checkpoints.md",
+        "docs/architecture/05_governance_audit.md",
+        "docs/architecture/10_testing_governance.md",
+        "docs/data_governance.md",
+        "docs/feedback.md",
+        "docs/disaster_recovery.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4+.3",
+      "name": "Feedback Loops",
+      "category": "C4+",
+      "grade": "PRESENT",
+      "evidence": [
+        "Feedback loop mechanisms in 2 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/feedback.md",
+        "docs/feedback.md",
+        "docs/oncall.md"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C4+.4",
+      "name": "Fitness Functions",
+      "category": "C4+",
+      "grade": "PRESENT",
+      "evidence": [
+        "Automated fitness functions in 118 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "tests/test_gate5_invariants.py",
+        "src/egregore/governance/anchorum_integrity_gate.py",
+        "docs/adr/ADR-010-anchorum-integrity-gate.md",
+        "bcf_pioneer1_real.py",
+        "egregore_selx_audit.py",
+        "honest_qav_audit.py",
+        "DEPLOYMENT.md",
+        "project_info__1.md",
+        ".aider.chat.history.md",
+        "project_info__2.md",
+        "tools/audit_architecture.py",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/feedback.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "docs/disaster_recovery.md",
+        "tests/test_arch_enforcement.py",
+        "tests/test_cbi_projection_binding.py",
+        "tests/test_semantics_observability_kernel.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C5.1",
+      "name": "Data Governance (GDPR/HIPAA/Retention/PII)",
+      "category": "C5",
+      "grade": "PRESENT",
+      "evidence": [
+        "Data governance controls in 30 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/data_governance.md",
+        "project_info__1.md",
+        "project_info__2.md",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/disaster_recovery.md",
+        "tests/test_legal_agent_biok_integration.py",
+        "tests/test_nats_broker.py",
+        "tests/test_legal_agent_pipeline.py",
+        "tests/test_integration_adapters.py",
+        "tests/test_local_model_catalog.py",
+        "src/egregore/infrastructure/timestamp_client.py",
+        "src/egregore/infrastructure/local_model_catalog.py",
+        "src/egregore/application/model_manager.py",
+        "src/egregore/application/legal_reasoning_engine.py",
+        "src/egregore/domain/agency_taxonomy.py",
+        "src/egregore/dt1/dt1_field_compute_comparative_report.py",
+        "src/egregore/dt1/subjects.py",
+        "src/egregore/bus/nats_broker.py",
+        "src/egregore/interface/orchestration_ports.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C6.1",
+      "name": "Compliance & Regulatory (Legal Hold / Audit Trail / Chain of Custody)",
+      "category": "C6",
+      "grade": "PRESENT",
+      "evidence": [
+        "Compliance controls in 65 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "src/egregore/governance/litigation_hold.py",
+        "honest_qav_audit.py",
+        "project_info__1.md",
+        ".aider.chat.history.md",
+        "project_info__2.md",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/feedback.md",
+        "docs/runbook.md",
+        "docs/disaster_recovery.md",
+        "tests/test_cbi_0_enforcement.py",
+        "tests/test_cbi_projection_binding.py",
+        "tests/test_merkle.py",
+        "tests/test_legal_agent_biok_integration.py",
+        "tests/test_cbi_0_runtime_chain.py",
+        "tests/test_nats_broker.py",
+        "tests/test_tamper.py",
+        "tests/test_local_llm_cse_integration.py",
+        "tests/test_federation_mesh.py",
+        "tests/test_constrained_semantic_engine.py"
+      ],
+      "remediation": ""
+    },
+    {
+      "id": "C7.1",
+      "name": "Disaster Recovery (RPO / RTO / Backup / Failover)",
+      "category": "C7",
+      "grade": "PRESENT",
+      "evidence": [
+        "DR controls in 33 files"
+      ],
+      "gaps": [],
+      "files_found": [
+        "docs/disaster_recovery.md",
+        "docs/pipeline.md",
+        "docs/data_governance.md",
+        "docs/runbook.md",
+        "docs/oncall.md",
+        "docs/disaster_recovery.md",
+        "tests/test_dt1_kimik2_integration.py",
+        "tests/test_lang_determinism.py",
+        "tests/test_canon_yaml_schema.py",
+        "tests/test_lang_benchmark.py",
+        "tests/test_document_intake.py",
+        "tests/test_ritual_engine_replay.py",
+        "scripts/verify_selx_closure.sh",
+        "tools/cleanup/fix_arch_violations.py",
+        "tools/cleanup/find_egregore_files.sh",
+        "tools/cleanup/fix_import_direction.py",
+        "tools/cleanup/fix_all_future_recursive.py",
+        "src/egregore/governance/anchorum_integrity_gate.py",
+        "src/egregore/infrastructure/cluster_kek.py",
+        "src/egregore/application/cbi_0_projection_registry_validator.py"
+      ],
+      "remediation": ""
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+FROM prom/prometheus:v2.54.1
+
+# Add security: run as non-root user
+USER 10001:10001
+
+# Expose port
+EXPOSE 9090

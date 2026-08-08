@@ -1,0 +1,35 @@
+# Summary
+
+**Case ID:** {{ case_id }}  
+**Generated:** {{ generated_at }}  
+**Engine Version:** {{ engine_version }}  
+**Policy Version:** {{ policy_version }}  
+**Reasoning Version:** {{ reasoning_version_id }}  
+**Report Hash:** `{{ report_hash }}`  
+**Decision Log Hash:** `{{ decision_log_hash }}`  
+
+## Key Findings
+
+{% for finding in key_findings %}
+- {{ finding }}
+{% else %}
+- No definitive findings could be established from the submitted streams.
+{% endfor %}
+
+## Streams Summary
+
+| Stream ID | Type | Tier | Authority Weight | Composite Score | Status |
+|-----------|------|------|------------------|-----------------|--------|
+{% for s in scored_streams %}
+| {{ s.stream_id }} | {{ s.stream_type }} | {{ s.source_tier }} | {{ "%.3f"|format(s.authority_weight) }} | {{ "%.4f"|format(s.composite_score) }} | {{ "ACCEPTED" if s.composite_score >= min_confidence else "BELOW_THRESHOLD" }} |
+{% endfor %}
+
+## Anomalies Detected
+
+{% if anomalies %}
+{% for a in anomalies %}
+- ⚠️ {{ a }}
+{% endfor %}
+{% else %}
+No metadata anomalies detected.
+{% endif %}

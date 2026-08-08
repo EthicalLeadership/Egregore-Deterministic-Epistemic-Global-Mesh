@@ -1,0 +1,136 @@
+cell_id: carpentry_joinery
+version: 1.0.0
+taxonomy:
+  root: guildhall
+  branch: building
+  leaf: carpentry
+  specialty: joinery
+owner: guildhall_master_carpenter
+type: guild
+tier: 3
+max_load: 0.75
+advisory_cells:
+  - electrical_wiring
+purpose: |
+  The carpentry_joinery cell produces trade-quality joinery plans: cut lists,
+  joint selection, material notes, and safety reminders. It emits structured
+  output suitable for shop-floor use and downstream estimation.
+
+inputs:
+  - name: input
+    type: string
+    description: Joinery project description.
+    schema: { type: string, minLength: 10, maxLength: 50000 }
+    required: true
+
+outputs:
+  - name: plan
+    type: object
+    description: Structured joinery plan.
+    schema:
+      type: object
+      properties:
+        project_summary: { type: string }
+        joints: { type: array }
+        cut_list: { type: array }
+        materials: { type: array }
+        safety_notes: { type: array }
+
+output_format:
+  stream_type: trade_plan
+  claim_field: safety_ok
+  claim_map:
+    "true": positive
+    "false": negative
+  schema:
+    type: object
+    properties:
+      project_summary: { type: string }
+      joints: { type: array }
+      cut_list: { type: array }
+      materials: { type: array }
+      safety_notes: { type: array }
+
+pipeline:
+  description: |
+    2-stage pipeline: extract project parameters, then generate a complete
+    joinery plan with safety notes.
+  stages:
+    - stage_id: parameter_extraction
+      name: Project Parameter Extraction
+      model: qwen_1.5b
+      system: |
+        You are a journeyman carpentry assistant. Extract project parameters
+        from the description and return JSON with fields: project_type,
+        dimensions, wood_species, finish. Output only JSON.
+      prompt: |
+        Project description:
+        {input}
+
+        Return JSON parameters only.
+      output_format: json
+      max_tokens: 512
+      temperature: 0.0
+
+    - stage_id: plan_generation
+      name: Joinery Plan Generation
+      model: qwen_7b
+      system: |
+        You are a master joiner. Produce a detailed joinery plan as JSON with
+        project_summary, joints (array of objects), cut_list, materials, and
+        safety_notes. Output only JSON.
+      prompt: |
+        Parameters:
+        {parameter_extraction_output}
+
+        Return JSON joinery plan only.
+      output_format: json
+      max_tokens: 1536
+      temperature: 0.1
+      depends_on: [parameter_extraction]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Parameter extraction.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+  - model_id: qwen_7b
+    purpose: Plan generation.
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    required: true
+
+verification:
+  static_tools: [json_schema]
+  dynamic_tools: []
+  rules:
+    - rule_id: safety_notes_present
+      description: Plan must include safety notes.
+      severity: high
+      check: safety_notes_nonempty
+    - rule_id: cut_list_present
+      description: Plan must include a cut list.
+      severity: medium
+      check: cut_list_nonempty
+
+moral_compliance:
+  egregore_laws:
+    - law_id: shop_safety
+      description: All plans must remind the worker of PPE and safe tool use.
+      enforcement: safety_notes
+    - law_id: no_unsafe_shortcuts
+      description: Do not recommend removing guards or bypassing safety interlocks.
+      enforcement: output_scan
+
+dependencies:
+  - electrical_wiring
+
+artifacts:
+  stage_gates:
+    plan: cells/carpentry_joinery/spec.yaml
+    draw: cells/carpentry_joinery/artifacts/draw.json
+    layout: cells/carpentry_joinery/artifacts/layout.json
+    erect: cells/carpentry_joinery/artifacts/erect.json
+    build: cells/carpentry_joinery/artifacts/build.json
+    finish: cells/carpentry_joinery/artifacts/finish.json
+    inspect: cells/carpentry_joinery/artifacts/inspect.json
+    deliver: cells/carpentry_joinery/artifacts/deliver.json

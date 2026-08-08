@@ -1,0 +1,116 @@
+{
+  "case": "GDC-86849-02",
+  "mode": "case_report",
+  "deterministic": false,
+  "output_identical": false,
+  "trace_diffs": [
+    {
+      "kind": "payload",
+      "index": 9,
+      "event_type": "factory.inference",
+      "differing_keys": [
+        "prompt_tokens",
+        "total_tokens"
+      ]
+    },
+    {
+      "kind": "payload",
+      "index": 10,
+      "event_type": "factory.station",
+      "differing_keys": [
+        "tokens"
+      ]
+    },
+    {
+      "kind": "payload",
+      "index": 11,
+      "event_type": "factory.inference",
+      "differing_keys": [
+        "prompt_tokens",
+        "total_tokens"
+      ]
+    },
+    {
+      "kind": "payload",
+      "index": 13,
+      "event_type": "factory.run.outcome",
+      "differing_keys": [
+        "total_tokens"
+      ]
+    }
+  ],
+  "qc_states": [
+    "SHIP",
+    "SHIP"
+  ],
+  "output_a_head": "{\n  \"summary\": \"The investigation into the anomaly 1825 by entity 2636 revealed a significant amount of metadata scrubbing in the documents. The anomaly may be related to the scrubbing of sensitive information.\",\n  \"key_findings\": [\n    \"The Lettre_Demande_Precisions_Medicales.docx document contains metadata that suggests the document was scrubbed.\",\n    \"The Kimi_Agent_3-Document Medical Package ",
+  "output_b_head": "{\n  \"summary\": \"The investigation into the anomaly 1825 by entity 2636 revealed a significant amount of metadata scrubbing in the documents. The anomaly may be related to the scrubbing of sensitive information.\",\n  \"key_findings\": [\n    \"The Lettre_Demande_Precisions_Medicales.docx document contains sensitive information that has been scrubbed.\",\n    \"The Kimi_Agent_3-Document Medical Package Draf",
+  "stations_a": [
+    {
+      "station": "intake",
+      "elapsed_ms": 601.13,
+      "tokens": 401,
+      "backend": "gguf"
+    },
+    {
+      "station": "parts_mfg",
+      "elapsed_ms": 2072.82,
+      "tokens": 680,
+      "backend": "gguf"
+    },
+    {
+      "station": "compression",
+      "elapsed_ms": 1734.83,
+      "tokens": 655,
+      "backend": null
+    },
+    {
+      "station": "cnc",
+      "elapsed_ms": 43466.26,
+      "tokens": 2458,
+      "backend": "gguf"
+    },
+    {
+      "station": "qc",
+      "elapsed_ms": 436.85,
+      "tokens": 1786,
+      "backend": "gguf"
+    }
+  ],
+  "stations_b": [
+    {
+      "station": "intake",
+      "elapsed_ms": 101.43,
+      "tokens": 401,
+      "backend": "gguf"
+    },
+    {
+      "station": "parts_mfg",
+      "elapsed_ms": 1984.07,
+      "tokens": 680,
+      "backend": "gguf"
+    },
+    {
+      "station": "compression",
+      "elapsed_ms": 1779.22,
+      "tokens": 655,
+      "backend": null
+    },
+    {
+      "station": "cnc",
+      "elapsed_ms": 43651.03,
+      "tokens": 2458,
+      "backend": "gguf"
+    },
+    {
+      "station": "qc",
+      "elapsed_ms": 366.87,
+      "tokens": 1787,
+      "backend": "gguf"
+    }
+  ],
+  "total_tokens": [
+    5980,
+    5981
+  ]
+}

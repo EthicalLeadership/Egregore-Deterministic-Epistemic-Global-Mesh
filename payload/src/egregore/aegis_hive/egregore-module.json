@@ -1,0 +1,32 @@
+{
+  "module_id": "egregore.aegis_hive",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "aegis_hive",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.cells",
+        "version": "0.6.0",
+        "hash": "sha256:5211072b7c81571c5a8079a4f098752a177b4e1f1dca163b6594f81249426959"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

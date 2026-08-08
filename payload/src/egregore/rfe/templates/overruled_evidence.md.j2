@@ -1,0 +1,12 @@
+# Overruled Evidence
+
+The following streams lost arbitration and are not reflected in the supported
+conclusions. They remain in the decision log for audit purposes.
+
+{% for stream in overruled_streams %}
+- **{{ stream.stream_id }}** (Tier {{ stream.source_tier }}, Score {{ "%.4f"|format(stream.composite_score) }})
+{% endfor %}
+
+{% if not overruled_streams %}
+No streams were overruled.
+{% endif %}

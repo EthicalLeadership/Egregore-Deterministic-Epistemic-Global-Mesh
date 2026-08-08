@@ -55,11 +55,45 @@ class TestProxyRouting:
         tmp_registry.register("m1", dummy_checkpoint, tier="expert")
         tmp_registry.register("m2", dummy_checkpoint, tier="general")
 
-        proxy = EmsProxy(tmp_registry)
+        proxy = EmsProxy(tmp_registry, gguf_backend=None)
         models = proxy._list_available_models()
         assert len(models) == 2
         assert models[0]["object"] == "model"
         assert "meta" in models[0]
+
+    def test_list_available_models_includes_gguf_backend(self, tmp_registry):
+        gguf_backend = MagicMock()
+        gguf_backend.health.return_value = True
+        gguf_backend.list_models.return_value = [
+            {
+                "id": "my-coder-ft",
+                "path": "/models/my_coder.gguf",
+                "backend": "gguf",
+                "loaded": False,
+            },
+            {
+                "id": "qwen-1.5b",
+                "path": "/models/qwen.gguf",
+                "backend": "gguf",
+                "loaded": True,
+            },
+        ]
+        proxy = EmsProxy(tmp_registry, gguf_backend=gguf_backend)
+
+        models = proxy._list_available_models()
+
+        ids = {model["id"] for model in models}
+        assert "my-coder-ft" in ids
+        assert "qwen-1.5b" in ids
+
+    def test_resolve_backend_gguf_model(self, tmp_registry):
+        gguf_backend = MagicMock()
+        gguf_backend.health.return_value = True
+        gguf_backend.model_exists.side_effect = lambda model_id: model_id == "my-coder-ft"
+        proxy = EmsProxy(tmp_registry, auto_start=False, gguf_backend=gguf_backend)
+
+        backend = proxy._resolve_backend("my-coder-ft")
+        assert backend is gguf_backend
 
 
 class TestProxyApp:

@@ -1,0 +1,81 @@
+---
+- name: Phase 07 | Install and Configure HashiCorp Vault on Pioneer-2
+  hosts: pioneer-2
+  become: true
+
+  tasks:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - gpg
+          - wget
+          - lsb-release
+        state: present
+        update_cache: true
+
+    - name: Download HashiCorp APT signing key
+      ansible.builtin.get_url:
+        url: https://apt.releases.hashicorp.com/gpg
+        dest: /tmp/hashicorp.gpg
+        mode: "0644"
+
+    - name: Install HashiCorp keyring
+      ansible.builtin.command: >-
+        gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg /tmp/hashicorp.gpg
+      args:
+        creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+    - name: Add HashiCorp apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+        filename: hashicorp
+        state: present
+
+    - name: Install Vault
+      ansible.builtin.apt:
+        name: vault
+        state: present
+        update_cache: true
+
+    - name: Ensure Vault data directory exists
+      ansible.builtin.file:
+        path: "{{ vault_storage_path }}"
+        state: directory
+        owner: vault
+        group: vault
+        mode: "0750"
+
+    - name: Deploy Vault configuration
+      ansible.builtin.template:
+        src: templates/vault.hcl.j2
+        dest: "{{ vault_config_path }}"
+        owner: root
+        group: root
+        mode: "0640"
+      notify: restart vault
+
+    - name: Ensure Vault service is enabled
+      ansible.builtin.systemd:
+        name: vault
+        enabled: true
+        state: started
+
+    - name: Allow Vault API access from LAN
+      community.general.ufw:
+        rule: allow
+        src: "{{ pioneer_lan_cidr }}"
+        port: "{{ pioneer_vault_port }}"
+        proto: tcp
+        comment: "Vault API from LAN"
+
+    - name: Print first-time Vault initialization command
+      ansible.builtin.debug:
+        msg: >-
+          Run once on pioneer-2: vault operator init > /root/vault-init.txt
+          then unseal with vault operator unseal. Do not use -dev mode in production.
+
+  handlers:
+    - name: restart vault
+      ansible.builtin.systemd:
+        name: vault
+        state: restarted

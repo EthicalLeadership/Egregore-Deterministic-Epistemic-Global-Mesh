@@ -1,0 +1,13 @@
+[Unit]
+Description=Egregore ANCHORUM Plain-HTTP Site (user)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/blackstar
+ExecStart=%h/blackstar/scripts/start_anchorum_http.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

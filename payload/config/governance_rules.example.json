@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "deny-restricted-tenant",
+      "when": {"field": "tenant", "in": ["restricted", "embargoed"]},
+      "then": {"verdict": "deny", "reason": "Tenant is restricted or embargoed"}
+    },
+    {
+      "id": "qc-confidence-floor",
+      "when": {
+        "all": [
+          {"field": "qc.confidence", "lt": 0.85},
+          {"field": "qc.tier", "eq": "critical"}
+        ]
+      },
+      "then": {"verdict": "require_escalation", "reason": "Critical-tier QC below confidence floor"}
+    },
+    {
+      "id": "budget-overspend",
+      "when": {"field": "budget.post_balance", "lt": 0},
+      "then": {"verdict": "deny", "reason": "Budget overspend is never permitted"}
+    },
+    {
+      "id": "standard-allow",
+      "when": {
+        "all": [
+          {"field": "qc.confidence", "ge": 0.85},
+          {"field": "role", "matches": "(operator|admin|auditor)"}
+        ]
+      },
+      "then": {"verdict": "allow", "reason": "Standard QC floor satisfied by authorized role"}
+    }
+  ]
+}

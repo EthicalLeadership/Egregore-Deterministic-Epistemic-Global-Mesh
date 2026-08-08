@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Egregore update check every 15 minutes
+Requires=egregore-update.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

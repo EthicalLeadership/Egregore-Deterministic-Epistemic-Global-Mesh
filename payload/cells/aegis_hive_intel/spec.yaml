@@ -1,0 +1,102 @@
+cell_id: aegis_hive_intel
+version: 0.1.0
+taxonomy:
+  domain: investigation
+  subdomain: defense
+  function: intelligence
+  tags: [aegis, hive, intel, stix]
+owner: aegis_hive
+type: investigation
+tier: 2
+max_load: 0.80
+purpose: |
+  The AEGIS-HIVE intelligence cell ingests STIX 2.1 threat-intelligence
+  bundles, maintains an indicator graph, and matches incoming telemetry
+  against indicators with Bayesian confidence decay.
+
+inputs:
+  - name: telemetry_envelope
+    type: object
+    description: Normalized telemetry envelope from the sensor cell.
+    schema: { type: object }
+    required: true
+  - name: stix_bundle_path
+    type: string
+    description: Path to a local STIX 2.1 bundle file or directory.
+    schema: { type: string }
+    required: false
+
+outputs:
+  - name: findings
+    type: array
+    description: List of AegisFinding objects produced from indicator matches.
+    schema:
+      type: array
+      items: { type: object }
+  - name: intel_summary
+    type: object
+    description: Summary of indicators loaded and matches observed.
+
+output_format:
+  stream_type: aegis_intel
+  claim_field: verdict
+  claim_map:
+    PASS: benign
+    FAIL: malicious
+  schema:
+    type: object
+    properties:
+      findings: { type: array }
+      intel_summary: { type: object }
+
+pipeline:
+  description: |
+    3-stage intelligence pipeline: ingest → decay → match.
+  stages:
+    - stage_id: ingest
+      name: Ingest STIX Indicators
+      tool: aegis_intel_stub
+      output_format: json
+    - stage_id: decay
+      name: Apply Temporal Confidence Decay
+      tool: aegis_intel_stub
+      output_format: json
+      depends_on: [ingest]
+    - stage_id: match
+      name: Match Telemetry Against Indicators
+      tool: aegis_intel_stub
+      output_format: json
+      depends_on: [decay]
+
+models: []
+
+verification:
+  static_tools: []
+  dynamic_tools: []
+  rules:
+    - rule_id: indicator_signature_verified
+      description: All ingested intelligence must be signature-verified before use.
+      severity: high
+    - rule_id: sovereign_boundary
+      description: Raw telemetry must not leave sovereign boundaries.
+      severity: critical
+
+moral_compliance:
+  egregore_laws:
+    - law_id: aegis-002
+      description: Intelligence fusion must not introduce foreign untrusted data without attestation.
+      enforcement: fail_closed
+
+dependencies:
+  - aegis_hive_sensor
+
+artifacts:
+  stage_gates:
+    plan: cells/aegis_hive_intel/spec.yaml
+    draw: cells/aegis_hive_intel/artifacts/draw.json
+    layout: cells/aegis_hive_intel/artifacts/layout.json
+    erect: cells/aegis_hive_intel/artifacts/erect.json
+    build: cells/aegis_hive_intel/artifacts/build.json
+    finish: cells/aegis_hive_intel/artifacts/finish.json
+    inspect: cells/aegis_hive_intel/artifacts/inspect.json
+    deliver: cells/aegis_hive_intel/artifacts/deliver.json

@@ -1,0 +1,42 @@
+{
+  "module_id": "egregore.rfe",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "rfe",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.kernel",
+        "version": "0.6.0",
+        "hash": "sha256:1b9014ce620d60d1b3e0289a376be61bf174541e2c85a02db140fe18619d9032"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      },
+      {
+        "module": "egregore.tooling",
+        "version": "0.6.0",
+        "hash": "sha256:ceca295c39777e24d840f931b167124a5f0ec26ad7c3402b8db5ea4e55a04046"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

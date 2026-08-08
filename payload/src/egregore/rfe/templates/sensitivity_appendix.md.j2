@@ -1,0 +1,51 @@
+# Appendix A — Sensitivity Analysis
+
+This appendix recomputes the fusion with each finite-decay stream's half-life
+varied by ±{{ "%.0f"|format(variation_factor * 100) }}%. It exposes conclusions
+that flip under plausible decay uncertainty.
+
+## Baseline Conclusions
+
+{% for c in baseline_conclusions %}
+- {{ c }}
+{% endfor %}
+
+## Scenarios
+
+{% for scenario in scenarios %}
+### {{ scenario.variation_label }}
+
+**Variation Factor:** {{ "%.2f"|format(scenario.variation_factor) }}
+
+**Conclusions:**
+{% for c in scenario.conclusions %}
+- {{ c }}
+{% endfor %}
+
+{% if scenario.flipped_conclusions %}
+**Flipped Conclusions:**
+{% for c in scenario.flipped_conclusions %}
+- ⚠️ {{ c }}
+{% endfor %}
+{% else %}
+No conclusions flipped under this scenario.
+{% endif %}
+
+{% endfor %}
+
+## Overall Flipped Conclusions
+
+{% if flipped_conclusions %}
+{% for c in flipped_conclusions %}
+- ⚠️ {{ c }}
+{% endfor %}
+{% else %}
+No conclusions flipped across any sensitivity scenario.
+{% endif %}
+
+## Methodology
+
+For every stream with finite exponential decay, the half-life is multiplied by
+(1 + {{ variation_factor }}) and (1 − {{ variation_factor }}) while all other
+streams are held constant. The MEEV scores are recomputed and the top-supported
+and top-opposed conclusions are compared against the baseline.

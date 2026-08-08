@@ -1,0 +1,22 @@
+{
+  "name": "egregore",
+  "version": "0.6.0",
+  "private": true,
+  "description": "Egregore — Deterministic Epistemic Global Mesh. Sovereign, governed, replay-correct.",
+  "scripts": {
+    "postinstall": "npm run install:frontend && npm run install:python",
+    "install:frontend": "cd frontend && npm install",
+    "install:python": "bash scripts/install_python.sh",
+    "services:check": "bash scripts/check_local_services.sh",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm start",
+    "test": "PYTHONPATH=src .venv/bin/python -m pytest tests/ -q --ignore=tests/test_canon_yaml_schema.py",
+    "test:arch": "PYTHONPATH=src .venv/bin/python -m pytest tests/test_arch_enforcement.py -q",
+    "smoke": "bash scripts/smoke_test.sh"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "module_id": "egregore.interface",
+  "version": "0.6.0",
+  "cell": "aegis_hive_actor",
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "interface",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.application",
+        "version": "0.6.0",
+        "hash": "sha256:b57fe98527c8a97a51aa2cf2df67fa096ea1a1a89b095f36a6bb986ec35b0fa2"
+      },
+      {
+        "module": "egregore.cells",
+        "version": "0.6.0",
+        "hash": "sha256:5211072b7c81571c5a8079a4f098752a177b4e1f1dca163b6594f81249426959"
+      },
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.governance",
+        "version": "0.6.0",
+        "hash": "sha256:4c010937b66fa262d77ee1f92723a42f5464da027bb317db933af114ad1c42ad"
+      },
+      {
+        "module": "egregore.http_api",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.models",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.rfe",
+        "version": "0.6.0",
+        "hash": "sha256:df249961295547a086d7474018f1260fde6c5c9b572de74b23611d5ee57ee20b"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 148: with open(path, encoding=\"utf-8\") as f:"
+      ],
+      "write": [
+        "line 277: report_path.write_text(source.read_text(encoding=\"utf-8\"), encoding=\"utf-8\")",
+        "line 294: staged_path.write_text("
+      ],
+      "execute": [],
+      "network": [
+        "line 330: async with httpx.AsyncClient(timeout=2.0) as client:"
+      ]
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": true
+  }
+}

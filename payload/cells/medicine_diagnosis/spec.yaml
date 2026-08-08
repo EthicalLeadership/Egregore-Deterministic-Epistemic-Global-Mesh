@@ -1,0 +1,137 @@
+cell_id: medicine_diagnosis
+version: 1.0.0
+taxonomy:
+  root: university
+  branch: health_sciences
+  leaf: medicine
+  specialty: differential_diagnosis
+owner: university_faculty_medicine
+type: university
+tier: 5
+max_load: 0.6
+advisory_cells:
+  - law_contract_review
+purpose: |
+  The medicine_diagnosis cell performs a structured differential-diagnosis
+  triage from symptoms. It is strictly educational and triage-oriented; it must
+  always advise consulting a qualified clinician for definitive diagnosis.
+
+inputs:
+  - name: input
+    type: string
+    description: Symptoms, history, and demographic context.
+    schema: { type: string, minLength: 10, maxLength: 50000 }
+    required: true
+
+outputs:
+  - name: triage_report
+    type: object
+    description: Structured differential diagnosis and triage.
+    schema:
+      type: object
+      properties:
+        urgency: { type: string }
+        differential_diagnoses: { type: array }
+        recommended_next_steps: { type: array }
+        disclaimer: { type: string }
+
+output_format:
+  stream_type: medical_triage
+  claim_field: urgency
+  claim_map:
+    routine: positive
+    urgent: negative
+    emergency: negative
+  schema:
+    type: object
+    properties:
+      urgency: { type: string }
+      differential_diagnoses: { type: array }
+      recommended_next_steps: { type: array }
+      disclaimer: { type: string }
+
+pipeline:
+  description: |
+    2-stage pipeline: extract findings, then generate a conservative triage
+    report with a required medical disclaimer.
+  stages:
+    - stage_id: findings_extraction
+      name: Findings Extraction
+      model: qwen_1.5b
+      system: |
+        You are a medical-education assistant. Extract symptoms, history, and
+        risk factors from the user input. Return JSON with arrays:
+        symptoms, risk_factors, duration. Output only JSON.
+      prompt: |
+        Patient input:
+        {input}
+
+        Return JSON findings only.
+      output_format: json
+      max_tokens: 768
+      temperature: 0.0
+
+    - stage_id: triage_generation
+      name: Triage Report
+      model: qwen_7b
+      system: |
+        You are a cautious medical-education assistant. Produce a differential
+        diagnosis triage report as JSON with urgency (routine|urgent|emergency),
+        differential_diagnoses, recommended_next_steps, and a disclaimer that
+        this is not medical advice and a clinician must be consulted. Output
+        only JSON.
+      prompt: |
+        Findings:
+        {findings_extraction_output}
+
+        Return JSON triage report only.
+      output_format: json
+      max_tokens: 1536
+      temperature: 0.0
+      depends_on: [findings_extraction]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Findings extraction.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+  - model_id: qwen_7b
+    purpose: Triage report generation.
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    required: true
+
+verification:
+  static_tools: [json_schema]
+  dynamic_tools: []
+  rules:
+    - rule_id: disclaimer_present
+      description: Output must contain a medical-disclaimer.
+      severity: critical
+      check: contains_disclaimer
+    - rule_id: no_definitive_diagnosis
+      description: The cell must not present a single definitive diagnosis.
+      severity: critical
+      check: differential_list_nonempty
+
+moral_compliance:
+  egregore_laws:
+    - law_id: do_no_harm
+      description: Avoid advice that could delay emergency care.
+      enforcement: urgency_escalation
+    - law_id: medical_disclaimer
+      description: Always disclaim that this is educational, not clinical advice.
+      enforcement: output_prefix
+
+dependencies:
+  - law_contract_review
+
+artifacts:
+  stage_gates:
+    plan: cells/medicine_diagnosis/spec.yaml
+    draw: cells/medicine_diagnosis/artifacts/draw.json
+    layout: cells/medicine_diagnosis/artifacts/layout.json
+    erect: cells/medicine_diagnosis/artifacts/erect.json
+    build: cells/medicine_diagnosis/artifacts/build.json
+    finish: cells/medicine_diagnosis/artifacts/finish.json
+    inspect: cells/medicine_diagnosis/artifacts/inspect.json
+    deliver: cells/medicine_diagnosis/artifacts/deliver.json

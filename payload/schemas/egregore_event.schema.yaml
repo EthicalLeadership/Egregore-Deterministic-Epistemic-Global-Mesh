@@ -1,0 +1,177 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://egregore.local/schemas/egregore_event.schema.yaml"
+title: Egregore Global Event Schema
+description: >-
+  Canonical event record and .zarc provenance storage envelope for the Egregore
+  runtime. Every service must emit events that validate against the
+  "canonicalEvent" branch. The "zarcRecord" branch describes the signed,
+  hash-chained JSONL line produced by the provenance layer.
+type: object
+oneOf:
+  - $ref: "#/$defs/canonicalEvent"
+  - $ref: "#/$defs/zarcRecord"
+
+$defs:
+  canonicalEvent:
+    type: object
+    additionalProperties: false
+    required:
+      - event_id
+      - event_type
+      - timestamp_ns
+      - schema_version
+      - source
+      - causality
+      - payload
+    properties:
+      event_id:
+        type: string
+        minLength: 1
+        description: Stable, globally unique event identifier.
+      event_type:
+        type: string
+        pattern: "^egregore\\.[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+        description: >-
+          Reverse-domain event name, e.g.
+          egregore.dossier.generation_requested.
+      timestamp_ns:
+        type: integer
+        minimum: 0
+        description: Epoch timestamp in nanoseconds.
+      schema_version:
+        type: string
+        const: "egregore-event-v1.0.0"
+        description: Canonical event schema version.
+      source:
+        $ref: "#/$defs/source"
+      causality:
+        $ref: "#/$defs/causality"
+      context:
+        $ref: "#/$defs/context"
+      payload:
+        type: object
+        additionalProperties: true
+        description: Event-specific payload.
+      _provenance:
+        $ref: "#/$defs/provenance"
+
+  source:
+    type: object
+    additionalProperties: false
+    required:
+      - service
+      - component
+      - node_id
+    properties:
+      service:
+        type: string
+        minLength: 1
+        description: Logical service name in dotted form.
+      component:
+        type: string
+        minLength: 1
+        description: Component or class name.
+      node_id:
+        type: string
+        minLength: 1
+        description: Logical node identifier.
+      cluster_id:
+        type: string
+        description: Deployment cluster / federation cell.
+      instance_version:
+        type: string
+        description: Service semver.
+
+  causality:
+    type: object
+    additionalProperties: false
+    required:
+      - correlation_id
+    properties:
+      correlation_id:
+        type: string
+        minLength: 1
+        description: Stable request lineage id shared by all events in a request.
+      causation_id:
+        type: string
+        description: Id of the command/message that caused this event.
+      parent_event_id:
+        type: string
+        description: Immediate predecessor event_id in a causal chain.
+
+  context:
+    type: object
+    additionalProperties: false
+    properties:
+      tenant_id:
+        type: string
+      organization_id:
+        type: string
+      case_id:
+        type: string
+      version_id:
+        type: string
+      actor_id:
+        type: string
+      request_id:
+        type: string
+        description: Ingress-plane request id; treated as a hint by Plane 1.
+
+  provenance:
+    type: object
+    additionalProperties: false
+    required:
+      - engine
+      - event
+      - prev_hash
+      - sig
+    properties:
+      engine:
+        type: string
+        description: Logical engine / service that produced the record.
+      event:
+        type: string
+        description: Mirror of event_type.
+      prev_hash:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+        description: SHA256 hex of the previous canonical .zarc line.
+      sig:
+        type: string
+        pattern: "^[0-9a-f]+$"
+        description: Ed25519 signature hex over the unsigned canonical record.
+
+  zarcRecord:
+    type: object
+    additionalProperties: false
+    required:
+      - ts_ns
+      - engine
+      - event
+      - payload
+      - prev_hash
+      - sig
+    properties:
+      ts_ns:
+        type: integer
+        minimum: 0
+        description: Same value as the canonical event timestamp_ns.
+      engine:
+        type: string
+        minLength: 1
+        description: Same value as source.service.
+      event:
+        type: string
+        minLength: 1
+        description: Same value as event_type.
+      payload:
+        $ref: "#/$defs/canonicalEvent"
+        description: The full canonical event (header + payload).
+      prev_hash:
+        type: string
+        pattern: "^[0-9a-f]{64}$"
+        description: SHA256 hex of the previous canonical .zarc line.
+      sig:
+        type: string
+        pattern: "^[0-9a-f]+$"
+        description: Ed25519 signature hex over the unsigned canonical record.

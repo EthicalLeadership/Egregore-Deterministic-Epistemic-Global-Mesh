@@ -1,0 +1,74 @@
+{
+  "module_id": "egregore.http_api",
+  "version": "0.6.0",
+  "cell": "aegis_hive_sensor",
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "http_api",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.application",
+        "version": "0.6.0",
+        "hash": "sha256:b57fe98527c8a97a51aa2cf2df67fa096ea1a1a89b095f36a6bb986ec35b0fa2"
+      },
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.governance",
+        "version": "0.6.0",
+        "hash": "sha256:4c010937b66fa262d77ee1f92723a42f5464da027bb317db933af114ad1c42ad"
+      },
+      {
+        "module": "egregore.infrastructure",
+        "version": "0.6.0",
+        "hash": "sha256:12e5681e3070696502043f7dcc9bb774b09c98b912197f2d0c12ed7e98613296"
+      },
+      {
+        "module": "egregore.interface",
+        "version": "0.6.0",
+        "hash": "sha256:9bad391b3be4b97a4e262371d449b75bd6362232896e28cf40072766721f96ea"
+      },
+      {
+        "module": "egregore.models",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.rfe",
+        "version": "0.6.0",
+        "hash": "sha256:df249961295547a086d7474018f1260fde6c5c9b572de74b23611d5ee57ee20b"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 7: with open(app_file) as f:",
+        "line 29: with open(app_file, \"w\") as f:",
+        "line 121: with open(keys_path) as f:",
+        "line 16: with open(key_file) as f:"
+      ],
+      "write": [
+        "line 29: with open(app_file, \"w\") as f:"
+      ],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": true
+  }
+}

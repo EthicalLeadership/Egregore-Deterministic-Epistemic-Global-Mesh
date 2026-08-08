@@ -1,0 +1,88 @@
+# Reproducible Fusion Engine (RFE) configuration
+# Versioned policy defaults for deterministic report fusion.
+
+version: "rfe-1.0.0"
+engine_version: "rfe-1.0.0"
+policy_version: "rfe-policy-1.0.0"
+reasoning_version_id: "rfe-reasoning-1.0.0"
+
+scoring_weights:
+  w_impact: 0.35
+  w_freshness: 0.25
+  w_reliability: 0.25
+  w_corroboration: 0.15
+
+# No global decay setting. Per-stream decay is mandatory; missing decay defaults
+# to {"method": "unbounded"} inside the engine.
+
+decay_default:
+  method: "unbounded"
+
+min_confidence: 0.5
+arbitration_threshold: 0.15
+dead_band: 0.05
+sensitivity_variation: 0.5
+max_streams_per_section: 5
+
+source_authority_tiers:
+  version: "tier-table-1.0.0"
+  tiers:
+    1:
+      examples:
+        - "Court rulings"
+        - "Sworn testimony"
+        - "Certified audit records"
+      authority_weight: 1.0
+    2:
+      examples:
+        - "Official government reports"
+        - "Medical records"
+      authority_weight: 0.9
+    3:
+      examples:
+        - "Professional analyst reports"
+        - "Sensor telemetry"
+      authority_weight: 0.8
+    4:
+      examples:
+        - "News media"
+        - "Expert opinion"
+      authority_weight: 0.6
+    5:
+      examples:
+        - "Social media"
+        - "Unverified eyewitness accounts"
+      authority_weight: 0.3
+
+# Penalty applied to streams whose Ed25519 signature is missing or invalid.
+unsigned_authority_multiplier: 0.5
+
+red_team_config:
+  # Maximum allowed future timestamp skew in seconds (reject if stream timestamp
+  # is more than this far in the future relative to manifest timestamp).
+  future_timestamp_max_skew_seconds: 60
+  # Window in seconds within which duplicate content hashes from the same source
+  # are considered suspicious.
+  duplication_window_seconds: 3600
+  # Threshold for source flooding: more than this many streams from a single
+  # source within the duplication window triggers an alert/dedup.
+  flooding_rate_threshold: 10
+
+# Provenance / .zarc storage
+zarc:
+  path: "data/rfe.zarc"
+  # Ed25519 signing key hex. In production this must be injected via the
+  # RFE_SIGNING_KEY_HEX environment variable; the value below is a placeholder
+  # and will be regenerated if missing.
+  signing_key_hex_env_var: "RFE_SIGNING_KEY_HEX"
+
+# Output report defaults
+report_defaults:
+  max_pages: 20
+  required_sections:
+    - summary
+    - timeline
+    - obstruction_analysis
+    - conclusion
+  output_format: "pdf-a-1b"
+  language: "en"

@@ -1,0 +1,17 @@
+{
+  "performance": {
+    "mvt": {"p50_ms": 100, "p95_ms": 500, "p99_ms": 1000, "cv_max": 1.0, "throughput_min_ops_sec": 10},
+    "tt": {"p50_ms": 50, "p95_ms": 100, "p99_ms": 200, "cv_max": 0.5, "throughput_min_ops_sec": 100},
+    "et": {"p50_ms": 10, "p95_ms": 20, "p99_ms": 50, "cv_max": 0.2, "throughput_min_ops_sec": 1000}
+  },
+  "security": {
+    "mvt": {"auth_success_rate": 0.95, "cbi0_pass_rate": 0.95, "zarc_verification": 0.99},
+    "tt": {"auth_success_rate": 0.99, "cbi0_pass_rate": 0.99, "zarc_verification": 0.999},
+    "et": {"auth_success_rate": 0.999, "cbi0_pass_rate": 0.9999, "zarc_verification": 1.0}
+  },
+  "resilience": {
+    "mvt": {"mtbf_hours": 24, "mttr_minutes": 30, "rpo_minutes": 60, "rto_minutes": 15},
+    "tt": {"mtbf_hours": 168, "mttr_minutes": 10, "rpo_minutes": 5, "rto_minutes": 5},
+    "et": {"mtbf_hours": 720, "mttr_minutes": 2, "rpo_minutes": 1, "rto_minutes": 1}
+  }
+}

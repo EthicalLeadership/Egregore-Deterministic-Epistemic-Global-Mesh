@@ -1,0 +1,26 @@
+{
+  "hostname": "pioneer1",
+  "os": {
+    "kernel": "6.17.0-35-generic",
+    "distro": "Ubuntu 24.04.4 LTS"
+  },
+  "cpu": {
+    "model": "AMD Ryzen 7 2700 Eight-Core Processor",
+    "cores": 16,
+    "threads": 16,
+    "freq_mhz": 3291.731
+  },
+  "ram": {
+    "total_mb": 32003,
+    "available_mb": 21446,
+    "total_gb": 31.3
+  },
+  "gpu": {
+    "vendor": "NVIDIA",
+    "model": "NVIDIA GeForce RTX 3060",
+    "vram_total_mb": 12288,
+    "vram_free_mb": 281,
+    "utilization": "3 %",
+    "clock_mhz": 210
+  }
+}

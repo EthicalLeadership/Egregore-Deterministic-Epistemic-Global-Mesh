@@ -1,0 +1,18 @@
+# /home/kark/.config/systemd/user/egregore-federation-watcher.service
+[Unit]
+Description=Egregore federation handshake watcher (Pioneer 2)
+After=network.target egregore.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore
+Environment=PYTHONPATH=src
+EnvironmentFile=-%h/egregore/.env
+ExecStart=%h/egregore/.venv/bin/python scripts/federation_handshake_watcher.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:%h/egregore/logs/federation-watcher.log
+StandardError=append:%h/egregore/logs/federation-watcher.log
+
+[Install]
+WantedBy=default.target

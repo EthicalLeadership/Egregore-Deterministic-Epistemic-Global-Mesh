@@ -1,0 +1,5 @@
+{
+  "description": "Calls Anthropic Claude to answer questions and perform analysis tasks.",
+  "timeout": 150,
+  "allowed_roles": ["admin", "operator"]
+}

@@ -1,0 +1,147 @@
+cell_id: math_calculus
+version: 1.0.0
+taxonomy:
+  root: university
+  branch: science
+  leaf: mathematics
+  specialty: calculus
+owner: university_faculty_mathematics
+type: university
+tier: 4
+max_load: 0.8
+advisory_cells:
+  - sweng_python
+purpose: |
+  The math_calculus cell solves university-level calculus problems (limits,
+  derivatives, integrals, series) and verifies the symbolic result using SymPy.
+  It emits a structured RFE stream with the claim, derivation, and verified
+  numeric or symbolic answer.
+
+inputs:
+  - name: input
+    type: string
+    description: Natural-language calculus problem.
+    schema: { type: string, minLength: 3, maxLength: 50000 }
+    required: true
+
+outputs:
+  - name: answer
+    type: string
+    description: Verified symbolic or numeric answer.
+    schema: { type: string }
+  - name: derivation
+    type: string
+    description: Step-by-step derivation.
+    schema: { type: string }
+  - name: verification_report
+    type: object
+    description: SymPy verification result.
+    schema:
+      type: object
+      properties:
+        verdict: { type: string }
+        expression: { type: string }
+        evaluated: { type: string }
+
+output_format:
+  stream_type: mathematical_claim
+  claim_field: verdict
+  claim_map:
+    PASS: positive
+    FAIL: negative
+  schema:
+    type: object
+    properties:
+      answer: { type: string }
+      derivation: { type: string }
+      verification_report: { type: object }
+
+pipeline:
+  description: |
+    3-stage pipeline: extract the formal problem, generate a symbolic solution,
+    and verify it deterministically with SymPy.
+  stages:
+    - stage_id: spec_extraction
+      name: Problem Formalization
+      model: qwen_1.5b
+      system: |
+        You are a university mathematics teaching assistant. Read the student's
+        calculus question and produce a JSON object with fields:
+        problem_type (limit|derivative|integral|series), expression (LaTeX or
+        plain math), and any constraints. Output only JSON.
+      prompt: |
+        Calculus problem:
+        {input}
+
+        Return the JSON formalization only.
+      output_format: json
+      max_tokens: 512
+      temperature: 0.0
+
+    - stage_id: generation
+      name: Symbolic Solution
+      model: qwen_7b
+      system: |
+        You are a professor of calculus. Solve the formalized problem step by
+        step. Return ONLY valid JSON with fields: answer (string), derivation
+        (string), and expression (string).
+      prompt: |
+        Problem formalization:
+        {spec_extraction_output}
+
+        Return JSON with keys answer, derivation, expression. Example value for answer: "2*x".
+      output_format: json
+      max_tokens: 1536
+      temperature: 0.0
+      depends_on: [spec_extraction]
+
+    - stage_id: verification
+      name: Symbolic Verification
+      tool: math_verify
+      depends_on: [generation]
+
+models:
+  - model_id: qwen_1.5b
+    purpose: Problem formalization.
+    path: ${MODELS_DIR}/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    required: true
+  - model_id: qwen_7b
+    purpose: Symbolic solution generation.
+    path: ${MODELS_DIR}/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    required: true
+
+verification:
+  static_tools: [math_verify]
+  dynamic_tools: []
+  rules:
+    - rule_id: symbolic_check
+      description: Result must be symbolically verifiable by SymPy.
+      severity: critical
+      check: math_verify
+    - rule_id: well_formed_json
+      description: LLM outputs must be valid JSON.
+      severity: high
+      check: json_parse
+
+moral_compliance:
+  egregore_laws:
+    - law_id: academic_integrity
+      description: The cell must not produce intentionally misleading derivations.
+      enforcement: self_consistency_check
+    - law_id: no_external_computation
+      description: All computation must be local; no network calls.
+      enforcement: sandbox_policy
+
+dependencies:
+  - sweng_python
+
+artifacts:
+  stage_gates:
+    plan: cells/math_calculus/spec.yaml
+    draw: cells/math_calculus/artifacts/draw.json
+    layout: cells/math_calculus/artifacts/layout.json
+    erect: cells/math_calculus/artifacts/erect.json
+    build: cells/math_calculus/artifacts/build.json
+    finish: cells/math_calculus/artifacts/finish.json
+    inspect: cells/math_calculus/artifacts/inspect.json
+    deliver: cells/math_calculus/artifacts/deliver.json

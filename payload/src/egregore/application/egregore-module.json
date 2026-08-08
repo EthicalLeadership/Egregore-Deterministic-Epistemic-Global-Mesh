@@ -1,0 +1,86 @@
+{
+  "module_id": "egregore.application",
+  "version": "0.6.0",
+  "cell": "aegis_hive_reasoner",
+  "cbi0": {
+    "m1_plane": "plane1",
+    "m1_layer": "application",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.governance",
+        "version": "0.6.0",
+        "hash": "sha256:4c010937b66fa262d77ee1f92723a42f5464da027bb317db933af114ad1c42ad"
+      },
+      {
+        "module": "egregore.http_api",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.infrastructure",
+        "version": "0.6.0",
+        "hash": "sha256:12e5681e3070696502043f7dcc9bb774b09c98b912197f2d0c12ed7e98613296"
+      },
+      {
+        "module": "egregore.interface",
+        "version": "0.6.0",
+        "hash": "sha256:9bad391b3be4b97a4e262371d449b75bd6362232896e28cf40072766721f96ea"
+      },
+      {
+        "module": "egregore.kernel",
+        "version": "0.6.0",
+        "hash": "sha256:1b9014ce620d60d1b3e0289a376be61bf174541e2c85a02db140fe18619d9032"
+      },
+      {
+        "module": "egregore.models",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.powertrain",
+        "version": "0.6.0",
+        "hash": "sha256:2019f4c17771e8f6fd53fea521fae2e58b6bb3ea38a55e4cf223c700c512ad90"
+      },
+      {
+        "module": "egregore.services",
+        "version": "0.6.0",
+        "hash": "sha256:d806ac9e44962f14e1022f0dd9dd8d27a1ad7ea5326aa410fe891c8f9b4a1c55"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 119: with open(policy_file) as f:",
+        "line 33: with pdfplumber.open(BytesIO(file_bytes)) as pdf:",
+        "line 121: self._escalation.open(",
+        "line 33: def open("
+      ],
+      "write": [],
+      "execute": [
+        "line 63: proc = subprocess.run(  # noqa: S603"
+      ],
+      "network": [
+        "line 13: # Demo mode: if no users are configured, allow all requests."
+      ]
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": true
+  }
+}

@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 15% 8%;
+    --foreground: 210 20% 92%;
+    --card: 220 14% 11%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 14% 11%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 210 100% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 12% 16%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 220 12% 16%;
+    --muted-foreground: 215 12% 50%;
+    --accent: 220 12% 16%;
+    --accent-foreground: 210 20% 92%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 10% 20%;
+    --input: 220 10% 20%;
+    --ring: 210 100% 52%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-[#0f1117] text-[#e2e4e9];
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-lg border border-[#1e2129] bg-[#161922];
+  }
+
+  .panel-hover:hover {
+    @apply border-[#2a2e3a];
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-[#2563eb] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-[#1e2129] px-3 py-1.5 text-xs font-medium text-[#e2e4e9] transition-colors hover:bg-[#2a2e3a] disabled:opacity-40 disabled:cursor-not-allowed border border-[#2a2e3a];
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-[#dc2626]/10 px-3 py-1.5 text-xs font-medium text-[#ef4444] transition-colors hover:bg-[#dc2626]/20 disabled:opacity-40 disabled:cursor-not-allowed border border-[#dc2626]/20;
+  }
+
+  .status-dot {
+    @apply inline-block h-2 w-2 rounded-full;
+  }
+
+  .status-running {
+    @apply bg-emerald-500;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  }
+
+  .status-stopped {
+    @apply bg-slate-500;
+  }
+
+  .status-error {
+    @apply bg-red-500;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+  }
+
+  .metric-value {
+    @apply text-2xl font-semibold tracking-tight text-white;
+  }
+
+  .metric-label {
+    @apply text-[11px] font-medium uppercase tracking-wide text-slate-500;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2e3a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3e4a;
+}
+
+/* Log colors */
+.log-info { color: #e2e4e9; }
+.log-debug { color: #6b7280; }
+.log-warn { color: #f59e0b; }
+.log-error { color: #ef4444; }

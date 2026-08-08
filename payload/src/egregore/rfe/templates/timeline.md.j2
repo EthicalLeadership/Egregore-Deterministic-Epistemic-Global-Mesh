@@ -1,0 +1,18 @@
+# Timeline
+
+Events are ordered by stream timestamp and composite score.
+
+{% for entry in timeline_entries %}
+## {{ entry.timestamp }} — {{ entry.stream_id }}
+
+- **Type:** {{ entry.stream_type }}
+- **Source Tier:** {{ entry.source_tier }}
+- **Composite Score:** {{ "%.4f"|format(entry.composite_score) }}
+- **Claim:** {{ entry.claim }}
+
+{{ entry.content_text }}
+
+---
+{% else %}
+No timeline events available.
+{% endfor %}

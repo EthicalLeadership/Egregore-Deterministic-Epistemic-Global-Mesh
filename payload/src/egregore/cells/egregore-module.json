@@ -1,0 +1,44 @@
+{
+  "module_id": "egregore.cells",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "cells",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.governance",
+        "version": "0.6.0",
+        "hash": "sha256:4c010937b66fa262d77ee1f92723a42f5464da027bb317db933af114ad1c42ad"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      },
+      {
+        "module": "egregore.tooling",
+        "version": "0.6.0",
+        "hash": "sha256:ceca295c39777e24d840f931b167124a5f0ec26ad7c3402b8db5ea4e55a04046"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 47: with open(candidate, encoding=\"utf-8\") as f:"
+      ],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

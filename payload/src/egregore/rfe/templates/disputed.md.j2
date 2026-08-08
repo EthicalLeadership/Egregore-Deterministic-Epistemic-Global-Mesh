@@ -1,0 +1,19 @@
+# Disputed Findings
+
+The following contradictions could not be resolved by arbitration because the
+score difference fell below the dead band ({{ dead_band }}) or the streams were
+otherwise indistinguishable.
+
+{% for dispute in disputes %}
+## Dispute {{ dispute.conflict_id }}
+
+- **Streams:** {{ dispute.stream_ids | join(", ") }}
+- **Score Gap:** {{ "%.4f"|format(dispute.score_gap) }}
+- **Rationale:** {{ dispute.rationale }}
+
+The RFE does not assign a winner; human review is required.
+
+---
+{% else %}
+No unresolved disputes.
+{% endfor %}

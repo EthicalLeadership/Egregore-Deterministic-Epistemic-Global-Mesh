@@ -1,0 +1,85 @@
+{
+  "module_id": "egregore.infrastructure",
+  "version": "0.6.0",
+  "cell": "aegis_hive_intel",
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "infrastructure",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.application",
+        "version": "0.6.0",
+        "hash": "sha256:b57fe98527c8a97a51aa2cf2df67fa096ea1a1a89b095f36a6bb986ec35b0fa2"
+      },
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.interface",
+        "version": "0.6.0",
+        "hash": "sha256:9bad391b3be4b97a4e262371d449b75bd6362232896e28cf40072766721f96ea"
+      },
+      {
+        "module": "egregore.kernel",
+        "version": "0.6.0",
+        "hash": "sha256:1b9014ce620d60d1b3e0289a376be61bf174541e2c85a02db140fe18619d9032"
+      },
+      {
+        "module": "egregore.models",
+        "version": "0.6.0",
+        "hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 24: with self._store_path.open(\"a\", encoding=\"utf-8\") as f:",
+        "line 33: with self._store_path.open(\"r\", encoding=\"utf-8\") as f:",
+        "line 57: with pdfplumber.open(path) as pdf:",
+        "line 81: fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)",
+        "line 57: with open(CATALOG_FILE) as f:",
+        "line 69: with open(CATALOG_FILE, \"w\") as f:",
+        "line 102: with open(target_path, \"rb\") as f:",
+        "line 121: with contextlib.suppress(Exception), open(\"/proc/meminfo\") as f:",
+        "line 48: with open(index_path) as f:",
+        "line 17: with open(path, \"rb\") as f:",
+        "line 14: with open(path, \"rb\") as f:",
+        "line 138: with contextlib.suppress(Exception), open(\"/proc/meminfo\") as f:"
+      ],
+      "write": [
+        "line 63: KEK_FILE.write_bytes(key_bytes)",
+        "line 24: md_path.write_text(render_markdown(dossier), encoding=\"utf-8\")",
+        "line 25: json_path.write_text(render_json(dossier), encoding=\"utf-8\")",
+        "line 69: with open(CATALOG_FILE, \"w\") as f:"
+      ],
+      "execute": [
+        "line 50: result = subprocess.run("
+      ],
+      "network": [
+        "line 39: self._client: httpx.Client | None = None",
+        "line 41: def _ensure_client(self) -> httpx.Client:",
+        "line 48: self._client = httpx.Client(",
+        "line 47: self._client: httpx.Client | None = None",
+        "line 49: def _ensure_client(self) -> httpx.Client:",
+        "line 55: self._client = httpx.Client(",
+        "line 112: response = requests.post("
+      ]
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": true
+  }
+}

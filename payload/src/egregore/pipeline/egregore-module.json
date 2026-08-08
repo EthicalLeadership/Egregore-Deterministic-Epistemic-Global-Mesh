@@ -1,0 +1,37 @@
+{
+  "module_id": "egregore.pipeline",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "pipeline",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [
+        "line 53: report_path.write_text(",
+        "line 61: provenance_path.write_text(",
+        "line 158: (out / \"signing_key.pem\").write_text(private_pem)",
+        "line 159: (out / \"signing_key.pub\").write_text(public_pem)"
+      ],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

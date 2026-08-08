@@ -1,0 +1,66 @@
+# Machine-readable Egregore Federation Constitution.
+# This file is the active constitutional contract against which treaties,
+# entropy signals, and escalations are evaluated.
+version: "1.0.0"
+ratified_by: [Alpha, Beta, Omega]
+
+articles:
+  - id: I
+    title: Sovereign Node Rights
+    obligations:
+      - All nodes have the right to self-check entropy and escalate under lawful pressure.
+  - id: II
+    title: Federation Duties
+    obligations:
+      - Federations must honor treaties they have signed.
+      - Federations must share entropy risk signals when accorded.
+  - id: III
+    title: Override Handling
+    obligations:
+      - Nodes may enter override state only when quorum from meta-governors is reached.
+  - id: IV
+    title: Treaty Transparency
+    obligations:
+      - Treaties must be shareable in hashed or redacted form.
+  - id: V
+    title: Escalation Channels
+    obligations:
+      - Emergency escalation channels must be encrypted and logged.
+
+required_treaty_clauses:
+  - honor_federation_treaties
+  - share_entropy_risk_signals
+  - redacted_treaty_sharing
+  - encrypted_escalation_channels
+
+entropy:
+  signal_ttl_seconds: 300
+  aggregation:
+    method: median_with_outlier_rejection
+    outlier_z_score: 2.0
+    min_participating_nodes: 2
+  thresholds:
+    - name: elevated
+      comparator: gt
+      value: 0.65
+      escalation_level: WARNING
+    - name: critical
+      comparator: gt
+      value: 0.85
+      escalation_level: CRITICAL
+
+escalation:
+  levels:
+    - id: WARNING
+      description: Elevated entropy or minor treaty concern.
+      requires_freeze: false
+    - id: CRITICAL
+      description: Critical entropy or constitutional breach.
+      requires_freeze: true
+    - id: OVERRIDE
+      description: Meta-governor quorum override.
+      requires_freeze: true
+
+meta_governor_quorum:
+  required_fraction: 0.67
+  min_votes: 2

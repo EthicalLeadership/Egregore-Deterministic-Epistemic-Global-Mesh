@@ -1,0 +1,2026 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Egregore Projection Plane",
+    "version": "0.6.0-phase1"
+  },
+  "paths": {
+    "/health/ready": {
+      "get": {
+        "summary": "Ready",
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "summary": "Live",
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/deep": {
+      "get": {
+        "summary": "Deep Health",
+        "operationId": "deep_health_health_deep_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dossier/generate": {
+      "post": {
+        "summary": "Dossier Generate",
+        "operationId": "dossier_generate_api_v1_dossier_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DossierGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dossier Generate Api V1 Dossier Generate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/factory/modes": {
+      "get": {
+        "tags": [
+          "factory"
+        ],
+        "summary": "List Factory Modes",
+        "description": "List all available factory wheel positions.",
+        "operationId": "list_factory_modes_api_v1_factory_modes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Factory Modes Api V1 Factory Modes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/factory/health": {
+      "get": {
+        "tags": [
+          "factory"
+        ],
+        "summary": "Factory Health",
+        "description": "Overall factory health and configured models.",
+        "operationId": "factory_health_api_v1_factory_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Factory Health Api V1 Factory Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/factory": {
+      "post": {
+        "tags": [
+          "factory"
+        ],
+        "summary": "Run Default Factory",
+        "description": "Run the most sophisticated factory mode (coding_factory) by default.",
+        "operationId": "run_default_factory_api_v1_factory_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactoryRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/factory/{mode}": {
+      "post": {
+        "tags": [
+          "factory"
+        ],
+        "summary": "Run Factory",
+        "description": "Run the factory pipeline for the selected mode (wheel position).",
+        "operationId": "run_factory_api_v1_factory__mode__post",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mode"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactoryRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/factory/{mode}/health": {
+      "get": {
+        "tags": [
+          "factory"
+        ],
+        "summary": "Factory Mode Health",
+        "description": "Return whether all models required by a mode are present and loadable.",
+        "operationId": "factory_mode_health_api_v1_factory__mode__health_get",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Factory Mode Health Api V1 Factory  Mode  Health Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/cells": {
+      "get": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "List Cells",
+        "description": "Return all registered cells and their current load/status.",
+        "operationId": "list_cells_api_v1_ombudsman_cells_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Cells Api V1 Ombudsman Cells Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/cells/{cell_id}": {
+      "get": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Get Cell",
+        "description": "Return detailed state for a single cell.",
+        "operationId": "get_cell_api_v1_ombudsman_cells__cell_id__get",
+        "parameters": [
+          {
+            "name": "cell_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cell Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Cell Api V1 Ombudsman Cells  Cell Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/load": {
+      "get": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "List Load",
+        "description": "Return current load index for every registered cell.",
+        "operationId": "list_load_api_v1_ombudsman_load_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Load Api V1 Ombudsman Load Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/route/{taxonomy}": {
+      "get": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Route To Cell",
+        "description": "Find the best available cell for a given taxonomy path.",
+        "operationId": "route_to_cell_api_v1_ombudsman_route__taxonomy__get",
+        "parameters": [
+          {
+            "name": "taxonomy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Taxonomy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Route To Cell Api V1 Ombudsman Route  Taxonomy  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/cells/{cell_id}/load": {
+      "post": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Update Load",
+        "description": "Update a cell's load index (called by the cell or monitor).",
+        "operationId": "update_load_api_v1_ombudsman_cells__cell_id__load_post",
+        "parameters": [
+          {
+            "name": "cell_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cell Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CellLoadUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Load Api V1 Ombudsman Cells  Cell Id  Load Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/university/graph": {
+      "get": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "University Graph",
+        "description": "Return the University graph as nodes and edges for dashboard rendering.",
+        "operationId": "university_graph_api_v1_ombudsman_university_graph_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response University Graph Api V1 Ombudsman University Graph Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/dispatch": {
+      "post": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Dispatch",
+        "description": "Route a request to matching cells, execute them, and fuse the streams.",
+        "operationId": "dispatch_api_v1_ombudsman_dispatch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dispatch Api V1 Ombudsman Dispatch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/advisory/call": {
+      "post": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Advisory Call",
+        "description": "Let one cell invoke another cell and return the resulting RFE stream.",
+        "operationId": "advisory_call_api_v1_ombudsman_advisory_call_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryCallRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Advisory Call Api V1 Ombudsman Advisory Call Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ombudsman/dispatch_from_orchestrator": {
+      "post": {
+        "tags": [
+          "ombudsman"
+        ],
+        "summary": "Dispatch From Orchestrator",
+        "description": "Accept an orchestration-suite JobRequest and dispatch it as a WorkUnit.",
+        "operationId": "dispatch_from_orchestrator_api_v1_ombudsman_dispatch_from_orchestrator_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Job Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Dispatch From Orchestrator Api V1 Ombudsman Dispatch From Orchestrator Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rag/query": {
+      "post": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Query Rag",
+        "description": "Query the Egregore RAG knowledge base.",
+        "operationId": "query_rag_api_v1_rag_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RAGQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RAGResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rag/status": {
+      "get": {
+        "tags": [
+          "rag"
+        ],
+        "summary": "Rag Status",
+        "description": "Return basic RAG store status.",
+        "operationId": "rag_status_api_v1_rag_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Rag Status Api V1 Rag Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/batch": {
+      "post": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Trigger Batch",
+        "description": "Trigger an ANCHORUM forensic batch run asynchronously.",
+        "operationId": "trigger_batch_api_v1_anchorum_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Trigger Batch Api V1 Anchorum Batch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/batch/sync": {
+      "post": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Trigger Batch Sync",
+        "description": "Trigger an ANCHORUM forensic batch run synchronously (for small dirs).",
+        "operationId": "trigger_batch_sync_api_v1_anchorum_batch_sync_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Trigger Batch Sync Api V1 Anchorum Batch Sync Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/cases": {
+      "get": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "List Cases",
+        "description": "List all case IDs with generated reports or summaries.",
+        "operationId": "list_cases_api_v1_anchorum_cases_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response List Cases Api V1 Anchorum Cases Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/cases/{case_id}": {
+      "get": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Get Case",
+        "description": "Get the full investigation report for a case.",
+        "operationId": "get_case_api_v1_anchorum_cases__case_id__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Case Api V1 Anchorum Cases  Case Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/cases/{case_id}/anomalies": {
+      "get": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Get Anomalies",
+        "description": "Get only anomaly findings for a case.",
+        "operationId": "get_anomalies_api_v1_anchorum_cases__case_id__anomalies_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Anomalies Api V1 Anchorum Cases  Case Id  Anomalies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/cases/{case_id}/timeline": {
+      "get": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Get Timeline",
+        "description": "Get the master timeline for a case.",
+        "operationId": "get_timeline_api_v1_anchorum_cases__case_id__timeline_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Timeline Api V1 Anchorum Cases  Case Id  Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/cases/{case_id}/summary": {
+      "get": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Get Summary",
+        "description": "Get a compact case summary.",
+        "operationId": "get_summary_api_v1_anchorum_cases__case_id__summary_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Summary Api V1 Anchorum Cases  Case Id  Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anchorum/batch/fuse": {
+      "post": {
+        "tags": [
+          "ANCHORUM"
+        ],
+        "summary": "Trigger Batch And Fuse",
+        "description": "Run ANCHORUM and immediately fuse its stream through the RFE.",
+        "operationId": "trigger_batch_and_fuse_api_v1_anchorum_batch_fuse_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Trigger Batch And Fuse Api V1 Anchorum Batch Fuse Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingest": {
+      "post": {
+        "tags": [
+          "ANCHORUM Ingest"
+        ],
+        "summary": "Ingest Event",
+        "description": "Accept a Stage-4 IngestionEvent from the ANCHORUM connector.\n\nEvents are staged to the report directory and can be fused into a case\nreport by triggering ``POST /api/v1/anchorum/batch`` with the dossier root.\n\nA lightweight per-source rate limit is applied because this endpoint is\nintentionally public. Production deployments should add source validation\nor a connector token.",
+        "operationId": "ingest_event_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestionEvent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestReceipt"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/login": {
+      "get": {
+        "summary": "Login Page",
+        "description": "Self-hosted login page: enter API key to receive a session cookie.",
+        "operationId": "login_page_dashboard_login_get",
+        "parameters": [
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Login Submit",
+        "description": "Validate API key and set session cookie.",
+        "operationId": "login_submit_dashboard_login_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_submit_dashboard_login_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/logout": {
+      "get": {
+        "summary": "Logout",
+        "description": "Clear the API key cookie and return to the login page.",
+        "operationId": "logout_dashboard_logout_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "summary": "Dashboard Index",
+        "description": "Main dashboard page.",
+        "operationId": "dashboard_index_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/status": {
+      "get": {
+        "summary": "Status Card",
+        "description": "HTMX fragment: status card.",
+        "operationId": "status_card_dashboard_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/controls": {
+      "get": {
+        "summary": "Freeze Controls",
+        "description": "HTMX fragment: freeze/unfreeze buttons.",
+        "operationId": "freeze_controls_dashboard_controls_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/freeze": {
+      "post": {
+        "summary": "Freeze Action",
+        "description": "Freeze the system.",
+        "operationId": "freeze_action_dashboard_freeze_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_freeze_action_dashboard_freeze_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/unfreeze": {
+      "post": {
+        "summary": "Unfreeze Action",
+        "description": "Unfreeze the system.",
+        "operationId": "unfreeze_action_dashboard_unfreeze_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_unfreeze_action_dashboard_unfreeze_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/reset": {
+      "post": {
+        "summary": "Reset Action",
+        "description": "Reset the system to HEALTHY.",
+        "operationId": "reset_action_dashboard_reset_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_reset_action_dashboard_reset_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/audit": {
+      "get": {
+        "summary": "Audit Log",
+        "description": "HTMX fragment: audit log list.",
+        "operationId": "audit_log_dashboard_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/key-health": {
+      "get": {
+        "summary": "Key Health",
+        "description": "HTMX fragment: key health indicators.",
+        "operationId": "key_health_dashboard_key_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/ci-health": {
+      "get": {
+        "summary": "Ci Health",
+        "operationId": "ci_health_dashboard_ci_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/debug/state": {
+      "get": {
+        "summary": "Debug State",
+        "operationId": "debug_state_dashboard_debug_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdvisoryCallRequest": {
+        "properties": {
+          "caller_cell_id": {
+            "type": "string",
+            "title": "Caller Cell Id"
+          },
+          "target_cell_id": {
+            "type": "string",
+            "title": "Target Cell Id"
+          },
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Input"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "caller_cell_id",
+          "target_cell_id",
+          "input"
+        ],
+        "title": "AdvisoryCallRequest"
+      },
+      "BatchRequest": {
+        "properties": {
+          "input_path": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Input Path"
+          },
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Case Id"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator",
+            "default": "web_ui"
+          },
+          "fuse": {
+            "type": "boolean",
+            "title": "Fuse",
+            "description": "Run RFE fusion over the ANCHORUM stream.",
+            "default": false
+          },
+          "llm_model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Model Id",
+            "description": "Optional Egregore model ID for LLM-powered case narrative."
+          }
+        },
+        "type": "object",
+        "required": [
+          "input_path",
+          "case_id"
+        ],
+        "title": "BatchRequest"
+      },
+      "Body_freeze_action_dashboard_freeze_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator",
+            "default": "operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "Body_freeze_action_dashboard_freeze_post"
+      },
+      "Body_login_submit_dashboard_login_post": {
+        "properties": {
+          "api_key": {
+            "type": "string",
+            "title": "Api Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "api_key"
+        ],
+        "title": "Body_login_submit_dashboard_login_post"
+      },
+      "Body_reset_action_dashboard_reset_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator",
+            "default": "operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "Body_reset_action_dashboard_reset_post"
+      },
+      "Body_unfreeze_action_dashboard_unfreeze_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator",
+            "default": "operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "Body_unfreeze_action_dashboard_unfreeze_post"
+      },
+      "CellLoadUpdate": {
+        "properties": {
+          "cell_id": {
+            "type": "string",
+            "title": "Cell Id"
+          },
+          "load_index": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Load Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cell_id",
+          "load_index"
+        ],
+        "title": "CellLoadUpdate"
+      },
+      "DispatchRequest": {
+        "properties": {
+          "taxonomy": {
+            "type": "string",
+            "title": "Taxonomy",
+            "description": "Target taxonomy path."
+          },
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Input",
+            "description": "Primary natural-language request."
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "advisory_call": {
+            "type": "boolean",
+            "title": "Advisory Call",
+            "description": "Enable advisory calls to linked cells.",
+            "default": false
+          },
+          "fuse": {
+            "type": "boolean",
+            "title": "Fuse",
+            "description": "Run RFE fusion over emitted streams.",
+            "default": true
+          },
+          "constraints": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraints",
+            "description": "Optional RFE constraints."
+          }
+        },
+        "type": "object",
+        "required": [
+          "taxonomy",
+          "input"
+        ],
+        "title": "DispatchRequest"
+      },
+      "DossierGenerateRequest": {
+        "properties": {
+          "actor": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Actor"
+          },
+          "causality_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Causality Id",
+            "default": "default"
+          },
+          "engine_version": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Engine Version",
+            "default": "v1"
+          },
+          "policy_version": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Policy Version",
+            "default": "v1"
+          },
+          "input_fingerprint": {
+            "type": "string",
+            "maxLength": 512,
+            "title": "Input Fingerprint",
+            "default": ""
+          },
+          "timestamp_ns": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp Ns"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DossierGenerateRequest"
+      },
+      "FactoryRunRequest": {
+        "properties": {
+          "input": {
+            "type": "string",
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Input"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 8192.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 2.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "stream": {
+            "type": "boolean",
+            "title": "Stream",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "input"
+        ],
+        "title": "FactoryRunRequest"
+      },
+      "FactoryRunResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "pipeline_version": {
+            "type": "integer",
+            "title": "Pipeline Version"
+          },
+          "final_output": {
+            "type": "string",
+            "title": "Final Output"
+          },
+          "stations": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StationOutput"
+            },
+            "type": "object",
+            "title": "Stations"
+          },
+          "provenance": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Provenance"
+          },
+          "gates": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "pipeline_version",
+          "final_output",
+          "stations",
+          "provenance"
+        ],
+        "title": "FactoryRunResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "plane": {
+            "type": "string",
+            "title": "Plane"
+          },
+          "timestamp": {
+            "type": "number",
+            "title": "Timestamp"
+          },
+          "checks": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "plane",
+          "timestamp",
+          "checks"
+        ],
+        "title": "HealthResponse"
+      },
+      "IngestReceipt": {
+        "properties": {
+          "receipt_id": {
+            "type": "string",
+            "title": "Receipt Id"
+          },
+          "epistemic_state": {
+            "type": "string",
+            "title": "Epistemic State"
+          },
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          },
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "receipt_id",
+          "epistemic_state",
+          "accepted",
+          "event_id"
+        ],
+        "title": "IngestReceipt"
+      },
+      "IngestionEvent": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "anchorum"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose",
+            "default": "legal_case_relevant"
+          },
+          "source_legality": {
+            "type": "string",
+            "title": "Source Legality",
+            "default": "user_provided"
+          },
+          "scope_status": {
+            "type": "string",
+            "title": "Scope Status",
+            "default": "case_actor"
+          },
+          "entity_kind": {
+            "type": "string",
+            "title": "Entity Kind",
+            "default": "email"
+          },
+          "entity_value": {
+            "type": "string",
+            "title": "Entity Value",
+            "default": ""
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "IngestionEvent",
+        "description": "Loose model for the ANCHORUM Stage-4 IngestionEvent.\n\nExtra fields are allowed so the connector payload (which evolves) never\nbreaks the receipt endpoint."
+      },
+      "RAGQuery": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Query"
+          },
+          "top_k": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Top K",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "RAGQuery"
+      },
+      "RAGResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "results"
+        ],
+        "title": "RAGResponse"
+      },
+      "StationOutput": {
+        "properties": {
+          "output": {
+            "type": "string",
+            "title": "Output"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "tokens": {
+            "type": "integer",
+            "title": "Tokens",
+            "default": 0
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms",
+            "default": 0.0
+          },
+          "compressed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compressed"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "parsed": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parsed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "output",
+          "model"
+        ],
+        "title": "StationOutput"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

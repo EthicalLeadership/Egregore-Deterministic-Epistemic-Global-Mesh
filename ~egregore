@@ -1,0 +1,23 @@
+# Create payload and copy only what's needed at runtime
+mkdir -p payload
+
+# Core Python source and configuration
+cp -r src anchorum cells config schemas data certs secrets payload/ 2>/dev/null || true
+
+# Frontend (if it's a separate Node app)
+cp -r frontend payload/ 2>/dev/null || true
+
+# Launcher scripts and executables
+cp -r egregore-gui.py run_dashboard.py anchorum_desktop.py factory_tab.py egregorectl start_server.sh start_dashboard.sh payload/ 2>/dev/null || true
+
+# Icons
+cp egregore-icon.svg blackstar-icon.png payload/ 2>/dev/null || true
+
+# Requirements files
+cp requirements.txt requirements-selx.txt pyproject.toml package.json package-lock.json payload/ 2>/dev/null || true
+
+# Any other essential directories (skip __pycache__, tmp, etc.)
+# For example, if 'rag', 'report', 'tools' are needed, include them
+# cp -r rag report tools payload/   # uncomment if required
+
+# Do NOT copy atgca, __pycache__, sandbox_outputs, tmp, torchinductor_kark, etc.

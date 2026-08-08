@@ -1,0 +1,18 @@
+# Perspectives
+
+This section preserves verbatim content from the top-ranked streams, ordered by
+composite score and annotated with source tier badges. No LLM summarization is
+applied.
+
+{% for p in perspectives %}
+## {{ p.stream_id }} — Tier {{ p.source_tier }} Badge
+
+- **Type:** {{ p.stream_type }}
+- **Composite Score:** {{ "%.4f"|format(p.composite_score) }}
+- **Authority Weight:** {{ "%.3f"|format(p.authority_weight) }}
+- **Flags:** {{ p.flags | join(", ") if p.flags else "none" }}
+
+{{ p.content_text }}
+
+---
+{% endfor %}

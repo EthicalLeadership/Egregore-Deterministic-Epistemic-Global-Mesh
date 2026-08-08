@@ -1,0 +1,26 @@
+{
+  "module_id": "egregore.bus",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "bus",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

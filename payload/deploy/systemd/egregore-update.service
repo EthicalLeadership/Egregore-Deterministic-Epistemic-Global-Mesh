@@ -1,0 +1,18 @@
+[Unit]
+Description=Egregore Pioneer 1 Auto-Update
+After=network.target
+
+[Service]
+Type=oneshot
+User=kark
+WorkingDirectory=/opt/egregore
+Environment=PYTHONPATH=/opt/egregore/src
+Environment=HOME=/opt/egregore
+ExecStart=/bin/bash -c '\
+  cd /opt/egregore && \
+  git fetch origin && \
+  git status && \
+  PYTHONPATH=src python -m pytest tests/ -q --tb=line || \
+  echo "UPDATE_BLOCKED: tests failed" >> /opt/egregore/.update_log'
+StandardOutput=journal
+StandardError=journal

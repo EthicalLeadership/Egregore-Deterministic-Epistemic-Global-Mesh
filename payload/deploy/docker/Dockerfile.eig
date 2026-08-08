@@ -1,0 +1,19 @@
+# Dockerfile.eig
+FROM envoyproxy/envoy:v1.28 as envoy
+
+# Build controller
+FROM golang:1.21-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY cmd/eig-controller/ ./cmd/eig-controller/
+COPY pkg/ ./pkg/
+RUN CGO_ENABLED=0 GOOS=linux go build -o /eig-controller ./cmd/eig-controller
+
+# Final image
+FROM alpine:3.18
+RUN apk --no-cache add ca-certificates
+COPY --from=builder /eig-controller /usr/local/bin/
+COPY --from=envoy /usr/local/bin/envoy /usr/local/bin/
+USER 10001
+ENTRYPOINT ["/usr/local/bin/eig-controller"]

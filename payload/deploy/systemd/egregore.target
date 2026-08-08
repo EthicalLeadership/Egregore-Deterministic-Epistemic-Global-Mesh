@@ -1,0 +1,7 @@
+[Unit]
+Description=Egregore Sovereign Execution Runtime
+Documentation=https://docs.egregore.edge
+After=network.target
+
+[Install]
+WantedBy=multi-user.target

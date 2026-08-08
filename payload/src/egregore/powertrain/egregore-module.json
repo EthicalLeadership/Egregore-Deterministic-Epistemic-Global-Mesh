@@ -1,0 +1,47 @@
+{
+  "module_id": "egregore.powertrain",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "plane2",
+    "m1_layer": "powertrain",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.application",
+        "version": "0.6.0",
+        "hash": "sha256:b57fe98527c8a97a51aa2cf2df67fa096ea1a1a89b095f36a6bb986ec35b0fa2"
+      },
+      {
+        "module": "egregore.domain",
+        "version": "0.6.0",
+        "hash": "sha256:0e4f6e1829aab733097e21030d7ea9e6f7c12a2d526c6ce471eea147b69a79c9"
+      },
+      {
+        "module": "egregore.infrastructure",
+        "version": "0.6.0",
+        "hash": "sha256:12e5681e3070696502043f7dcc9bb774b09c98b912197f2d0c12ed7e98613296"
+      },
+      {
+        "module": "egregore.kernel",
+        "version": "0.6.0",
+        "hash": "sha256:1b9014ce620d60d1b3e0289a376be61bf174541e2c85a02db140fe18619d9032"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [],
+      "write": [],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

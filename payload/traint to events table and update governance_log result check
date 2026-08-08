@@ -1,0 +1,20 @@
+[33mdf82819[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m fix: Use os.stat for keystore permission check
+[33md2c1518[m feat: Add permission verification for keystore directory
+[33mfe53f4c[m refactor: update keystore directory creation method
+[33m0cd1691[m feat: Add `_ensure_keystore` function to create keystore directory if it doesn't exist
+[33m3341627[m feat: Add KEKCorrupt exception for handling corrupted KEK files
+[33mad94688[m feat: Add KEKNotFound exception for better error handling
+[33m4ea2818[m feat: Add ClusterKEKManager for managing Key Encryption Keys in the infrastructure layer
+[33m15b1a23[m feat: Add replay_traces table and indexes to schema.sql
+[33m8199869[m fix: add unique constraint to events table and update governance_log result check
+[33m543a59e[m reorg: canonical tree established, legacy crown archived
+[33mff80a60[m[33m ([m[1;33mtag: [m[1;33mpre-reorg-20260613-035529[m[33m)[m chore: archive legacy crown to HDD vault (20260613_034711)
+[33mc40743d[m chore: include ignored debris in archive inventory
+[33mf5e9c3c[m chore: archive legacy metrics/myth modules; remove dependent tests
+[33m533734b[m chore: archive legacy crown to HDD vault (20260613_034222)
+[33m320209a[m fix: Add 'UNKNOWN' to result check in governance_log table
+[33m239421d[m chore: use NUL-terminated git status for robust path parsing
+[33mc757fb5[m chore: handle submodules in archive script
+[33mb5a6ad0[m chore: remove generated inventory files from tracking
+[33m1dc4e25[m chore: dynamic archive inventory and hardened archive script
+[33m6741203[m chore: remove tracked __pycache__, add missing CommitResult/IProvenanceSigner to semantics_ports

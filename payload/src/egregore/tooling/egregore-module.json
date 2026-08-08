@@ -1,0 +1,44 @@
+{
+  "module_id": "egregore.tooling",
+  "version": "0.6.0",
+  "cell": null,
+  "cbi0": {
+    "m1_plane": "shared",
+    "m1_layer": "tooling",
+    "m1_interface_concrete": false,
+    "m2_dependencies": [
+      {
+        "module": "egregore.application",
+        "version": "0.6.0",
+        "hash": "sha256:b57fe98527c8a97a51aa2cf2df67fa096ea1a1a89b095f36a6bb986ec35b0fa2"
+      },
+      {
+        "module": "egregore.shared",
+        "version": "0.6.0",
+        "hash": "sha256:2cd1d0218aa2ebfdb5f80ac453676c6b49d317646994d34521191e84ea44fb81"
+      }
+    ],
+    "m2_capabilities": {
+      "read": [
+        "line 50: with path.open(encoding=\"utf-8\") as f:"
+      ],
+      "write": [
+        "line 105: output_path.write_text(manifest.model_dump_json(indent=2), encoding=\"utf-8\")",
+        "line 119: report_path.write_text(",
+        "line 61: manifest_path.write_text(manifest.model_dump_json(indent=2), encoding=\"utf-8\")",
+        "line 62: report_path.write_text(report.model_dump_json(indent=2), encoding=\"utf-8\")"
+      ],
+      "execute": [],
+      "network": []
+    },
+    "m2_ports": {
+      "implements": [],
+      "requires": []
+    },
+    "m3": {
+      "terminal": false,
+      "decom_manifest": null
+    },
+    "m5_cell_aware": false
+  }
+}

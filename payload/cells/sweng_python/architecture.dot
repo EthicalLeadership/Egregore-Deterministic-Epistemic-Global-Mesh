@@ -1,0 +1,26 @@
+digraph sweng_python {
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#e8f4f8", fontname="Helvetica"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  Input [label="User Request\n(JSON)", fillcolor="#fff2cc"];
+  Spec [label="1. spec_synthesis\n(Qwen 1.5B)", fillcolor="#d5e8d4"];
+  Scaffold [label="2. scaffolding\n(Qwen 1.5B)", fillcolor="#d5e8d4"];
+  CNC [label="3. cnc\n(Qwen 7B)", fillcolor="#dae8fc"];
+  Static [label="4. static_analysis\n(Qwen 1.5B)", fillcolor="#f8cecc"];
+  Dynamic [label="5. dynamic_test\n(Qwen 1.5B)", fillcolor="#f8cecc"];
+  Moral [label="6. moral_compliance\n(Qwen 1.5B)", fillcolor="#f8cecc"];
+  Final [label="7. final_qc\n(Qwen 1.5B)", fillcolor="#e1d5e7"];
+  Output [label="module + test + README\n+ verification_report", fillcolor="#fff2cc"];
+
+  Input -> Spec;
+  Spec -> Scaffold;
+  Scaffold -> CNC;
+  CNC -> Static;
+  CNC -> Dynamic;
+  CNC -> Moral;
+  Static -> Final;
+  Dynamic -> Final;
+  Moral -> Final;
+  Final -> Output;
+}

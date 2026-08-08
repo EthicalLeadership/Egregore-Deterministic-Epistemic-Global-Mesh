@@ -1,0 +1,16 @@
+[Unit]
+Description=Egregore host CPU partition policy
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+Environment=GAME_CPUSET=8-15
+Environment=CONTROL_CPUSET=0-7
+Environment=GAME_NICE=15
+WorkingDirectory=/opt/egregore/Desktop/Egregore Unziped/egregore_deployment_pipeline/deploy
+ExecStart=/usr/bin/bash -c 'exec "/opt/egregore/Desktop/Egregore Unziped/egregore_deployment_pipeline/deploy/scripts/host_partition.sh"'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

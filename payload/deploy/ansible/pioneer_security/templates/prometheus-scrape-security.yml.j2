@@ -1,0 +1,23 @@
+- job_name: pioneer-node-exporter-secure
+  scheme: https
+  tls_config:
+    ca_file: {{ pioneer_ssl_dir }}/ca.crt
+    cert_file: {{ pioneer_ssl_dir }}/pioneer-2.crt
+    key_file: {{ pioneer_ssl_dir }}/pioneer-2.key
+    insecure_skip_verify: false
+  static_configs:
+    - targets:
+        - 192.168.2.11:9100
+      labels:
+        instance: pioneer-1
+        lane: security
+    - targets:
+        - 192.168.2.10:9100
+      labels:
+        instance: pioneer-2
+        lane: security
+    - targets:
+        - 192.168.2.133:9100
+      labels:
+        instance: pioneer-3
+        lane: security

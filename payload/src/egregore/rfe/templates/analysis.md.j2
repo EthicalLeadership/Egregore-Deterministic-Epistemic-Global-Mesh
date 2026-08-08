@@ -1,0 +1,33 @@
+# Analysis
+
+## Stream-Level Assessment
+
+{% for s in scored_streams %}
+### {{ s.stream_id }} (Tier {{ s.source_tier }})
+
+- **Authority Weight:** {{ "%.3f"|format(s.authority_weight) }}
+- **Confidence:** {{ "%.3f"|format(s.confidence) }}
+- **Severity Impact:** {{ "%.3f"|format(s.severity_impact) }}
+- **Freshness:** {{ "%.3f"|format(s.freshness) }}
+- **Corroboration Count:** {{ s.corroboration_count }}
+- **Composite Score:** {{ "%.4f"|format(s.composite_score) }}
+- **Decay Method:** {{ s.decay_method }}
+{% if s.half_life_hours is not none %}
+- **Half-Life:** {{ s.half_life_hours }} hours
+{% endif %}
+{% if s.flags %}
+- **Flags:** {{ s.flags | join(", ") }}
+{% endif %}
+
+{% endfor %}
+
+## Trajectory Notes
+
+{% if trajectory_notes %}
+{% for note in trajectory_notes %}
+- **{{ note.stream_id }}:** {{ note.label }} ({{ note.interval }})  
+  *Disclaimer: {{ note.disclaimer }}*
+{% endfor %}
+{% else %}
+No trend information available.
+{% endif %}

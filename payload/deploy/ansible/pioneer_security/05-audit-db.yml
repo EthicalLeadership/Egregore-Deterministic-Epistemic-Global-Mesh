@@ -1,0 +1,126 @@
+---
+- name: Phase 05 | Immutable Audit Logging on Pioneer-2
+  hosts: pioneer-2
+  become: true
+
+  tasks:
+    - name: Install PostgreSQL and extensions
+      ansible.builtin.apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+        state: present
+        update_cache: true
+
+    - name: Ensure PostgreSQL service is enabled
+      ansible.builtin.systemd:
+        name: postgresql
+        enabled: true
+        state: started
+
+    - name: Create pioneer_audit database
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: pioneer_audit
+        state: present
+
+    - name: Create audit_writer role
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        name: audit_writer
+        password: "{{ vault_audit_writer_password }}"
+        db: pioneer_audit
+        role_attr_flags: LOGIN
+        state: present
+
+    - name: Create audit schema and hash-chain trigger
+      become_user: postgres
+      community.postgresql.postgresql_query:
+        db: pioneer_audit
+        query: |
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+          CREATE TABLE IF NOT EXISTS audit_log (
+              id BIGSERIAL PRIMARY KEY,
+              occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              node_id TEXT NOT NULL,
+              actor TEXT NOT NULL,
+              action TEXT NOT NULL,
+              resource TEXT NOT NULL,
+              previous_hash BYTEA NOT NULL,
+              current_hash BYTEA NOT NULL,
+              payload JSONB
+          );
+
+          CREATE OR REPLACE FUNCTION hash_audit_entry() RETURNS TRIGGER AS $$
+          BEGIN
+              NEW.previous_hash = COALESCE(
+                  (SELECT current_hash FROM audit_log ORDER BY id DESC LIMIT 1),
+                  decode(repeat('0', 64), 'hex')
+              );
+              NEW.current_hash = digest(
+                  NEW.previous_hash ||
+                  NEW.occurred_at::TEXT ||
+                  NEW.node_id ||
+                  NEW.action ||
+                  NEW.resource,
+                  'sha256'
+              );
+              RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+
+          DO $$
+          BEGIN
+              IF NOT EXISTS (
+                  SELECT 1
+                  FROM pg_trigger
+                  WHERE tgname = 'trg_audit_hash'
+              ) THEN
+                  CREATE TRIGGER trg_audit_hash
+                      BEFORE INSERT ON audit_log
+                      FOR EACH ROW EXECUTE FUNCTION hash_audit_entry();
+              END IF;
+          END;
+          $$;
+
+    - name: Grant INSERT/SELECT on audit_log to audit_writer
+      become_user: postgres
+      community.postgresql.postgresql_privs:
+        db: pioneer_audit
+        type: table
+        objs: audit_log
+        roles: audit_writer
+        privs: INSERT,SELECT
+        state: present
+
+    - name: Locate pg_hba.conf files
+      ansible.builtin.find:
+        paths: /etc/postgresql
+        patterns: pg_hba.conf
+        recurse: true
+      register: pg_hba_files
+
+    - name: Require TLS for audit_writer over LAN
+      ansible.builtin.lineinfile:
+        path: "{{ item.path }}"
+        regexp: '^hostssl\s+pioneer_audit\s+audit_writer\s+'
+        line: "hostssl pioneer_audit audit_writer {{ pioneer_lan_cidr }} scram-sha-256"
+        insertafter: EOF
+      loop: "{{ pg_hba_files.files }}"
+      notify: restart postgresql
+
+    - name: Allow PostgreSQL from LAN
+      community.general.ufw:
+        rule: allow
+        src: "{{ pioneer_lan_cidr }}"
+        port: "{{ pioneer_postgres_port }}"
+        proto: tcp
+        comment: "PostgreSQL audit access from LAN"
+
+  handlers:
+    - name: restart postgresql
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted

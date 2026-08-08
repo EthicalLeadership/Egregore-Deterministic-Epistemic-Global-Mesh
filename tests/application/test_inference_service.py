@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from egregore.application.inference_service import InferenceService
+from egregore.application.inference_service import (
+    InferenceService,
+    build_inference_service_from_env,
+)
 from egregore.domain.inference_models import (
     ChatMessage,
     ChatRequest,
@@ -44,6 +47,11 @@ class StubLlmClient:
 
     def model_exists(self, name: str) -> bool:
         return name == f"{self.name}-model"
+
+
+class BrokenModelExistsClient(StubLlmClient):
+    def model_exists(self, name: str) -> bool:
+        raise ConnectionError("unreachable")
 
 
 def test_routes_claude_models_to_anthropic_backend() -> None:
@@ -143,13 +151,8 @@ def test_routes_deepseek_models_to_deepseek_backend() -> None:
 
 
 def test_model_exists_is_robust_to_unreachable_backends() -> None:
-    local_client = StubLlmClient("local")
+    local_client = BrokenModelExistsClient("local")
     deepseek = StubLlmClient("deepseek")
-
-    def raises(_name: str) -> bool:
-        raise ConnectionError("unreachable")
-
-    local_client.model_exists = raises
     service = InferenceService(
         {"local": local_client, "deepseek": deepseek}, default_backend="local"
     )
@@ -186,3 +189,45 @@ def test_default_backend_is_configurable() -> None:
 
     assert response.message.content == "local:some-model"
     assert service.health()["default_backend"] == "local"
+
+
+def test_build_inference_service_rejects_ollama_default_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EGREGORE_DEFAULT_BACKEND", "ollama")
+
+    with pytest.raises(RuntimeError, match="forbidden"):
+        build_inference_service_from_env()
+
+    monkeypatch.delenv("EGREGORE_DEFAULT_BACKEND", raising=False)
+
+
+def test_execute_rejects_runtime_backend_mutation_to_ollama() -> None:
+    local = StubLlmClient("local")
+    service = InferenceService({"local": local}, default_backend="local")
+
+    with pytest.raises(RuntimeError, match="forbidden"):
+        service.default_backend = "ollama"
+
+
+def test_rejects_setting_unregistered_default_backend() -> None:
+    local = StubLlmClient("local")
+    service = InferenceService({"local": local}, default_backend="local")
+
+    with pytest.raises(RuntimeError, match="not registered"):
+        service.set_default_backend("anthropic")
+
+
+def test_rejects_unregistering_active_default_backend() -> None:
+    local = StubLlmClient("local")
+    service = InferenceService({"local": local}, default_backend="local")
+
+    with pytest.raises(RuntimeError, match="Cannot unregister active default backend"):
+        service.unregister_backend("local")
+
+    request = ChatRequest(
+        model="some-model",
+        messages=[ChatMessage(role="user", content="Hi")],
+    )
+    response = service.execute(request)
+    assert response.message.content == "local:some-model"

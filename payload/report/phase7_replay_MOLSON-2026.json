@@ -1,0 +1,81 @@
+{
+  "case": "MOLSON-2026",
+  "mode": "case_report",
+  "deterministic": true,
+  "output_identical": true,
+  "trace_diffs": [],
+  "qc_states": [
+    "SHIP",
+    "SHIP"
+  ],
+  "output_a_head": "```json\n{\n  \"summary\": \"The evidence suggests that the documents and files have been scrubbed of internal timestamps.\",\n  \"key_findings\": [\n    \"No internal timestamps were found in the documents and files.\"\n  ],\n  \"severity_assessment\": \"High severity as no internal timestamps were found in the documents and files.\",\n  \"recommended_actions\": [\n    \"Immediate action is required to scrub the docume",
+  "output_b_head": "```json\n{\n  \"summary\": \"The evidence suggests that the documents and files have been scrubbed of internal timestamps.\",\n  \"key_findings\": [\n    \"No internal timestamps were found in the documents and files.\"\n  ],\n  \"severity_assessment\": \"High severity as no internal timestamps were found in the documents and files.\",\n  \"recommended_actions\": [\n    \"Immediate action is required to scrub the docume",
+  "stations_a": [
+    {
+      "station": "intake",
+      "elapsed_ms": 98.16,
+      "tokens": 448,
+      "backend": "gguf"
+    },
+    {
+      "station": "parts_mfg",
+      "elapsed_ms": 2317.23,
+      "tokens": 785,
+      "backend": "gguf"
+    },
+    {
+      "station": "compression",
+      "elapsed_ms": 645.67,
+      "tokens": 538,
+      "backend": null
+    },
+    {
+      "station": "cnc",
+      "elapsed_ms": 42982.53,
+      "tokens": 2270,
+      "backend": "gguf"
+    },
+    {
+      "station": "qc",
+      "elapsed_ms": 349.51,
+      "tokens": 1648,
+      "backend": "gguf"
+    }
+  ],
+  "stations_b": [
+    {
+      "station": "intake",
+      "elapsed_ms": 83.34,
+      "tokens": 448,
+      "backend": "gguf"
+    },
+    {
+      "station": "parts_mfg",
+      "elapsed_ms": 2382.07,
+      "tokens": 785,
+      "backend": "gguf"
+    },
+    {
+      "station": "compression",
+      "elapsed_ms": 678.78,
+      "tokens": 538,
+      "backend": null
+    },
+    {
+      "station": "cnc",
+      "elapsed_ms": 43127.99,
+      "tokens": 2270,
+      "backend": "gguf"
+    },
+    {
+      "station": "qc",
+      "elapsed_ms": 399.81,
+      "tokens": 1648,
+      "backend": "gguf"
+    }
+  ],
+  "total_tokens": [
+    5689,
+    5689
+  ]
+}
