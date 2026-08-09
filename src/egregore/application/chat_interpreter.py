@@ -22,6 +22,7 @@ from egregore.domain.semantics_models import CommandAck
 from egregore.governance.permissions import Action, PermissionService
 from egregore.interface.rag_api import RAGQuery, query_rag
 from egregore.models.user import UserIdentity
+from egregore.paths import repo_root
 from egregore.shared.canonical import canonical_dumps, canonical_loads, sha256_hex
 
 _CHAT_HISTORY_KEY = "chat_history"
@@ -207,7 +208,7 @@ def _default_hold_api(**kwargs: Any) -> str:
 
 def _repo_root() -> Path:
     """Return the Egregore repo root."""
-    return Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore"))
+    return repo_root()
 
 
 def _resolve_zarc_path(path_str: str) -> Path:

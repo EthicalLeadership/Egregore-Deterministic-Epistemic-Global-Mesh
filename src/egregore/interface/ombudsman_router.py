@@ -9,12 +9,10 @@ Reproducible Fusion Engine.
 from __future__ import annotations
 
 import logging
-import os
 import sqlite3
 import time
 import uuid
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -37,11 +35,10 @@ from egregore.rfe.integration.mapper import (
     job_request_to_work_unit,
     work_unit_to_job_response,
 )
+from egregore.paths import repo_root
 from egregore.shared.canonical import canonical_dumps
 
-DB_PATH = (
-    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
-)
+DB_PATH = repo_root() / "rag/cell_protocol.db"
 
 logger = logging.getLogger("egregore.ombudsman")
 

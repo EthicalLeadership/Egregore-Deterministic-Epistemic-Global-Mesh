@@ -1,11 +1,14 @@
 [Unit]
 Description=Egregore ANCHORUM Plain-HTTP Site (user)
 After=network.target
+# ~/egregore physically lives on the blackstar HDD volume; do not start
+# before that mount is up.
+RequiresMountsFor=/mnt/blackstar/vol-hdd-a
 
 [Service]
 Type=simple
-WorkingDirectory=%h/blackstar
-ExecStart=%h/blackstar/scripts/start_anchorum_http.sh
+WorkingDirectory=%h/egregore
+ExecStart=%h/egregore/scripts/start_anchorum_http.sh
 Restart=always
 RestartSec=5
 

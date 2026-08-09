@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
+from egregore.paths import repo_root
+
 router = APIRouter(prefix="/api/v1/rag", tags=["rag"])
 
-CHROMA_PATH = (
-    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/chroma_db"
-)
+CHROMA_PATH = repo_root() / "rag/chroma_db"
 _EMBEDDER: SentenceTransformer | None = None
 
 

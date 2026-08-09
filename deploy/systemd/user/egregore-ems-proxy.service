@@ -1,6 +1,7 @@
 [Unit]
 Description=Egregore EMS proxy (port 8001)
 After=network.target
+RequiresMountsFor=/mnt/blackstar/vol-hdd-a
 
 [Service]
 Type=simple

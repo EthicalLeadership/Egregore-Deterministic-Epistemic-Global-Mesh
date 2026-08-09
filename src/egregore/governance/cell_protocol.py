@@ -8,7 +8,6 @@ and passes validation.
 
 from __future__ import annotations
 
-import os
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -19,11 +18,10 @@ from typing import Any
 # PyYAML has no PEP 561 stubs; ignore for compatibility.
 import yaml  # type: ignore[import-untyped]
 
+from egregore.paths import repo_root
 from egregore.shared.canonical import canonical_dumps, canonical_loads
 
-DB_PATH = (
-    Path(os.environ.get("EGREGORE_REPO_ROOT", "/opt/egregore")) / "rag/cell_protocol.db"
-)
+DB_PATH = repo_root() / "rag/cell_protocol.db"
 STAGES = ["plan", "draw", "layout", "erect", "build", "finish", "inspect", "deliver"]
 
 

@@ -2,6 +2,7 @@
 [Unit]
 Description=Egregore federation handshake watcher (Pioneer 2)
 After=network.target egregore.service
+RequiresMountsFor=/mnt/blackstar/vol-hdd-a
 
 [Service]
 Type=simple

@@ -2,6 +2,7 @@
 [Unit]
 Description=Egregore Control Center API (port 3001)
 After=network.target
+RequiresMountsFor=/mnt/blackstar/vol-hdd-a
 
 [Service]
 Type=simple
