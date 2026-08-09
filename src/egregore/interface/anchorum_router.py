@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Any, cast
@@ -312,6 +314,129 @@ def _now_iso() -> str:
 
 
 # ---------------------------------------------------------------------------
+# In-memory job registry
+#
+# Tracks async and sync ANCHORUM batch runs so the desktop client can list,
+# inspect, and delete/cancel jobs. Single-process, thread-safe, non-durable:
+# restarting the server clears the list. Production deployments that need
+# durability should back this with the job store used by the full bootstrap.
+# ---------------------------------------------------------------------------
+class _JobStore:
+    """Thread-safe in-memory store of ANCHORUM jobs."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._jobs: dict[str, dict[str, Any]] = {}
+
+    def create(
+        self,
+        *,
+        case_id: str,
+        operator: str,
+        source: str = "api",
+        status: str = "queued",
+    ) -> dict[str, Any]:
+        job_id = str(uuid.uuid4())
+        job: dict[str, Any] = {
+            "job_id": job_id,
+            "case_id": case_id,
+            "operator": operator,
+            "source": source,
+            "status": status,
+            "progress": "0",
+            "created_at": _now_iso(),
+            "updated_at": _now_iso(),
+            "message": "queued",
+        }
+        with self._lock:
+            self._jobs[job_id] = job
+        return dict(job)
+
+    def get(self, job_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            return dict(job) if job is not None else None
+
+    def list(self) -> list[dict[str, Any]]:
+        with self._lock:
+            jobs = list(self._jobs.values())
+        return sorted(jobs, key=lambda j: j.get("created_at") or "", reverse=True)
+
+    def update(self, job_id: str, **changes: Any) -> dict[str, Any] | None:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            job.update(changes)
+            job["updated_at"] = _now_iso()
+            return dict(job)
+
+    def delete(self, job_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            return self._jobs.pop(job_id, None)
+
+
+_jobs = _JobStore()
+
+_JOB_TERMINAL_STATUSES = {"completed", "failed", "cancelled", "canceled"}
+
+
+def _run_anchorum_job(job_id: str, request: BatchRequest) -> None:
+    """Run an ANCHORUM batch inside a tracked job and record the outcome."""
+    _jobs.update(job_id, status="running", progress="10", message="running")
+    try:
+        result = _run_anchorum_batch(
+            request.input_path,
+            request.case_id,
+            request.operator,
+            request.llm_model_id,
+        )
+        _jobs.update(
+            job_id,
+            status="completed",
+            progress="100",
+            message="completed",
+            result=result.get("result_summary", {}),
+            report_path=result.get("report_path"),
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Job %s failed", job_id)
+        _jobs.update(
+            job_id,
+            status="failed",
+            progress="100",
+            message=f"failed: {exc}",
+            error=str(exc),
+        )
+
+
+def _new_job(request: BatchRequest, source: str = "api") -> dict[str, Any]:
+    """Create a queued job record; returns the job dict (includes job_id)."""
+    return _jobs.create(
+        case_id=request.case_id,
+        operator=request.operator,
+        source=source,
+        status="queued",
+    )
+
+
+def _job_response(job_id: str) -> dict[str, Any]:
+    """Build the API response shape for a submitted job."""
+    job = _jobs.get(job_id) or {}
+    base = {
+        "job_id": job.get("job_id", job_id),
+        "case_id": job.get("case_id", ""),
+        "status": job.get("status", "queued"),
+        "created_at": job.get("created_at"),
+        "output_path": str(_report_path(job.get("case_id", ""))),
+    }
+    for key in ("progress", "message", "result", "error", "report_path"):
+        if job.get(key) is not None:
+            base[key] = job[key]
+    return base
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @router.post("/batch")
@@ -326,31 +451,67 @@ def trigger_batch(
             detail=f"Case {request.case_id} already exists. Choose a new case_id or delete the existing report.",
         )
 
-    background_tasks.add_task(
-        _run_anchorum_batch,
-        request.input_path,
-        request.case_id,
-        request.operator,
-        request.llm_model_id,
-    )
+    job = _new_job(request, source="batch")
+    job_id = job["job_id"]
+    background_tasks.add_task(_run_anchorum_job, job_id, request)
 
-    return {
-        "status": "queued",
-        "case_id": request.case_id,
-        "output_path": str(report_path),
-        "message": "Batch run started in background. Poll /cases/{case_id} for results.",
-    }
+    response = _job_response(job_id)
+    response["status"] = "queued"
+    response[
+        "message"
+    ] = f"Batch run started in background. Poll /jobs/{job_id} or /cases/{request.case_id} for results."
+    return response
 
 
 @router.post("/batch/sync")
 def trigger_batch_sync(request: BatchRequest) -> dict[str, Any]:
     """Trigger an ANCHORUM forensic batch run synchronously (for small dirs)."""
-    return _run_anchorum_batch(
-        request.input_path,
-        request.case_id,
-        request.operator,
-        request.llm_model_id,
-    )
+    job = _new_job(request, source="sync")
+    job_id = job["job_id"]
+    _run_anchorum_job(job_id, request)
+    return _job_response(job_id)
+
+
+@router.get("/jobs")
+def list_jobs() -> dict[str, Any]:
+    """List all tracked jobs, newest first."""
+    return {"jobs": [_job_response(job["job_id"]) for job in _jobs.list()]}
+
+
+@router.get("/jobs/{job_id}")
+def get_job(job_id: str) -> dict[str, Any]:
+    """Return the detail record for a single job."""
+    if _jobs.get(job_id) is None:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    return _job_response(job_id)
+
+
+@router.delete("/jobs/{job_id}")
+def delete_job(job_id: str) -> dict[str, Any]:
+    """Delete (cancel) a job record.
+
+    Active jobs cannot be killed mid-flight — the batch runs on a background
+    thread — so deleting a non-terminal job removes its record and the
+    worker's final status update becomes a no-op. The response is honest
+    about this via the `note` field.
+    """
+    job = _jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    was_active = str(job.get("status", "")) not in _JOB_TERMINAL_STATUSES
+    removed = _jobs.delete(job_id) or {}
+    response: dict[str, Any] = {
+        "job_id": job_id,
+        "case_id": removed.get("case_id", ""),
+        "status": "cancelled" if was_active else removed.get("status", "deleted"),
+        "deleted": True,
+    }
+    if was_active:
+        response["note"] = (
+            "Job was active; record removed. The background worker will finish "
+            "but its result is discarded."
+        )
+    return response
 
 
 @router.get("/cases")

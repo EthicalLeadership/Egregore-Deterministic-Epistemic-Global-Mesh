@@ -14,7 +14,7 @@ import threading
 import tkinter as tk
 from html import unescape
 from pathlib import Path
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 
 import requests
 
@@ -22,6 +22,16 @@ BASE_URL = "http://127.0.0.1:8080"
 API_KEY = (Path(__file__).parent / "secrets" / "api_key.hex").read_text().strip()
 HEADERS = {"X-API-Key": API_KEY, "Accept": "application/json"}
 TIMEOUT = 180  # local LLM can be slow
+
+# Jobs API — adjust if the backend routes differ.
+# Expected surface:
+#   GET    {JOBS_ENDPOINT}                 -> list of jobs (or {"jobs": [...]})
+#   GET    {JOBS_ENDPOINT}/{job_id}        -> job detail
+#   DELETE {JOBS_ENDPOINT}/{job_id}        -> delete/cancel job
+# Creation reuses the existing /batch endpoints (async batch already creates a
+# server-side job), so job creation works even if the jobs routes are absent.
+JOBS_ENDPOINT = "/api/v1/anchorum/jobs"
+JOB_AUTO_REFRESH_S = 5
 
 SEVERITIES = ("critical", "high", "medium", "low", "info")
 
@@ -36,10 +46,16 @@ class AnchorumApp(tk.Tk):
         self._q: queue.Queue = queue.Queue()
         self._cases: list[str] = []
         self._active_case: str | None = None
+        self._jobs: list[dict] = []
+        self._active_job: str | None = None
+        self._jobs_unavailable = False
+        self._job_rows: dict[str, dict] = {}  # treeview iid -> job payload
+        self._refilling_jobs = False
         self._build_ui()
         self.after(100, self._poll_queue)
         self._bg(self._load_cases)
         self._bg(self._load_status)
+        self._bg(self._load_jobs)
         self._chat_welcome()
 
     # ------------------------------------------------------------------ UI
@@ -58,6 +74,7 @@ class AnchorumApp(tk.Tk):
         self._build_cases_tab(nb)
         self._build_chat_tab(nb)
         self._build_batch_tab(nb)
+        self._build_jobs_tab(nb)
         self._build_system_tab(nb)
         self._build_factory_tab(nb)
 
@@ -153,6 +170,78 @@ class AnchorumApp(tk.Tk):
         self.batch_out = self._make_ro_text(tab, None, height=12)
         self.batch_out.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
 
+    def _build_jobs_tab(self, nb: ttk.Notebook) -> None:
+        tab = ttk.Frame(nb, padding=8)
+        nb.add(tab, text="Jobs")
+
+        # ---- Create form --------------------------------------------------
+        form = ttk.LabelFrame(tab, text="New job", padding=8)
+        form.pack(fill=tk.X)
+
+        ttk.Label(form, text="Input directory:").grid(row=0, column=0, sticky=tk.W)
+        self.job_input = ttk.Entry(form, width=60)
+        self.job_input.grid(row=0, column=1, sticky=tk.EW, padx=6)
+        ttk.Button(form, text="Browse…", command=self._browse_job_input).grid(row=0, column=2)
+
+        ttk.Label(form, text="Case ID:").grid(row=1, column=0, sticky=tk.W, pady=(6, 0))
+        self.job_case = ttk.Entry(form, width=40)
+        self.job_case.grid(row=1, column=1, sticky=tk.W, padx=6, pady=(6, 0))
+
+        self.job_fuse = tk.BooleanVar(value=False)
+        ttk.Checkbutton(form, text="Run RFE fusion after batch", variable=self.job_fuse).grid(
+            row=2, column=1, sticky=tk.W, padx=6, pady=(6, 0))
+
+        ttk.Button(form, text="Create job", command=self._create_job).grid(
+            row=3, column=1, sticky=tk.W, padx=6, pady=(8, 0))
+        form.columnconfigure(1, weight=1)
+
+        # ---- Jobs table ----------------------------------------------------
+        table_frame = ttk.LabelFrame(tab, text="Jobs", padding=4)
+        table_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+
+        cols = ("job_id", "case_id", "status", "created", "progress")
+        self.job_tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=8)
+        widths = {"job_id": 260, "case_id": 200, "status": 110, "created": 170, "progress": 80}
+        headings = {"job_id": "Job ID", "case_id": "Case ID", "status": "Status",
+                    "created": "Created", "progress": "Progress"}
+        for c in cols:
+            self.job_tree.heading(c, text=headings[c])
+            self.job_tree.column(c, width=widths[c], anchor=tk.W)
+        scroll = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.job_tree.yview)
+        self.job_tree.configure(yscrollcommand=scroll.set)
+        self.job_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.job_tree.bind("<<TreeviewSelect>>", self._on_job_select)
+
+        # Colour-code statuses
+        self.job_tree.tag_configure("queued", foreground="#8a6d00")
+        self.job_tree.tag_configure("running", foreground="#1a6ed1")
+        self.job_tree.tag_configure("done", foreground="#177a3a")
+        self.job_tree.tag_configure("completed", foreground="#177a3a")
+        self.job_tree.tag_configure("failed", foreground="#c01c1c")
+        self.job_tree.tag_configure("error", foreground="#c01c1c")
+        self.job_tree.tag_configure("cancelled", foreground="#888888")
+        self.job_tree.tag_configure("canceled", foreground="#888888")
+
+        ctl = ttk.Frame(tab)
+        ctl.pack(fill=tk.X, pady=(6, 0))
+        ttk.Button(ctl, text="Refresh", command=lambda: self._bg(self._load_jobs)).pack(side=tk.LEFT)
+        self.job_auto = tk.BooleanVar(value=True)
+        ttk.Checkbutton(ctl, text=f"Auto-refresh every {JOB_AUTO_REFRESH_S}s",
+                        variable=self.job_auto).pack(side=tk.LEFT, padx=(10, 0))
+        ttk.Button(ctl, text="Delete selected job…", command=self._delete_selected_job).pack(side=tk.RIGHT)
+
+        # ---- Detail pane ---------------------------------------------------
+        detail_frame = ttk.LabelFrame(tab, text="Selected job detail", padding=4)
+        detail_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+        self.job_detail = tk.Text(detail_frame, wrap=tk.WORD, state=tk.DISABLED, height=7)
+        dscroll = ttk.Scrollbar(detail_frame, orient=tk.VERTICAL, command=self.job_detail.yview)
+        self.job_detail.configure(yscrollcommand=dscroll.set)
+        self.job_detail.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        dscroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.after(JOB_AUTO_REFRESH_S * 1000, self._jobs_auto_tick)
+
     def _build_system_tab(self, nb: ttk.Notebook) -> None:
         tab = ttk.Frame(nb, padding=6)
         nb.add(tab, text="System")
@@ -234,7 +323,11 @@ class AnchorumApp(tk.Tk):
         try:
             while True:
                 fn, args = self._q.get_nowait()
-                fn(*args)
+                try:
+                    fn(*args)
+                except Exception as exc:
+                    # A failing UI callback must not kill the poll loop.
+                    self._set_status(f"UI error: {exc}")
         except queue.Empty:
             pass
         self.after(100, self._poll_queue)
@@ -287,12 +380,21 @@ class AnchorumApp(tk.Tk):
         r.raise_for_status()
         return r.json()
 
+    def _delete(self, path: str, timeout: int = 30):
+        r = requests.delete(f"{BASE_URL}{path}", headers=HEADERS, timeout=timeout)
+        r.raise_for_status()
+        try:
+            return r.json()
+        except ValueError:
+            return {"status": r.status_code}
+
     def _refresh_all(self) -> None:
         self._bg(self._load_cases)
         self._bg(self._load_status)
         self._bg(self._load_key_health)
         self._bg(self._load_ci_health)
         self._bg(self._load_audit)
+        self._bg(self._load_jobs)
 
     # ------------------------------------------------------- cases actions
     def _load_cases(self) -> None:
@@ -472,6 +574,7 @@ class AnchorumApp(tk.Tk):
             self._ui(self._set_text, self.batch_out, json.dumps(data, indent=2, default=str))
             self._ui(self._set_status, f"Batch {payload['case_id']}: {data.get('status', 'done')}")
             self._bg(self._load_cases)
+            self._bg(self._load_jobs)
         except requests.HTTPError as exc:
             body = exc.response.text[:800] if exc.response is not None else str(exc)
             self._ui(self._set_text, self.batch_out, f"HTTP error: {body}")
@@ -479,6 +582,177 @@ class AnchorumApp(tk.Tk):
         except Exception as exc:
             self._ui(self._set_text, self.batch_out, f"Failed: {exc}")
             self._ui(self._set_status, "Batch failed")
+
+    # -------------------------------------------------------- jobs actions
+    def _browse_job_input(self) -> None:
+        path = filedialog.askdirectory()
+        if path:
+            self.job_input.delete(0, tk.END)
+            self.job_input.insert(0, path)
+
+    @staticmethod
+    def _job_field(job: dict, *names: str, default: str = "") -> str:
+        for n in names:
+            v = job.get(n)
+            if v is not None:
+                return str(v)
+        return default
+
+    def _job_id_of(self, job: dict) -> str:
+        return self._job_field(job, "job_id", "id", "batch_id")
+
+    def _load_jobs(self) -> None:
+        try:
+            data = self._get(JOBS_ENDPOINT, timeout=15)
+            jobs = data.get("jobs", data) if isinstance(data, dict) else data
+            if isinstance(jobs, dict):
+                # Server returned a single job object instead of a list.
+                jobs = [jobs]
+            if not isinstance(jobs, list):
+                jobs = []
+            self._jobs_unavailable = False
+            self._ui(self._fill_jobs, jobs)
+            self._ui(self._set_status, f"{len(jobs)} job(s)")
+        except requests.HTTPError as exc:
+            code = exc.response.status_code if exc.response is not None else "?"
+            self._jobs_unavailable = True
+            self._ui(self._fill_jobs, [])
+            self._ui(self._set_text, self.job_detail,
+                     f"Jobs endpoint unavailable (HTTP {code}) at {JOBS_ENDPOINT}.\n"
+                     "Adjust JOBS_ENDPOINT at the top of this file if the backend route differs.\n\n"
+                     "Job creation still works — it uses the /batch endpoints.")
+            self._ui(self._set_status, f"Jobs list unavailable (HTTP {code})")
+        except Exception as exc:
+            self._jobs_unavailable = True
+            self._ui(self._fill_jobs, [])
+            self._ui(self._set_status, f"Failed to load jobs: {exc}")
+
+    def _fill_jobs(self, jobs: list[dict]) -> None:
+        prev = self._active_job
+        self._refilling_jobs = True
+        try:
+            children = self.job_tree.get_children()
+            if children:  # delete() with zero items is a Tcl error
+                self.job_tree.delete(*children)
+            self._jobs = jobs
+            self._job_rows = {}
+            keep: str | None = None
+            for job in jobs:
+                jid = self._job_id_of(job)
+                status = self._job_field(job, "status", default="unknown")
+                # Let the tree assign the iid: job IDs may be missing or
+                # duplicated, both of which crash insert() if used as iid.
+                iid = self.job_tree.insert(
+                    "", tk.END,
+                    values=(
+                        jid,
+                        self._job_field(job, "case_id"),
+                        status,
+                        self._job_field(job, "created_at", "submitted_at", "queued_at"),
+                        self._job_field(job, "progress", "pct"),
+                    ),
+                    tags=(status.lower(),),
+                )
+                self._job_rows[iid] = job
+                if jid and jid == prev:
+                    keep = iid
+            if keep is not None:
+                self.job_tree.selection_set(keep)
+                self.job_tree.see(keep)
+            elif prev is not None:
+                # The previously selected job is gone from the server list.
+                self._active_job = None
+        finally:
+            self._refilling_jobs = False
+
+    def _on_job_select(self, _event) -> None:
+        if self._refilling_jobs:
+            return  # programmatic re-selection during refresh, not a user click
+        sel = self.job_tree.selection()
+        if not sel:
+            return
+        job = self._job_rows.get(sel[0])
+        if job is None:
+            return
+        self._active_job = self._job_id_of(job)
+        self._set_text(self.job_detail, json.dumps(job, indent=2, default=str))
+        if not self._jobs_unavailable and self._active_job:
+            self._bg(self._fetch_job_detail, self._active_job)
+
+    def _fetch_job_detail(self, job_id: str) -> None:
+        try:
+            data = self._get(f"{JOBS_ENDPOINT}/{job_id}", timeout=15)
+            self._ui(self._set_text, self.job_detail, json.dumps(data, indent=2, default=str))
+        except Exception:
+            pass  # keep whatever the list payload already showed
+
+    def _create_job(self) -> None:
+        input_path = self.job_input.get().strip()
+        case_id = self.job_case.get().strip()
+        if not input_path or not case_id:
+            self._set_status("New job needs both an input directory and a case ID")
+            return
+        fuse = self.job_fuse.get()
+        payload = {"input_path": input_path, "case_id": case_id, "operator": "desktop_app", "fuse": fuse}
+        endpoint = "/api/v1/anchorum/batch/fuse" if fuse else "/api/v1/anchorum/batch"
+        self._bg(self._create_job_bg, endpoint, payload)
+
+    def _create_job_bg(self, endpoint: str, payload: dict) -> None:
+        self._ui(self._set_status, f"Creating job for {payload['case_id']}…")
+        try:
+            data = self._post(endpoint, payload, timeout=30)
+            job_id = (data.get("job_id") or data.get("id")) if isinstance(data, dict) else None
+            job_id = job_id or "?"
+            self._ui(self._set_text, self.job_detail, json.dumps(data, indent=2, default=str))
+            self._ui(self._set_status, f"Job {job_id} created")
+            self._bg(self._load_jobs)
+        except requests.HTTPError as exc:
+            body = exc.response.text[:800] if exc.response is not None else str(exc)
+            self._ui(self._set_text, self.job_detail, f"HTTP error: {body}")
+            self._ui(self._set_status, "Job creation failed")
+        except Exception as exc:
+            self._ui(self._set_text, self.job_detail, f"Failed: {exc}")
+            self._ui(self._set_status, "Job creation failed")
+
+    def _delete_selected_job(self) -> None:
+        sel = self.job_tree.selection()
+        if not sel:
+            self._set_status("Select a job to delete")
+            return
+        job = self._job_rows.get(sel[0], {})
+        job_id = self._job_id_of(job)
+        if not job_id:
+            self._set_status("Selected job has no ID — cannot delete")
+            return
+        status = self._job_field(job, "status", default="unknown")
+        if not messagebox.askyesno(
+            "Delete job",
+            f"Delete job {job_id}?\n\nCase: {self._job_field(job, 'case_id') or '—'}\n"
+            f"Status: {status}\n\nThis cannot be undone.",
+        ):
+            return
+        self._bg(self._delete_job_bg, job_id)
+
+    def _delete_job_bg(self, job_id: str) -> None:
+        self._ui(self._set_status, f"Deleting job {job_id}…")
+        try:
+            data = self._delete(f"{JOBS_ENDPOINT}/{job_id}", timeout=30)
+            if self._active_job == job_id:
+                self._active_job = None
+            self._ui(self._set_text, self.job_detail, json.dumps(data, indent=2, default=str))
+            self._ui(self._set_status, f"Job {job_id} deleted")
+        except requests.HTTPError as exc:
+            code = exc.response.status_code if exc.response is not None else "?"
+            body = exc.response.text[:400] if exc.response is not None else str(exc)
+            self._ui(self._set_status, f"Delete failed (HTTP {code}): {body}")
+        except Exception as exc:
+            self._ui(self._set_status, f"Delete failed: {exc}")
+        self._load_jobs()
+
+    def _jobs_auto_tick(self) -> None:
+        if self.job_auto.get() and not self._jobs_unavailable:
+            self._bg(self._load_jobs)
+        self.after(JOB_AUTO_REFRESH_S * 1000, self._jobs_auto_tick)
 
     # ------------------------------------------------------ system actions
     @staticmethod
