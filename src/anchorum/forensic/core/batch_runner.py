@@ -42,6 +42,12 @@ from anchorum.forensic.core import (
     ingest_artifact,
     to_canonical_json,
 )
+from anchorum.forensic.core.audio_transcription import (
+    AUDIO_EXTENSIONS,
+    VIDEO_EXTENSIONS,
+    TranscriptionUnavailable,
+    WhisperEngine,
+)
 from anchorum.forensic.core.canonicalization import EntityExtractor, merge_entities
 from anchorum.forensic.core.egregore_client import EgregoreModelClient
 from anchorum.forensic.core.ingestion import IngestionError, detect_container
@@ -93,6 +99,8 @@ SUPPORTED_TYPES = {
     ContainerType.GIF,
     ContainerType.BMP,
     ContainerType.TEXT,
+    ContainerType.AUDIO,
+    ContainerType.VIDEO,
 }
 
 # Plain-text evidence extensions (Plane 4 content extraction)
@@ -229,6 +237,13 @@ def _peek_container_type(path: Path) -> ContainerType | None:
     ext = path.suffix.lower()
     if ext in _TEXT_EXTENSIONS:
         return ContainerType.TEXT
+    # Audio/video are classified by extension: their containers (m4a/mp4/mkv…)
+    # share the same `ftyp` magic, and the transcription stage only needs to
+    # know whether ffmpeg must demux first.
+    if ext in AUDIO_EXTENSIONS:
+        return ContainerType.AUDIO
+    if ext in VIDEO_EXTENSIONS:
+        return ContainerType.VIDEO
     try:
         with open(path, "rb") as f:
             header = f.read(8192)
@@ -453,6 +468,56 @@ def _extract_patterns(text: str) -> dict[str, tuple[str, ...]]:
         "mac_addresses": tuple(sorted(set(_MAC_RE.findall(text)))),
         "phone_numbers": tuple(sorted(set(_PHONE_RE.findall(text)))),
         "social_security_numbers": tuple(sorted(set(_SSN_RE.findall(text)))),
+    }
+
+
+def _record_transcript(
+    output_path: Path, artifact: Artifact, tresult: Any
+) -> dict[str, Any]:
+    """Persist a whisper transcript and build its (unsigned) report record.
+
+    Transcript text is a model derivative: it is hashed and referenced, but
+    kept out of the signed report subset (same rule as LLM enrichment).
+    """
+    tdir = output_path.parent / "transcripts"
+    tdir.mkdir(parents=True, exist_ok=True)
+    txt_path = tdir / f"{artifact.artifact_id}.txt"
+    json_path = tdir / f"{artifact.artifact_id}.json"
+    txt_path.write_text(tresult.text, encoding="utf-8")
+    json_path.write_text(
+        json.dumps(
+            {
+                "segments": [dataclasses.asdict(s) for s in tresult.segments],
+                "language": tresult.language,
+                "duration_s": tresult.duration_s,
+                "model_id": tresult.model_id,
+                "settings": tresult.settings,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    patterns = _extract_patterns(tresult.text)
+    return {
+        "artifact_id": artifact.artifact_id,
+        "source_path": artifact.source_path,
+        "original_filename": artifact.original_filename,
+        "container_type": artifact.container_type.value,
+        "transcript_path": str(txt_path),
+        "transcript_segments_path": str(json_path),
+        "transcript_sha256": hashlib.sha256(
+            tresult.text.encode("utf-8")
+        ).hexdigest(),
+        "language": tresult.language,
+        "duration_s": tresult.duration_s,
+        "segment_count": len(tresult.segments),
+        "model_id": tresult.model_id,
+        "settings": tresult.settings,
+        "character_count": len(tresult.text),
+        "pattern_hits": {k: list(v) for k, v in patterns.items() if v},
+        "excerpt": tresult.text[:2000],
+        "speaker_diarization": "none (whisper limitation)",
     }
 
 
@@ -1074,7 +1139,13 @@ def run_batch(  # noqa: C901
     raw_entities: list[Any] = []
     anomalies: list[AnomalyFinding] = []
     timeline: list[TimelineEntry] = []
-    skipped = {"unsupported": 0, "too_large": 0, "ingestion_error": 0}
+    audio_transcripts: list[dict[str, Any]] = []
+    skipped = {
+        "unsupported": 0,
+        "too_large": 0,
+        "ingestion_error": 0,
+        "transcription_unavailable": 0,
+    }
 
     for idx, path in enumerate(files, 1):
         try:
@@ -1108,6 +1179,48 @@ def run_batch(  # noqa: C901
                 text_entities, text_findings, _ = _extract_plain_text_evidence(artifact)
                 raw_entities.extend(text_entities)
                 anomalies.extend(text_findings)
+            elif ctype in (ContainerType.AUDIO, ContainerType.VIDEO):
+                # Audio/video evidence: transcribe locally (faster-whisper),
+                # then route the transcript through the text-intelligence path.
+                tresult: Any | None = None
+                transcript_error: str | None = None
+                try:
+                    tresult = WhisperEngine.get().transcribe(path)
+                except TranscriptionUnavailable as exc:
+                    transcript_error = str(exc)
+                except Exception as exc:  # noqa: BLE001
+                    # One undecodable file must not kill the batch.
+                    transcript_error = f"transcription failed: {exc}"
+                if transcript_error is not None:
+                    skipped["transcription_unavailable"] += 1
+                    logger.warning(
+                        "Transcription skipped for %s: %s", path, transcript_error
+                    )
+                extracted = ExtractedMetadata(
+                    artifact_id=artifact.artifact_id,
+                    extraction_time=datetime.now(UTC),
+                    plane_fs=artifact.filesystem_metadata,
+                    extraction_errors=(transcript_error,) if transcript_error else (),
+                )
+                extracted_list.append(extracted)
+                if tresult is not None and tresult.text:
+                    record = _record_transcript(output_path, artifact, tresult)
+                    audio_transcripts.append(record)
+                    if provenance is not None:
+                        provenance.append(
+                            engine=ENGINE,
+                            event="audio_transcribed",
+                            payload={
+                                "case_id": case_id,
+                                "operator": operator,
+                                "artifact_id": artifact.artifact_id,
+                                "transcript_sha256": record["transcript_sha256"],
+                                "model_id": record["model_id"],
+                                "language": record["language"],
+                                "duration_s": record["duration_s"],
+                                "segment_count": record["segment_count"],
+                            },
+                        )
             else:
                 extracted = extract_from_artifact(
                     artifact, case_id=case_id, operator=operator
@@ -1272,6 +1385,24 @@ def run_batch(  # noqa: C901
             logger.warning("LLM summary generation failed: %s", exc)
             llm_result_dict = {"ok": False, "error": str(exc)}
 
+    # Audio transcripts are model derivatives: layered onto the report after
+    # signing, exactly like LLM enrichment, and marked unverified.
+    if audio_transcripts:
+        try:
+            current_report = json.loads(output_path.read_text(encoding="utf-8"))
+            current_report["audio_transcripts"] = audio_transcripts
+            current_report["unverified_enrichment"] = True
+            output_path.write_text(
+                json.dumps(current_report, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            logger.info(
+                "Audio transcription: %d transcript(s) attached to report",
+                len(audio_transcripts),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to attach audio transcripts: %s", exc)
+
     sediment_id: str | None = None
     if runtime_ok and journal is not None and archive is not None:
         try:
@@ -1323,6 +1454,7 @@ def run_batch(  # noqa: C901
         "sediment_id": sediment_id,
         "signature": signature_info,
         "skipped": skipped,
+        "audio_transcript_count": len(audio_transcripts),
         "elapsed_seconds": round(elapsed, 2),
         "report_id": report.report_id,
         "llm_summary": llm_result_dict,

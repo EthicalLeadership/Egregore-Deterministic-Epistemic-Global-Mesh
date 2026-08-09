@@ -37,6 +37,8 @@ class ContainerType(Enum):
     RAW_IMAGE = "raw_image"
     ZIP = "zip"
     TEXT = "text"
+    AUDIO = "audio"
+    VIDEO = "video"
     UNKNOWN = "unknown"
 
 

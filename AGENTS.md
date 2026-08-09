@@ -38,6 +38,10 @@ EGREGORE_CODER_BACKEND_ENABLED=false
 EGREGORE_CODER_WARMUP=true
 ```
 
+## Canonical layout
+
+The repo root is `~/egregore` (physical location: `/mnt/blackstar/vol-hdd-a/home_data_blackstar/egregore`). `~/blackstar` is a legacy compatibility symlink — new references should use `~/egregore`. `EGREGORE_REPO_ROOT` auto-resolves from the code's own location (`src/egregore/paths.py`); the `.env` pin is only an explicit override. `/opt/egregore` is not a deployment location. Because the repo lives on the blackstar volume, systemd units that touch it carry `RequiresMountsFor=/mnt/blackstar/vol-hdd-a`.
+
 ## How to start the services
 
 ### Dashboard / Core API stack (current deployment)
@@ -202,6 +206,24 @@ If the handshake verification loop reports `Peer did not report an active treaty
 - `deploy/systemd/egregore-model-server@.service`
 - `start_server.sh`
 
+## Audio evidence (added 2026-08-09)
+
+The forensic batch runner transcribes audio/video evidence locally with
+faster-whisper (`src/anchorum/forensic/core/audio_transcription.py`).
+`ContainerType.AUDIO`/`VIDEO`; audio decodes via PyAV, video is demuxed to
+16 kHz mono WAV with ffmpeg first. Transcripts are written to
+`transcripts/` next to the report and attached to the report JSON as an
+**unsigned** `audio_transcripts` section (`unverified_enrichment: true`) —
+same rule as LLM enrichment; the signed evidence stays the original media.
+Each transcript emits an `audio_transcribed` provenance event.
+
+Env: `ANCHORUM_WHISPER_MODEL` (default `large-v3`),
+`ANCHORUM_WHISPER_DEVICE` (`cuda`, auto-fallback `cpu`),
+`ANCHORUM_WHISPER_COMPUTE` (default `int8_float16`/`int8`).
+Dependency: `pip install -e ".[audio]"`. If whisper is unavailable the file
+is skipped (`skipped.transcription_unavailable`), never fatal.
+No speaker diarization — whisper limitation, recorded in each record.
+
 ## VRAM residency (Phase 6)
 
 The 8-bit HF backend is NOT resident (`EGREGORE_CODER_BACKEND_ENABLED=false`
@@ -228,6 +250,14 @@ converter whitelist entry (hash `d08ba653…` → `deepseek-coder` pre-tokenizer
 in `~/llama.cpp/convert_hf_to_gguf.py`). It is now the resident 7B. The
 legacy corrupt GGUFs are quarantined under
 `/mnt/blackstar/archive/quarantine/2026-08-02/`.
+
+Chat-template fix (2026-08-09): the salvage GGUF was converted without
+`tokenizer.chat_template`, so llama.cpp `create_chat_completion` fell back
+to a llama-2-style `[INST]` format and the model echoed prompt fragments
+to max_tokens. The DeepSeek-Coder template (`### Instruction:` /
+`### Response:` / `<|EOT|>`, matching `ems/prompts.py:format_deepseek`) is
+now embedded in the GGUF metadata via `gguf_new_metadata`. Pre-template
+backup: `my_coder_ft_fixed-Q4_K_M.gguf.bak-pre-template` next to the GGUF.
 
 ## Phase 7 — replay + weekly report
 
