@@ -277,3 +277,125 @@ def test_delete_active_job_marks_cancelled(client: TestClient) -> None:
     assert data["status"] == "cancelled"
     assert data["deleted"] is True
     assert "note" in data
+
+
+# --------------------------------------------------------------- case CRUD
+def test_case_crud_roundtrip(client: TestClient, tmp_path: Path) -> None:
+    resp = client.post(
+        "/api/v1/anchorum/cases",
+        json={"case_id": "CRUD-001", "operator": "test"},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 201
+    assert (tmp_path / "CRUD-001_report.json").exists()
+
+    resp = client.get("/api/v1/anchorum/cases", headers={"X-API-Key": _api_key()})
+    assert "CRUD-001" in resp.json()
+
+    resp = client.get(
+        "/api/v1/anchorum/cases/CRUD-001/summary", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["artifact_count"] == 0
+
+    # Duplicate create -> 409
+    resp = client.post(
+        "/api/v1/anchorum/cases",
+        json={"case_id": "CRUD-001", "operator": "test"},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 409
+
+    resp = client.delete(
+        "/api/v1/anchorum/cases/CRUD-001", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] is True
+    assert not (tmp_path / "CRUD-001_report.json").exists()
+
+    resp = client.get(
+        "/api/v1/anchorum/cases/CRUD-001", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 404
+
+
+def test_create_case_rejects_unsafe_id(client: TestClient) -> None:
+    resp = client.post(
+        "/api/v1/anchorum/cases",
+        json={"case_id": "../escape", "operator": "test"},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 422
+
+
+def test_delete_unknown_case_returns_404(client: TestClient) -> None:
+    resp = client.delete(
+        "/api/v1/anchorum/cases/NOPE-404", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 404
+
+
+def test_delete_read_only_case_returns_409(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ro_dir = tmp_path / "ro_reports"
+    ro_dir.mkdir()
+    _write_report(ro_dir, "RO-001", {"case_id": "RO-001", "artifact_count": 1})
+    monkeypatch.setattr(anchorum_router, "READ_ONLY_REPORT_DIRS", [ro_dir])
+    resp = client.delete(
+        "/api/v1/anchorum/cases/RO-001", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 409
+    assert (ro_dir / "RO-001_report.json").exists()
+
+
+def test_batch_allowed_over_empty_manual_case(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An empty skeleton from POST /cases must not block a batch run."""
+    from egregore.cells.executor import CellResult
+
+    resp = client.post(
+        "/api/v1/anchorum/cases",
+        json={"case_id": "SHELL-001", "operator": "test"},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 201
+
+    source_report = tmp_path / "w" / "anchorum_output" / "SHELL-001_report.json"
+    source_report.parent.mkdir(parents=True, exist_ok=True)
+    source_report.write_text(
+        canonicaljson.encode_canonical_json({"case_id": "SHELL-001"}).decode(),
+        encoding="utf-8",
+    )
+
+    def _fake_run(self: Any, cell_id: str, inputs: dict[str, Any]) -> CellResult:
+        return CellResult(
+            cell_id=cell_id,
+            cell_type="investigation",
+            tier=1,
+            taxonomy="investigation/forensic/document_analysis",
+            request=inputs,
+            stages={},
+            final_output={"output_path": str(source_report)},
+            verdict="PASS",
+            confidence=1.0,
+            elapsed_ms=1.0,
+            provenance_hash="",
+        )
+
+    monkeypatch.setattr(anchorum_router.CellExecutor, "run", _fake_run)
+    # Use the async /batch route: its duplicate guard is the one that must
+    # treat an empty manual skeleton as overwritable. TestClient runs
+    # BackgroundTasks before returning, so the job has completed here.
+    resp = client.post(
+        "/api/v1/anchorum/batch",
+        json={"input_path": str(tmp_path), "case_id": "SHELL-001", "operator": "test"},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 200
+    job_id = resp.json()["job_id"]
+    resp = client.get(
+        f"/api/v1/anchorum/jobs/{job_id}", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.json()["status"] == "completed"

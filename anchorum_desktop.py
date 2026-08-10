@@ -14,9 +14,16 @@ import threading
 import tkinter as tk
 from html import unescape
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 
 import requests
+
+from ui_text import (
+    append_text,
+    install_context_menu,
+    make_readonly_copyable,
+    set_text,
+)
 
 BASE_URL = "http://127.0.0.1:8080"
 API_KEY = (Path(__file__).parent / "secrets" / "api_key.hex").read_text().strip()
@@ -96,7 +103,11 @@ class AnchorumApp(tk.Tk):
         self.case_list = tk.Listbox(left, exportselection=False)
         self.case_list.pack(fill=tk.BOTH, expand=True)
         self.case_list.bind("<<ListboxSelect>>", self._on_case_select)
-        ttk.Button(left, text="Refresh", command=lambda: self._bg(self._load_cases)).pack(fill=tk.X, pady=(4, 0))
+        case_btns = ttk.Frame(left)
+        case_btns.pack(fill=tk.X, pady=(4, 0))
+        ttk.Button(case_btns, text="Refresh", command=lambda: self._bg(self._load_cases)).pack(side=tk.LEFT)
+        ttk.Button(case_btns, text="New case…", command=self._create_case).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Button(case_btns, text="Delete case…", command=self._delete_case).pack(side=tk.LEFT, padx=(6, 0))
 
         right = ttk.Frame(paned)
         paned.add(right, weight=1)
@@ -127,7 +138,8 @@ class AnchorumApp(tk.Tk):
         tab = ttk.Frame(nb, padding=6)
         nb.add(tab, text="AI Agent")
 
-        self.chat_log = tk.Text(tab, wrap=tk.WORD, state=tk.DISABLED)
+        self.chat_log = make_readonly_copyable(tk.Text(tab, wrap=tk.WORD))
+        install_context_menu(self.chat_log)
         self.chat_log.pack(fill=tk.BOTH, expand=True)
         self.chat_log.tag_config("you", foreground="#1a6ed1")
         self.chat_log.tag_config("agent", foreground="#177a3a")
@@ -136,9 +148,19 @@ class AnchorumApp(tk.Tk):
 
         controls = ttk.Frame(tab)
         controls.pack(fill=tk.X, pady=(6, 0))
-        self.chat_entry = ttk.Entry(controls)
-        self.chat_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.chat_entry.bind("<Return>", lambda _e: self._send("legal"))
+        # Multi-line input so file content can be pasted for AI exploration.
+        # Enter sends; Shift+Enter inserts a newline.
+        entry_frame = ttk.Frame(controls)
+        entry_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.chat_entry = tk.Text(entry_frame, height=4, wrap=tk.WORD)
+        entry_scroll = ttk.Scrollbar(
+            entry_frame, orient=tk.VERTICAL, command=self.chat_entry.yview
+        )
+        self.chat_entry.configure(yscrollcommand=entry_scroll.set)
+        self.chat_entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        entry_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        install_context_menu(self.chat_entry)
+        self.chat_entry.bind("<Return>", self._on_chat_return)
         ttk.Button(controls, text="Ask Legal Dossier", command=lambda: self._send("legal")).pack(side=tk.LEFT, padx=(6, 0))
         ttk.Button(controls, text="Ask Egregore", command=lambda: self._send("ask")).pack(side=tk.LEFT, padx=(6, 0))
         ttk.Button(controls, text="Clear", command=self._clear_chat).pack(side=tk.LEFT, padx=(6, 0))
@@ -152,11 +174,13 @@ class AnchorumApp(tk.Tk):
 
         ttk.Label(form, text="Input directory:").grid(row=0, column=0, sticky=tk.W)
         self.batch_input = ttk.Entry(form, width=60)
+        install_context_menu(self.batch_input)
         self.batch_input.grid(row=0, column=1, sticky=tk.EW, padx=6)
         ttk.Button(form, text="Browse…", command=self._browse_input).grid(row=0, column=2)
 
         ttk.Label(form, text="Case ID:").grid(row=1, column=0, sticky=tk.W, pady=(6, 0))
         self.batch_case = ttk.Entry(form, width=40)
+        install_context_menu(self.batch_case)
         self.batch_case.grid(row=1, column=1, sticky=tk.W, padx=6, pady=(6, 0))
 
         self.batch_fuse = tk.BooleanVar(value=False)
@@ -182,11 +206,13 @@ class AnchorumApp(tk.Tk):
 
         ttk.Label(form, text="Input directory:").grid(row=0, column=0, sticky=tk.W)
         self.job_input = ttk.Entry(form, width=60)
+        install_context_menu(self.job_input)
         self.job_input.grid(row=0, column=1, sticky=tk.EW, padx=6)
         ttk.Button(form, text="Browse…", command=self._browse_job_input).grid(row=0, column=2)
 
         ttk.Label(form, text="Case ID:").grid(row=1, column=0, sticky=tk.W, pady=(6, 0))
         self.job_case = ttk.Entry(form, width=40)
+        install_context_menu(self.job_case)
         self.job_case.grid(row=1, column=1, sticky=tk.W, padx=6, pady=(6, 0))
 
         self.job_fuse = tk.BooleanVar(value=False)
@@ -236,7 +262,10 @@ class AnchorumApp(tk.Tk):
         # ---- Detail pane ---------------------------------------------------
         detail_frame = ttk.LabelFrame(tab, text="Selected job detail", padding=4)
         detail_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
-        self.job_detail = tk.Text(detail_frame, wrap=tk.WORD, state=tk.DISABLED, height=7)
+        self.job_detail = make_readonly_copyable(
+            tk.Text(detail_frame, wrap=tk.WORD, height=7)
+        )
+        install_context_menu(self.job_detail)
         dscroll = ttk.Scrollbar(detail_frame, orient=tk.VERTICAL, command=self.job_detail.yview)
         self.job_detail.configure(yscrollcommand=dscroll.set)
         self.job_detail.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -285,7 +314,8 @@ class AnchorumApp(tk.Tk):
     # ----------------------------------------------------------- UI helpers
     def _make_ro_text(self, parent, tab_label: str | None, height: int = 10) -> tk.Text:
         frame = ttk.Frame(parent, padding=4)
-        txt = tk.Text(frame, wrap=tk.WORD, state=tk.DISABLED, height=height)
+        txt = make_readonly_copyable(tk.Text(frame, wrap=tk.WORD, height=height))
+        install_context_menu(txt)
         scroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=txt.yview)
         txt.configure(yscrollcommand=scroll.set)
         txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -297,7 +327,8 @@ class AnchorumApp(tk.Tk):
         return txt
 
     def _make_ro_text_frame(self, frame: ttk.LabelFrame) -> tk.Text:
-        txt = tk.Text(frame, wrap=tk.WORD, state=tk.DISABLED)
+        txt = make_readonly_copyable(tk.Text(frame, wrap=tk.WORD))
+        install_context_menu(txt)
         scroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=txt.yview)
         txt.configure(yscrollcommand=scroll.set)
         txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -306,10 +337,7 @@ class AnchorumApp(tk.Tk):
 
     @staticmethod
     def _set_text(widget: tk.Text, text: str) -> None:
-        widget.config(state=tk.NORMAL)
-        widget.delete("1.0", tk.END)
-        widget.insert(tk.END, text)
-        widget.config(state=tk.DISABLED)
+        set_text(widget, text)
 
     def _build_fetch_tab(self, nb: ttk.Notebook) -> None:
         from file_fetch import FetchTab
@@ -354,11 +382,12 @@ class AnchorumApp(tk.Tk):
             self.status.config(text=text)
 
     def _append_chat(self, tag: str, who: str, text: str) -> None:
-        self.chat_log.config(state=tk.NORMAL)
-        self.chat_log.insert(tk.END, f"{who}\n", "meta")
-        self.chat_log.insert(tk.END, f"{text}\n\n", tag)
-        self.chat_log.config(state=tk.DISABLED)
-        self.chat_log.see(tk.END)
+        append_text(self.chat_log, f"{who}\n", "meta")
+        append_text(self.chat_log, f"{text}\n\n", tag)
+
+    def _on_chat_return(self, _event: tk.Event) -> str:
+        self._send("legal")
+        return "break"  # swallow the newline; Shift+Enter still inserts one
 
     def _clear_chat(self) -> None:
         self._set_text(self.chat_log, "")
@@ -411,6 +440,69 @@ class AnchorumApp(tk.Tk):
         self._bg(self._load_jobs)
 
     # ------------------------------------------------------- cases actions
+    # ------------------------------------------------------- case CRUD
+    def _create_case(self) -> None:
+        case_id = simpledialog.askstring(
+            "New case",
+            "Case ID (A–Z, 0–9, _ - : .):",
+            parent=self,
+        )
+        if not case_id or not case_id.strip():
+            return
+        self._bg(self._create_case_bg, case_id.strip())
+
+    def _create_case_bg(self, case_id: str) -> None:
+        try:
+            data = self._post_case_create(case_id)
+            self._ui(self._set_status, f"Case {case_id} created")
+            self._bg(self._load_cases)
+        except requests.HTTPError as exc:
+            body = exc.response.text[:400] if exc.response is not None else str(exc)
+            code = exc.response.status_code if exc.response is not None else "?"
+            self._ui(self._set_status, f"Create case failed (HTTP {code}): {body}")
+        except Exception as exc:
+            self._ui(self._set_status, f"Create case failed: {exc}")
+
+    def _post_case_create(self, case_id: str) -> dict:
+        r = requests.post(
+            f"{BASE_URL}/api/v1/anchorum/cases",
+            headers={**HEADERS, "Content-Type": "application/json"},
+            json={"case_id": case_id, "operator": "desktop_app"},
+            timeout=30,
+        )
+        r.raise_for_status()
+        return r.json()
+
+    def _delete_case(self) -> None:
+        case_id = self._selected_case()
+        if not case_id:
+            self._set_status("Select a case to delete")
+            return
+        if not messagebox.askyesno(
+            "Delete case",
+            f"Delete case {case_id}?\n\nThis removes its report, summary, and work "
+            "directory from the writable workspace. Provenance .zarc chains are "
+            "append-only evidence and are kept.\n\nThis cannot be undone.",
+        ):
+            return
+        self._bg(self._delete_case_bg, case_id)
+
+    def _delete_case_bg(self, case_id: str) -> None:
+        try:
+            data = self._delete(f"/api/v1/anchorum/cases/{case_id}", timeout=30)
+            if self._active_case == case_id:
+                self._active_case = None
+                for widget in (self.summary_txt, self.anom_txt, self.timeline_txt, self.report_txt):
+                    self._ui(self._set_text, widget, "")
+            self._ui(self._set_status, f"Case {case_id} deleted")
+        except requests.HTTPError as exc:
+            body = exc.response.text[:400] if exc.response is not None else str(exc)
+            code = exc.response.status_code if exc.response is not None else "?"
+            self._ui(self._set_status, f"Delete case failed (HTTP {code}): {body}")
+        except Exception as exc:
+            self._ui(self._set_status, f"Delete case failed: {exc}")
+        self._load_cases()
+
     def _load_cases(self) -> None:
         self._ui(self._set_status, "Loading cases…")
         try:
@@ -531,14 +623,17 @@ class AnchorumApp(tk.Tk):
             "meta", "System",
             "Select a case in the Cases tab, then ask questions here. "
             "'Ask Legal Dossier' answers using the live case data (findings, "
-            "entities, anomalies) of the selected case.",
+            "entities, anomalies) of the selected case. You can paste file "
+            "content into the input below (Ctrl+V or right-click) to explore "
+            "it with the AI — e.g. 'Copy content → chat' in the Fetch tab. "
+            "Enter sends, Shift+Enter inserts a newline.",
         )
 
     def _send(self, mode: str) -> None:
-        text = self.chat_entry.get().strip()
+        text = self.chat_entry.get("1.0", "end-1c").strip()
         if not text:
             return
-        self.chat_entry.delete(0, tk.END)
+        self.chat_entry.delete("1.0", tk.END)
         case_id = self._active_case if mode == "legal" else None
         tag = f"You (case: {case_id})" if case_id else "You"
         self._append_chat("you", tag, text)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import threading
 import time
 import uuid
@@ -26,6 +27,16 @@ from egregore.cells.rfe_adapter import (
 )
 from egregore.rfe.engine import reproducible_fusion
 from egregore.shared.canonical import canonical_dumps, canonical_loads
+
+
+def _validate_case_id_or_422(case_id: str) -> None:
+    """Apply the forensic pipeline's case-id rules to API input."""
+    from anchorum.forensic.core.validation import validate_case_id
+
+    try:
+        validate_case_id(case_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 logger = logging.getLogger("egregore.anchorum")
 
@@ -168,6 +179,16 @@ def _all_report_roots() -> list[Path]:
         if root.exists() and root not in roots:
             roots.append(root)
     return roots
+
+
+def _case_exists(case_id: str) -> bool:
+    """True if an exact-case report or summary exists in any report root."""
+    for root in _all_report_roots():
+        if (root / f"{case_id}_report.json").exists():
+            return True
+        if (root / f"{case_id}_summary.json").exists():
+            return True
+    return False
 
 
 def _resolve_report_path(case_id: str) -> Path | None:
@@ -439,13 +460,25 @@ def _job_response(job_id: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+def _is_empty_manual_case(report_path: Path) -> bool:
+    """True if the report is an untouched skeleton from POST /cases."""
+    try:
+        raw = cast(
+            dict[str, Any],
+            canonical_loads(report_path.read_text(encoding="utf-8")),
+        )
+    except Exception:  # noqa: BLE001 — unreadable report is not an empty shell
+        return False
+    return bool(raw.get("created_manually")) and not raw.get("artifact_count")
+
+
 @router.post("/batch")
 def trigger_batch(
     request: BatchRequest, background_tasks: BackgroundTasks
 ) -> dict[str, Any]:
     """Trigger an ANCHORUM forensic batch run asynchronously."""
     report_path = _report_path(request.case_id)
-    if report_path.exists():
+    if report_path.exists() and not _is_empty_manual_case(report_path):
         raise HTTPException(
             status_code=409,
             detail=f"Case {request.case_id} already exists. Choose a new case_id or delete the existing report.",
@@ -527,6 +560,87 @@ def list_cases() -> list[str]:
         if summary.exists():
             cases.add("self_rep")
     return sorted(cases)
+
+
+class CaseCreateRequest(BaseModel):
+    case_id: str
+    operator: str = "desktop_app"
+
+
+@router.post("/cases", status_code=201)
+def create_case(request: CaseCreateRequest) -> dict[str, Any]:
+    """Create an empty case container (report skeleton) in the writable root.
+
+    A case created this way is an empty shell: it lists, summarizes, and is
+    a valid batch target — ``trigger_batch`` treats an empty manual skeleton
+    as overwritable (it only 409s on cases with real content).
+    """
+    _validate_case_id_or_422(request.case_id)
+    if _case_exists(request.case_id):
+        raise HTTPException(
+            status_code=409, detail=f"Case {request.case_id} already exists"
+        )
+    skeleton = {
+        "case_id": request.case_id,
+        "report_id": f"manual-{request.case_id}",
+        "generated_at": _now_iso(),
+        "created_manually": True,
+        "created_by": request.operator,
+        "artifact_count": 0,
+        "entity_count": 0,
+        "anomaly_count": 0,
+        "critical_findings": [],
+        "high_findings": [],
+        "medium_findings": [],
+        "low_findings": [],
+        "info_findings": [],
+        "master_timeline": [],
+        "entity_directory": [],
+    }
+    path = _report_path(request.case_id)
+    path.write_text(canonical_dumps(skeleton), encoding="utf-8")
+    return {
+        "case_id": request.case_id,
+        "created": True,
+        "report_path": str(path),
+    }
+
+
+@router.delete("/cases/{case_id}")
+def delete_case(case_id: str) -> dict[str, Any]:
+    """Delete a case's report/summary files and work dir from the writable root.
+
+    Cases that exist only in read-only roots cannot be deleted (409).
+    Provenance ``.zarc`` chains are append-only evidence and are deliberately
+    NOT deleted; the response says so explicitly.
+    """
+    _validate_case_id_or_422(case_id)
+    removed: list[str] = []
+    for name in (f"{case_id}_report.json", f"{case_id}_summary.json"):
+        candidate = _report_dir() / name
+        if candidate.exists():
+            candidate.unlink()
+            removed.append(str(candidate))
+    work_dir = _report_dir() / f"{case_id}_work"
+    workdir_removed = False
+    if work_dir.is_dir():
+        shutil.rmtree(work_dir)
+        workdir_removed = True
+    if not removed and not workdir_removed:
+        if _case_exists(case_id):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Case {case_id} exists only in read-only report roots; "
+                "delete it on the filesystem that owns it.",
+            )
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+    return {
+        "case_id": case_id,
+        "deleted": True,
+        "files_removed": removed,
+        "workdir_removed": workdir_removed,
+        "note": "Provenance .zarc chains are append-only evidence and were kept.",
+    }
 
 
 @router.get("/cases/{case_id}")
