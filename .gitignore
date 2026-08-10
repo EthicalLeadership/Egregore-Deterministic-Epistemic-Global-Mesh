@@ -168,3 +168,9 @@ audit_filesystem.log
 # Deployment artifacts and runtime telemetry data
 deploy/p2-update.tar.gz
 report/factory_telemetry/
+
+# Fetch tab evidence artifacts (consent ledger + staged payloads)
+consent_ledger.jsonl
+fetched/
+# Email tab consent ledger
+email_consent_ledger.jsonl

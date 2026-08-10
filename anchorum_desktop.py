@@ -74,6 +74,8 @@ class AnchorumApp(tk.Tk):
         self._build_cases_tab(nb)
         self._build_chat_tab(nb)
         self._build_batch_tab(nb)
+        self._build_fetch_tab(nb)
+        self._build_email_tab(nb)
         self._build_jobs_tab(nb)
         self._build_system_tab(nb)
         self._build_factory_tab(nb)
@@ -308,6 +310,18 @@ class AnchorumApp(tk.Tk):
         widget.delete("1.0", tk.END)
         widget.insert(tk.END, text)
         widget.config(state=tk.DISABLED)
+
+    def _build_fetch_tab(self, nb: ttk.Notebook) -> None:
+        from file_fetch import FetchTab
+
+        tab = FetchTab(nb, self._set_status)
+        nb.add(tab, text="Fetch")
+
+    def _build_email_tab(self, nb: ttk.Notebook) -> None:
+        from email_ingest import EmailIngestTab
+
+        tab = EmailIngestTab(nb, self._set_status)
+        nb.add(tab, text="Email")
 
     def _build_factory_tab(self, nb: ttk.Notebook) -> None:
         from factory_tab import FactoryTab
