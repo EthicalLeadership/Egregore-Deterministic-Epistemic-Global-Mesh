@@ -86,6 +86,21 @@ def _case_context(case_id: str) -> str:
             else:
                 names.append(str(e)[:60])
         lines.append("ENTITIES (sample): " + ", ".join(n for n in names if n))
+    transcripts = report.get("audio_transcripts", [])
+    if transcripts:
+        total_s = sum(float(t.get("duration_s") or 0) for t in transcripts)
+        lines.append(
+            f"\nAUDIO TRANSCRIPTS ({len(transcripts)} recordings, "
+            f"{total_s / 3600:.1f} h total, machine-transcribed, unverified):"
+        )
+        for t in transcripts[:6]:
+            name = str(t.get("original_filename") or "?")[:60]
+            lang = t.get("language", "?")
+            mins = float(t.get("duration_s") or 0) / 60
+            excerpt = str(t.get("excerpt", ""))[:280].replace("\n", " ")
+            lines.append(f"- {name} [{lang}, {mins:.0f} min]: {excerpt}")
+        if len(transcripts) > 6:
+            lines.append(f"  … and {len(transcripts) - 6} more transcript(s).")
     return "\n".join(lines)
 
 
