@@ -22,8 +22,8 @@ from egregore.domain.semantics_models import CommandAck
 from egregore.governance.permissions import Action, PermissionService
 from egregore.interface.rag_api import RAGQuery, query_rag
 from egregore.models.user import UserIdentity
-from egregore.paths import repo_root
 from egregore.shared.canonical import canonical_dumps, canonical_loads, sha256_hex
+from egregore.shared.paths import repo_root
 
 _CHAT_HISTORY_KEY = "chat_history"
 _CHAT_HISTORY_MAX_TURNS = 20  # user + assistant pairs
@@ -115,6 +115,23 @@ def _default_chat_model() -> str:
     return os.environ.get("EGREGORE_CHAT_MODEL", "my-coder-ft")
 
 
+def _selector_model(task: str) -> str | None:
+    """Best catalog model key for a task via the deterministic ModelSelector."""
+    try:
+        from egregore.application.model_selector import (
+            ModelSelector,
+            load_profiles,
+        )
+        from egregore.infrastructure.gguf_catalog import GGUFCatalog
+
+        selection = ModelSelector(
+            GGUFCatalog().get_catalog(), load_profiles()
+        ).select(task)
+        return selection.catalog_key
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _best_local_gguf_model() -> str:
     """Return the largest present GGUF model from the catalog."""
     try:
@@ -125,7 +142,7 @@ def _best_local_gguf_model() -> str:
     catalog = GGUFCatalog()
     best_id: str | None = None
     best_size = 0.0
-    for model_id, entry in catalog._entries.items():
+    for model_id, entry in catalog.entries().items():
         path = GGUF_ROOT / entry.tier / entry.filename
         if not path.exists():
             continue
@@ -139,15 +156,22 @@ def _best_local_gguf_model() -> str:
     return best_id or _default_chat_model()
 
 
-def _active_model(context: ChatContext) -> str:
+def _active_model(context: ChatContext, task: str | None = None) -> str:
     """Return the model identifier for this session.
 
     Preference:
       1. Explicit CHAT_MODEL in session env
       2. Explicit EGREGORE_CHAT_MODEL in process env
       3. Best available remote model (DeepSeek > Claude)
-      4. Largest present local GGUF model
+      4. ModelSelector pick for the task (manifest-driven)
+      5. Largest present local GGUF model
     """
+    if task is not None:
+        from egregore.application.model_selector import ALLOWED_TASKS
+
+        if task not in ALLOWED_TASKS:
+            raise ValueError(f"Invalid task: {task}. Allowed: {list(ALLOWED_TASKS)}")
+
     explicit = context.env.get("CHAT_MODEL") or os.environ.get("EGREGORE_CHAT_MODEL")
     if explicit:
         return explicit
@@ -158,6 +182,10 @@ def _active_model(context: ChatContext) -> str:
             return "deepseek-reasoner"
         if "anthropic" in inference_service.clients:
             return "claude-3-5-sonnet-20241022"
+
+    selected = _selector_model(task or "general")
+    if selected:
+        return selected
 
     return _best_local_gguf_model()
 
@@ -890,6 +918,301 @@ def _cmd_agent(args: list[str], context: ChatContext) -> dict[str, Any]:
     }
 
 
+def _cmd_mission(args: list[str], context: ChatContext) -> dict[str, Any]:
+    """Create and submit a mission through the MissionOrchestrator.
+
+    Supports the optional `--idempotency <key>` flag. Falls back to the
+    legacy WorkUnit path when the orchestrator is not wired.
+    """
+    auth_error = _require_privilege(context, "mission")
+    if auth_error:
+        return auth_error
+
+    if not args:
+        return {
+            "type": "chat",
+            "command": "mission",
+            "ok": False,
+            "summary": "Usage: `/mission <intent> [--idempotency <key>]`",
+            "detail": None,
+        }
+
+    idempotency_key: str | None = None
+    parts = args
+    if "--idempotency" in parts:
+        flag_index = parts.index("--idempotency")
+        if flag_index + 1 < len(parts):
+            idempotency_key = parts[flag_index + 1].strip()
+        parts = parts[:flag_index] + parts[flag_index + 2 :]
+
+    intent = " ".join(parts).strip()
+    if not intent:
+        return {
+            "type": "chat",
+            "command": "mission",
+            "ok": False,
+            "summary": "Mission intent must be a non-empty string.",
+            "detail": None,
+        }
+
+    runtime = context.env.get("job_runtime")
+    if runtime is None:
+        return {
+            "type": "chat",
+            "command": "mission",
+            "ok": False,
+            "summary": "Job runtime is not configured.",
+            "detail": None,
+        }
+
+    orchestrator = getattr(runtime, "mission_orchestrator", None)
+    if orchestrator is None:
+        return _legacy_cmd_mission(intent, runtime, context)
+
+    import asyncio
+
+    tenant_id = (
+        context.identity.tenant_id
+        if context.identity and context.identity.tenant_id
+        else context.env.get("tenant_id", "default")
+    )
+    trace_id = context.env.get("trace_id", context.session_id or "default")
+
+    try:
+        status = asyncio.run(
+            orchestrator.execute_mission(
+                intent=intent,
+                tenant_id=tenant_id,
+                trace_id=trace_id,
+                idempotency_key=idempotency_key,
+            )
+        )
+    except ValueError as exc:
+        return {
+            "type": "chat",
+            "command": "mission",
+            "ok": False,
+            "summary": f"Invalid mission request: {exc}",
+            "detail": None,
+        }
+    except Exception as exc:
+        return {
+            "type": "chat",
+            "command": "mission",
+            "ok": False,
+            "summary": f"Mission execution failed: {exc}",
+            "detail": None,
+        }
+
+    lines = [
+        f"Mission `{status.mission_id}`",
+        f"Complexity: {status.complexity.value}",
+        f"Model policy: {status.model_policy}",
+        f"Admitted: {status.admitted}",
+        f"Total units: {status.total_units}",
+        f"Lease: {status.capacity_lease_id or 'N/A'}",
+        f"Leaves: {len(status.leaf_statuses)}",
+    ]
+    for leaf in status.leaf_statuses:
+        leaf_line = f"  {leaf.job_id} -> {leaf.status.value}"
+        if leaf.node_id:
+            leaf_line += f" @ {leaf.node_id}"
+        if leaf.error:
+            leaf_line += f" error={leaf.error}"
+        lines.append(leaf_line)
+    if status.notes:
+        lines.append("Notes:")
+        lines.extend(f"  {note}" for note in status.notes)
+    if status.error_code:
+        lines.append(f"Error code: {status.error_code}")
+
+    return {
+        "type": "chat",
+        "command": "mission",
+        "ok": status.error_code is None,
+        "summary": "\n".join(lines),
+        "detail": {
+            "mission_id": status.mission_id,
+            "root_job_id": status.root_job_id,
+            "complexity": status.complexity.value,
+            "model_policy": status.model_policy,
+            "total_units": status.total_units,
+            "admitted": status.admitted,
+            "capacity_lease_id": status.capacity_lease_id,
+            "error_code": status.error_code,
+            "leaf_statuses": [
+                {
+                    "job_id": leaf.job_id,
+                    "status": leaf.status.value,
+                    "node_id": leaf.node_id,
+                    "attempts": leaf.attempts,
+                    "error": leaf.error,
+                }
+                for leaf in status.leaf_statuses
+            ],
+            "notes": list(status.notes),
+        },
+        "suggestion": "Use `/nodes` or `/status` to track mission progress.",
+    }
+
+
+def _legacy_cmd_mission(
+    intent: str, runtime: Any, context: ChatContext
+) -> dict[str, Any]:
+    """Legacy mission path: submit a WorkUnit through the work tree service."""
+    import time
+    import uuid
+
+    from egregore.domain.units import DT, TU
+    from egregore.domain.work_unit import (
+        WorkUnit,
+        WorkUnitDemand,
+        WorkUnitType,
+    )
+
+    timestamp_ns = time.time_ns()
+    tenant_id = (
+        context.identity.tenant_id
+        if context.identity and context.identity.tenant_id
+        else context.env.get("tenant_id", "default")
+    )
+    trace_id = context.env.get("trace_id", context.session_id or "default")
+
+    work_unit = WorkUnit(
+        work_unit_id=f"mission-{uuid.uuid4().hex[:12]}",
+        work_unit_type=WorkUnitType.LLM_INFERENCE,
+        demand=WorkUnitDemand(
+            dt=DT(1.0),
+            tu=TU(2),
+            priority=100,
+            max_wait_ms=5000,
+        ),
+        payload=intent.encode("utf-8"),
+        metadata={
+            "tenant_id": tenant_id,
+            "trace_id": trace_id,
+            "intent": intent,
+            "requested_capabilities": ["llm", "gpu"],
+            "priority_hint": "HIGH",
+        },
+    )
+
+    tree = runtime.work_tree_service.submit_tree(work_unit, timestamp_ns)
+
+    return {
+        "type": "chat",
+        "command": "mission",
+        "ok": True,
+        "summary": f"Mission submitted. Final state: {tree.root.state.name}",
+        "detail": {
+            "mission_id": tree.tree_id,
+            "final_state": tree.root.state.name,
+            "node_count": len(tree.nodes),
+            "leaves": [
+                {
+                    "work_unit_id": leaf.work_unit.work_unit_id,
+                    "state": leaf.state.name,
+                }
+                for leaf in tree.leaves()
+            ],
+        },
+        "suggestion": "Use `/nodes` or `/status` to track mission progress.",
+    }
+
+
+def _cmd_nodes(args: list[str], context: ChatContext) -> dict[str, Any]:
+    """Show registered nodes in the shared job runtime."""
+    auth_error = _require_privilege(context, "nodes")
+    if auth_error:
+        return auth_error
+
+    runtime = context.env.get("job_runtime")
+    if runtime is None:
+        return {
+            "type": "chat",
+            "command": "nodes",
+            "ok": False,
+            "summary": "Job runtime is not configured.",
+            "detail": None,
+        }
+
+    nodes = runtime.node_registry.get_available([])
+
+    if not nodes:
+        return {
+            "type": "chat",
+            "command": "nodes",
+            "ok": True,
+            "summary": "No ACTIVE nodes registered.",
+            "detail": {"nodes": []},
+        }
+
+    entries = [
+        {
+            "node_id": n.node_id,
+            "capabilities": n.capabilities,
+            "trust_score": n.trust_score,
+            "vram_mb": n.resource_profile.vram_mb,
+            "memory_mb": n.resource_profile.memory_mb,
+            "cpu_percent": n.resource_profile.cpu_percent,
+            "status": n.status,
+            "last_heartbeat_ns": n.last_heartbeat_ns,
+        }
+        for n in nodes
+    ]
+
+    return {
+        "type": "chat",
+        "command": "nodes",
+        "ok": True,
+        "summary": f"Found {len(entries)} ACTIVE node(s).",
+        "detail": {"nodes": entries},
+    }
+
+
+def _cmd_status(args: list[str], context: ChatContext) -> dict[str, Any]:
+    """Show scheduler queue depth and active node count."""
+    auth_error = _require_privilege(context, "status")
+    if auth_error:
+        return auth_error
+
+    runtime = context.env.get("job_runtime")
+    if runtime is None:
+        return {
+            "type": "chat",
+            "command": "status",
+            "ok": False,
+            "summary": "Job runtime is not configured.",
+            "detail": None,
+        }
+
+    tenant_id = (
+        context.identity.tenant_id
+        if context.identity and context.identity.tenant_id
+        else context.env.get("tenant_id", "default")
+    )
+
+    queue = runtime.scheduler.get_queue_depth(tenant_id)
+    active_nodes = runtime.node_registry.get_available([])
+
+    return {
+        "type": "chat",
+        "command": "status",
+        "ok": True,
+        "summary": (
+            f"Queue depth: {queue.get('total', 0)} job(s). "
+            f"Active nodes: {len(active_nodes)}."
+        ),
+        "detail": {
+            "tenant_id": tenant_id,
+            "queue_depth": queue,
+            "active_nodes": len(active_nodes),
+            "node_ids": [n.node_id for n in active_nodes],
+        },
+        "suggestion": "Use `/nodes` to see node details or `/mission <intent>` to submit work.",
+    }
+
+
 def _load_history(context: ChatContext) -> list[dict[str, str]]:
     """Load persisted conversation history for this session."""
     raw = context.env.get(_CHAT_HISTORY_KEY, "[]")
@@ -1055,16 +1378,56 @@ def _cmd_legal(args: list[str], context: ChatContext) -> dict[str, Any]:  # noqa
 
 
 def _cmd_ask(args: list[str], context: ChatContext) -> dict[str, Any]:
+    task: str | None = None
+    if len(args) >= 2 and args[0] == "--task":
+        task = args[1]
+        args = args[2:]
     user_prompt = " ".join(args) if args else "hello"
 
     inference_service = _get_inference_service(context)
-    active_model = _active_model(context)
+    try:
+        active_model = _active_model(context, task=task)
+    except ValueError as exc:
+        return {
+            "type": "chat",
+            "command": "ask",
+            "ok": False,
+            "summary": str(exc),
+            "detail": None,
+        }
     system_message = (
         "You are Egregore, a deterministic AI assistant. Be concise and helpful."
     )
     history = _load_history(context)
 
-    # Native GGUF path: use Egregore model host for catalog-registered GGUF models.
+    # Fast path: if the active model is registered on the InferenceService (GGUF
+    # env names, Coder, Claude, DeepSeek, local HF), use the governed execute()
+    # path. This avoids the slower ChatInferenceOrchestrator host path for the
+    # common GGUF fleet names (qwen-7b, qwen-1.5b, my-coder-ft, etc.).
+    if inference_service is not None and inference_service.model_exists(active_model):
+        request = ChatRequest(
+            model=active_model,
+            messages=_build_chat_messages(system_message, user_prompt, history),
+            mode=InferenceMode.DETERMINISTIC,
+            max_tokens=2048,
+            seed=42,
+        )
+        try:
+            response = _execute_inference_request(inference_service, request)
+            _append_history_turn(context, "user", user_prompt)
+            _append_history_turn(context, "assistant", response.message.content)
+            return _format_ask(response)
+        except Exception as exc:
+            return {
+                "type": "chat",
+                "command": "ask",
+                "ok": False,
+                "summary": f"Inference service error: {exc}",
+                "detail": {"model": active_model},
+            }
+
+    # Native GGUF path: use Egregore model host for raw catalog-registered GGUF
+    # model IDs that the InferenceService does not claim by env name.
     if _is_gguf_model(active_model):
         from egregore.application.chat_inference_orchestrator import (
             ChatInferenceOrchestrator,
@@ -1080,7 +1443,7 @@ def _cmd_ask(args: list[str], context: ChatContext) -> dict[str, Any]:
         _append_history_turn(context, "assistant", result.text)
         return _format_ask(result)
 
-    # Multi-backend path: use InferenceService (native Coder, Claude, DeepSeek, local HF)
+    # Fallback if inference_service exists but model is not registered.
     if inference_service is not None:
         request = ChatRequest(
             model=active_model,
@@ -1136,7 +1499,7 @@ def _cmd_models(args: list[str], context: ChatContext) -> dict[str, Any]:
         from egregore.infrastructure.gguf_catalog import GGUF_ROOT
 
         entries = []
-        for model_id, entry in catalog._entries.items():
+        for model_id, entry in catalog.entries().items():
             path = GGUF_ROOT / entry.tier / entry.filename
             entries.append(
                 {
@@ -1181,6 +1544,9 @@ _COMMAND_HANDLERS: dict[str, Callable[[list[str], ChatContext], dict[str, Any]]]
     "ask": _cmd_ask,
     "model": _cmd_model,
     "agents": _cmd_agents,
+    "mission": _cmd_mission,
+    "nodes": _cmd_nodes,
+    "status": _cmd_status,
     "agent": _cmd_agent,
     "models": _cmd_models,
     "ingest": _cmd_ingest,
@@ -1203,13 +1569,6 @@ def _execute_inference_request(inference_service: Any, request: ChatRequest) -> 
 
 def execute_message(message: str, context: ChatContext) -> dict[str, Any]:
     """Parse a message and execute the corresponding command."""
-    from egregore.application.chat_inference_orchestrator import (
-        ChatInferenceOrchestrator,
-    )
-
-    inference_service = _get_inference_service(context)
-    _any_remote_backend_available(inference_service)
-    ChatInferenceOrchestrator().is_available()
     command, args = parse_command(message)
     handler = _COMMAND_HANDLERS.get(command, _cmd_dossier)
     return handler(args, context)

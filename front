@@ -1,0 +1,71 @@
+/**
+ * ANCHORUM Desktop workspace.
+ *
+ * Mounts the ANCHORUM sidebar layout with the consent-gated File Fetch and
+ * Email Ingest panels. The remaining sidebar entries (Cases, AI Agent,
+ * Batch / Fusion, Jobs, System, Factory) are placeholders for the tools
+ * that live in the Tk desktop app; they render a coming-soon view until
+ * they are ported.
+ */
+
+import { useState } from 'react';
+import AnchorumLayout from './AnchorumLayout';
+import FileFetchPanel from './FileFetchPanel';
+import EmailIngestPanel from './EmailIngestPanel';
+import anchorumApi, { type LedgerStatus } from '../../lib/anchorumApi';
+
+const DEFAULT_CASES = ['GDC-86849-02', 'MOLSON-2026', 'molson'];
+
+const UNPORTED_TABS = ['cases', 'agent', 'batch', 'jobs', 'system', 'factory'] as const;
+
+export default function AnchorumWorkspace() {
+  const [activeTab, setActiveTab] = useState('fetch');
+  const [ledgerStatus, setLedgerStatus] = useState<LedgerStatus | null>(null);
+
+  const refreshLedger = () => {
+    anchorumApi.ledgerStatus().then(setLedgerStatus).catch(() => undefined);
+  };
+
+  return (
+    <AnchorumLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      ledgerStatus={
+        ledgerStatus
+          ? { ok: ledgerStatus.ok, message: ledgerStatus.message }
+          : null
+      }
+    >
+      {activeTab === 'fetch' && (
+        <FileFetchPanel caseId="MOLSON-2026" onLedgerChange={refreshLedger} />
+      )}
+      {activeTab === 'email' && (
+        <EmailIngestPanel
+          caseId="MOLSON-2026"
+          cases={DEFAULT_CASES}
+          onLedgerChange={refreshLedger}
+        />
+      )}
+      {(UNPORTED_TABS as readonly string[]).includes(activeTab) && (
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 'var(--space-3)',
+            color: 'var(--text-muted)',
+          }}
+        >
+          <span style={{ fontSize: 'var(--text-base)', fontWeight: 600 }}>
+            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+          </span>
+          <span style={{ fontSize: 'var(--text-sm)' }}>
+            Coming soon — this tool is still in the Tk desktop app.
+          </span>
+        </div>
+      )}
+    </AnchorumLayout>
+  );
+}

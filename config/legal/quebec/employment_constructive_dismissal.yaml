@@ -1,0 +1,125 @@
+# Quebec Employment Law — Constructive Dismissal (Congédiement déguisé)
+# Curated reference for ANCHORUM legal chat grounding.
+# WARNING: Verify current consolidation on LégisQuébec and current case law on
+# CanLII before relying on any citation in a proceeding.
+
+knowledge_base:
+  name: "Quebec Constructive Dismissal"
+  jurisdiction: "Quebec"
+  disclaimer: |
+    Article numbers and citations must be verified against the current official
+    consolidation on LégisQuébec and current case law on CanLII before any use
+    in a proceeding. This is legal information, not legal advice.
+
+rules:
+  - rule_id: qc-cd-test
+    domain: employment
+    source: "Farber v. Royal Trust Co., [1997] 1 S.C.R. 846 (SCC)"
+    title: "The constructive dismissal test"
+    rule_text: |
+      Constructive dismissal occurs when the employer unilaterally makes a
+      substantial change to an essential term of the employment contract. The
+      test is objective: would a reasonable person in the employee's position
+      have felt that an essential term was substantially changed? The employee
+      may then treat the contract as resiliated and claim damages, provided
+      they resign within a reasonable time (delay in resigning can be taken as
+      condonation). A unilateral pay cut of ~15-20% and a relocation that
+      materially increases commute are classic qualifying changes; each case
+      turns on whether the term changed was essential and the change
+      substantial.
+
+  - rule_id: qc-cd-2085
+    domain: employment
+    source: "C.c.Q., art. 2085"
+    title: "Contract of employment"
+    rule_text: |
+      A contract of employment is a contract by which a person, the employee,
+      undertakes, for a limited time and for remuneration, to do work under the
+      direction or control of another person, the employer. Foundation article
+      for the employment relationship and its essential terms (remuneration,
+      place of work, functions).
+
+  - rule_id: qc-cd-2091
+    domain: employment
+    source: "C.c.Q., art. 2091"
+    title: "Reasonable notice / indemnity in lieu"
+    rule_text: |
+      Either party to a contract of employment for an indeterminate term may
+      resiliate it by giving reasonable notice (délai de congé raisonnable).
+      In constructive dismissal the employer's breach removes that protection:
+      damages are measured as the indemnity in lieu of the reasonable notice
+      the employee was entitled to (length of service, age, position, salary,
+      availability of similar employment are the factors).
+
+  - rule_id: qc-cd-2092
+    domain: employment
+    source: "C.c.Q., art. 2092"
+    title: "Resiliation by the employee for serious reason"
+    rule_text: |
+      The employee may resiliate the contract of employment without notice for
+      a serious reason. Employer conduct amounting to constructive dismissal
+      (unilateral substantial change) is invoked under this article when the
+      employee resigns in response.
+
+  - rule_id: qc-cd-2925
+    domain: prescription
+    source: "C.c.Q., art. 2925"
+    title: "Prescription — civil action (3 years)"
+    rule_text: |
+      An action to enforce a personal right or a movable real right is
+      prescribed by three years. The civil (C.c.Q.) constructive dismissal /
+      damages claim is a personal action: 3-year prescription, generally
+      running from the resiliation.
+
+  - rule_id: qc-cd-lnt-124
+    domain: employment
+    source: "L.N.T. (RLRQ, c. N-1.1), art. 124"
+    title: "CNESST complaint — dismissal without good and sufficient cause"
+    rule_text: |
+      An employee with at least 2 years of continuous service who believes
+      they were dismissed (including constructively) without good and
+      sufficient cause may file a written complaint with the CNESST within
+      45 days of the dismissal. Remedies under art. 128 can include
+      reinstatement (non-managerial employees) and lost wages. The 45-day
+      delay is strict — it is the trap date in constructive dismissal files.
+
+  - rule_id: qc-cd-lnt-123.7
+    domain: prescription
+    source: "L.N.T., art. 123.7"
+    title: "Psychological harassment complaint (2 years)"
+    rule_text: |
+      A psychological harassment complaint must be filed with the CNESST
+      within 2 years of the last manifestation of the conduct. Relevant when
+      the unilateral changes are part of a harassment pattern.
+
+  - rule_id: qc-cd-damages
+    domain: remedies
+    source: "C.c.Q., arts. 2091, 1458; Charter art. 49"
+    title: "Available damages"
+    rule_text: |
+      Principal head: indemnity in lieu of reasonable notice (art. 2091
+      C.c.Q.) covering lost salary and benefits over the notice period, less
+      mitigation earnings (duty to mitigate applies). Moral damages are
+      possible where the employer acted in bad faith or in an abusive manner
+      (art. 1458 C.c.Q. general civil liability). Punitive damages only where
+      a right protected by the Charter of human rights and freedoms was
+      unlawfully interfered with (Charter, art. 49). Under the L.N.T. recourse:
+      reinstatement and lost wages (arts. 124, 128).
+
+  - rule_id: qc-cd-analysis-hints
+    domain: analysis
+    source: "ANCHORUM practice note"
+    title: "Applying the test to typical fact patterns"
+    rule_text: |
+      For a fact pattern like: 8 years of service, $72k salary, unilateral
+      18% pay cut plus office relocation adding 45 min commute, then
+      resignation — the analysis is: (1) remuneration and place of work are
+      essential terms (art. 2085 C.c.Q.); (2) an 18% cut is a substantial
+      change and a forced relocation materially altering commute has been held
+      substantial where place of work is an essential term; (3) Farber
+      objective test likely met; (4) resignation must follow within a
+      reasonable time; (5) damages = reasonable-notice indemnity for ~8 years
+      of service (factors: age, position, market); (6) deadlines: CNESST
+      art. 124 L.N.T. complaint within 45 days (2+ years service met at 8
+      years), civil action 3 years (art. 2925 C.c.Q.). Always flag condonation
+      risk if the employee kept working under the new terms for long.

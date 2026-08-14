@@ -1,0 +1,48 @@
+{
+  "my-coder-ft": {
+    "catalog_key": "specialized/my_coder_ft_fixed-Q4_K_M",
+    "routes_to": "my-coder-ft",
+    "task_tags": [
+      "code"
+    ],
+    "quality_score": 80
+  },
+  "qwen2.5-7b-instruct": {
+    "catalog_key": "expert/Qwen2.5-7B-Instruct-Q4_K_M",
+    "routes_to": "qwen-7b",
+    "task_tags": [
+      "general",
+      "reasoning",
+      "legal"
+    ],
+    "quality_score": 85
+  },
+  "deepseek-coder-6.7b-instruct": {
+    "catalog_key": "specialized/deepseek-coder-6.7b-instruct.Q4_K_M",
+    "routes_to": "ds-coder-6.7b",
+    "task_tags": [
+      "code",
+      "reasoning"
+    ],
+    "quality_score": 90
+  },
+  "qwen2.5-1.5b-instruct": {
+    "catalog_key": "general/qwen2.5-1.5b-instruct-q4_k_m",
+    "routes_to": "qwen-1.5b",
+    "task_tags": [
+      "fast",
+      "general"
+    ],
+    "quality_score": 55
+  },
+  "general/hermes-3-llama-3.1-8b-q4_k_m": {
+    "catalog_key": "general/hermes-3-llama-3.1-8b-q4_k_m",
+    "routes_to": "hermes-8b",
+    "task_tags": [
+      "general",
+      "reasoning",
+      "code"
+    ],
+    "quality_score": 88
+  }
+}

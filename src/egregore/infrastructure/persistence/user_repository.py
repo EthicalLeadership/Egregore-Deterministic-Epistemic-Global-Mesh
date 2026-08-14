@@ -516,6 +516,27 @@ class SQLiteUserRepository:
             ],
         }
 
+    def set_password(self, user_id: str, password_hash: str) -> None:
+        self._conn().execute(
+            """
+            INSERT INTO user_passwords (user_id, password_hash, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE
+            SET password_hash = excluded.password_hash,
+                updated_at = excluded.updated_at
+            """,
+            (user_id, password_hash, _now_ns()),
+        )
+        self._conn().commit()
+
+    def get_password_hash(self, user_id: str) -> str | None:
+        row = (
+            self._conn()
+            .execute("SELECT password_hash FROM user_passwords WHERE user_id = ?", (user_id,))
+            .fetchone()
+        )
+        return str(row["password_hash"]) if row else None
+
     # ------------------------------------------------------------------ #
     # Identity
     # ------------------------------------------------------------------ #

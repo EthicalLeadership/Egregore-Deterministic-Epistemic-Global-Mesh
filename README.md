@@ -83,6 +83,16 @@ Output files in `--outdir`:
 
 The governance-layer ingest runner in this repo is **architecture-restricted** and does **not** call `Provenance.verify_chain()`; therefore `verify_chain_ok` is currently `null` in reports. Payload/key diffs are computed from the ingest batch content.
 
+## Mission Job Bridge
+
+The chat interpreter exposes job-scheduler commands through the work tree pipeline:
+
+- `/mission <intent>` — submit a mission via `WorkTreeService.submit_tree()` → `JobRouterSchedulerAdapter` → `JobScheduler` → `SQLiteJobStore`.
+- `/nodes` — list active compute nodes loaded from `config/nodes/*.json`.
+- `/status` — show scheduler queue depth and active node count.
+
+These commands are only active on the projection-plane bootstrap server (port **8443**), which wires `app.state.job_runtime`; the plain HTTP API (port 8002) does not. See [docs/MISSION_JOB_BRIDGE.md](docs/MISSION_JOB_BRIDGE.md) for the full architecture, provisioning, services table, rollback notes, and verification script.
+
 ## Notes
 
 - Optional real integrations (GPU/NVML, NATS, ANCHORUM, dfih) are intentionally not imported directly; adapters are injection-based so CI does not depend on those systems.
