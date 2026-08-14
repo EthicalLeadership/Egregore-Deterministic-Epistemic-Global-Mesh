@@ -26,6 +26,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from egregore.application.agent_registry import AgentRegistry
+from egregore.application.job_runtime import build_job_runtime
 from egregore.application.inference_service import build_inference_service_from_env
 from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
 from egregore.http_api.http.v1.chat import router as chat_router
@@ -265,6 +266,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
 
     # Discover CLI agents for chat dispatch
     app.state.agent_registry = AgentRegistry()
+    app.state.job_runtime = build_job_runtime()
 
     # Security & observability middleware
     app.add_middleware(FreezeGateMiddleware)

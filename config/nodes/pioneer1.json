@@ -1,0 +1,18 @@
+{
+  "node_id": "pioneer1",
+  "capabilities": [
+    "llm",
+    "gpu"
+  ],
+  "resource_profile": {
+    "cpu_percent": 0.0,
+    "memory_mb": 0,
+    "vram_mb": 0,
+    "disk_iops": 0,
+    "network_mbps": 0
+  },
+  "trust_score": 0.5,
+  "status": "ACTIVE",
+  "last_heartbeat_ns": 0,
+  "public_key_fingerprint": null
+}

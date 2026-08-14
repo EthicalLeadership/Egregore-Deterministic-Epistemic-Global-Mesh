@@ -115,6 +115,51 @@ SQLITE_MIGRATIONS: Migrations = [
             CREATE INDEX IF NOT EXISTS idx_vertical_grants_user_id ON vertical_grants(user_id);
             """),
     ),
+    (
+        3,
+        "init_user_passwords",
+        lambda conn: conn.executescript('''
+            CREATE TABLE IF NOT EXISTS user_passwords (
+                user_id TEXT NOT NULL PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            '''),
+    ),
+    (
+        4,
+        "init_jobs_and_work_trees",
+        lambda conn: conn.executescript('''
+            CREATE TABLE IF NOT EXISTS jobs (
+                job_id TEXT NOT NULL PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                trace_id TEXT NOT NULL,
+                priority_tier TEXT NOT NULL,
+                sla_latency_target_ms INTEGER NOT NULL,
+                sla_throughput_target_qps REAL NOT NULL,
+                sla_reliability_target REAL NOT NULL,
+                sla_class TEXT NOT NULL,
+                classification_json TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                created_at_ns INTEGER NOT NULL,
+                scheduled_at_ns INTEGER NOT NULL DEFAULT 0,
+                started_at_ns INTEGER NOT NULL DEFAULT 0,
+                completed_at_ns INTEGER NOT NULL DEFAULT 0,
+                assigned_node_id TEXT NOT NULL DEFAULT '',
+                metadata_json TEXT NOT NULL DEFAULT '{}'
+            );
+            CREATE INDEX IF NOT EXISTS idx_jobs_tenant_status ON jobs(tenant_id, status);
+
+            CREATE TABLE IF NOT EXISTS work_trees (
+                tree_id TEXT NOT NULL PRIMARY KEY,
+                schema_version INTEGER NOT NULL,
+                root_id TEXT NOT NULL,
+                tree_json TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+            '''),
+    ),
 ]
 
 

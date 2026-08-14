@@ -24,6 +24,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
+import json
+import getpass
+import hashlib
 import secrets
 import sys
 
@@ -124,6 +128,105 @@ def _get_user_repo():
     )
 
     return SQLiteUserRepository()
+
+
+def _nodes_dir() -> Path:
+    repo_root = Path(__file__).resolve().parents[3]
+    nodes_dir = repo_root / "config" / "nodes"
+    nodes_dir.mkdir(parents=True, exist_ok=True)
+    return nodes_dir
+
+
+def cmd_node_register(args: argparse.Namespace) -> int:
+    nodes_dir = _nodes_dir()
+    node_file = nodes_dir / f"{args.node_id}.json"
+
+    data = {
+        "node_id": args.node_id,
+        "capabilities": args.capabilities,
+        "resource_profile": {
+            "cpu_percent": args.cpu_percent,
+            "memory_mb": args.memory_mb,
+            "vram_mb": args.vram_mb,
+            "disk_iops": args.disk_iops,
+            "network_mbps": args.network_mbps,
+        },
+        "trust_score": 0.5,
+        "status": "ACTIVE",
+        "last_heartbeat_ns": 0,
+        "public_key_fingerprint": None,
+    }
+
+    node_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    print(canonical_dumps({"ok": True, "node_id": args.node_id, "file": str(node_file)}, indent=2))
+    return 0
+
+
+def cmd_node_list(args: argparse.Namespace) -> int:
+    nodes_dir = _nodes_dir()
+    files = sorted(nodes_dir.glob("*.json"))
+    nodes = []
+    for f in files:
+        try:
+            nodes.append(json.loads(f.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+    print(canonical_dumps({"nodes": nodes}, indent=2))
+    return 0
+
+
+def cmd_account_create(args: argparse.Namespace) -> int:
+    repo = _get_user_repo()
+
+    # 1. Create account with provisional owner, then fix owner after user exists.
+    account_id = repo.create_account(name=args.account_name, owner_user_id="cli")
+
+    # 2. Create admin user under that account.
+    user = repo.create_user(
+        account_id=account_id,
+        username=args.admin_username,
+        email=args.email,
+        roles=["admin"],
+        status="active",
+    )
+
+    # 3. Set real owner_user_id.
+    repo._conn().execute(
+        "UPDATE accounts SET owner_user_id = ? WHERE id = ?",
+        (user.id, account_id),
+    )
+    repo._conn().commit()
+
+    # 4. Password entry, never via argv.
+    password = getpass.getpass("Password: ")
+    confirm = getpass.getpass("Confirm password: ")
+    if password != confirm:
+        print("ERROR: Passwords do not match.", file=sys.stderr)
+        return 1
+    if len(password) < 8:
+        print("ERROR: Password must be at least 8 characters.", file=sys.stderr)
+        return 1
+
+    salt = secrets.token_bytes(16)
+    n, r, p = 16384, 8, 1
+    digest = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=n, r=r, p=p).hex()
+    stored = f"scrypt${n}${r}${p}${salt.hex()}${digest}"
+
+    repo.set_password(user.id, stored)
+
+    print(
+        canonical_dumps(
+            {
+                "account_id": account_id,
+                "account_name": args.account_name,
+                "admin_user_id": user.id,
+                "admin_username": user.username,
+                "status": "created",
+            },
+            indent=2,
+        )
+    )
+    return 0
 
 
 def cmd_users_create(args: argparse.Namespace) -> int:
@@ -308,6 +411,37 @@ def main(argv: list[str] | None = None) -> int:
     p_users_invite.add_argument("--verticals", nargs="*", default=[])
     p_users_invite.add_argument("--expires-in-seconds", type=int, default=86400)
     p_users_invite.set_defaults(func=cmd_users_invite)
+
+    p_account = subparsers.add_parser(
+        "account", help="Create an account with an admin user and password"
+    )
+    account_sub = p_account.add_subparsers(dest="account_command", required=True)
+
+    p_account_create = account_sub.add_parser(
+        "create", help="Create account, admin user, and set password"
+    )
+    p_account_create.add_argument("account_name", help="Unique account name")
+    p_account_create.add_argument("admin_username", help="Admin username")
+    p_account_create.add_argument("--email", default=None)
+    p_account_create.set_defaults(func=cmd_account_create)
+
+    p_node = subparsers.add_parser("node", help="Register or list compute nodes")
+    node_sub = p_node.add_subparsers(dest="node_command", required=True)
+
+    p_node_register = node_sub.add_parser("register", help="Register a node")
+    p_node_register.add_argument("node_id", help="Unique node identifier")
+    p_node_register.add_argument(
+        "--capabilities", nargs="*", default=[], help="Capability tags e.g. llm gpu"
+    )
+    p_node_register.add_argument("--cpu-percent", type=float, default=0.0)
+    p_node_register.add_argument("--memory-mb", type=int, default=0)
+    p_node_register.add_argument("--vram-mb", type=int, default=0)
+    p_node_register.add_argument("--disk-iops", type=int, default=0)
+    p_node_register.add_argument("--network-mbps", type=int, default=0)
+    p_node_register.set_defaults(func=cmd_node_register)
+
+    p_node_list = node_sub.add_parser("list", help="List registered nodes")
+    p_node_list.set_defaults(func=cmd_node_list)
 
     args = parser.parse_args(argv)
     return args.func(args)

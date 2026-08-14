@@ -1,0 +1,92 @@
+# Quebec — CNESST/LATMP reprisals & SAAQ insurance coordination
+# Curated reference for ANCHORUM legal chat grounding.
+# WARNING: Verify current consolidation on LégisQuébec and current case law on
+# CanLII before relying on any citation in a proceeding.
+
+knowledge_base:
+  name: "Quebec CNESST reprisals and SAAQ insurance coordination"
+  jurisdiction: "Quebec"
+  disclaimer: |
+    Article numbers and citations must be verified against the current official
+    consolidation on LégisQuébec and current case law on CanLII before any use
+    in a proceeding. This is legal information, not legal advice.
+
+rules:
+  - rule_id: qc-latmp-32
+    domain: employment
+    source: "L.A.T.M.P. (RLRQ, c. A-3.001), art. 32"
+    title: "Prohibition of reprisals after a work injury or CNESST claim"
+    rule_text: |
+      The employer may not dismiss, suspend or transfer a worker, impose
+      discriminatory measures or reprisals, or impose any other sanction
+      because the worker suffered an employment injury (lésion professionnelle)
+      or exercised a right under the Act. A transfer to a different shift two
+      weeks after a CNESST claim is precisely the kind of measure art. 32
+      targets. The worker may choose the grievance procedure (if unionized) or
+      a written complaint to the CNESST.
+
+  - rule_id: qc-latmp-255
+    domain: employment
+    source: "L.A.T.M.P., art. 255"
+    title: "Rebuttable presumption of reprisal — burden on the employer"
+    rule_text: |
+      If the sanction or measure occurs within SIX MONTHS of the date the
+      worker suffered the employment injury or exercised a right under the
+      Act, there is a PRESUMPTION that it was imposed because of the injury or
+      the exercise of the right. The burden then falls on the EMPLOYER to
+      demonstrate, to the CNESST's satisfaction, another good and sufficient
+      cause (cause juste et suffisante) — a serious, genuine motive, not a
+      pretext. (Verified against CNESST policy 6.02; note the presumption is
+      art. 255, while art. 32 is the substantive prohibition.)
+
+  - rule_id: qc-latmp-252
+    domain: prescription
+    source: "L.A.T.M.P., art. 252"
+    title: "Reprisal complaint deadline — 30 days"
+    rule_text: |
+      The art. 32 reprisal complaint must be made in writing within 30 days
+      of the worker's knowledge of the act, sanction or measure; a copy must
+      be transmitted to the employer. Relief from a late filing requires a
+      reasonable motive — ignorance of the law is not one.
+
+  - rule_id: qc-latmp-257
+    domain: remedies
+    source: "L.A.T.M.P., arts. 256-257, 260"
+    title: "Remedies for reprisal"
+    rule_text: |
+      Pending the decision the CNESST may order interim reinstatement with
+      salary and benefits (art. 256). On the merits it may order reinstatement
+      with full rights and privileges, annul the sanction, order the
+      discriminatory measures to cease, and order payment of lost salary and
+      benefits (art. 257), plus capitalized interest from the filing of the
+      complaint (art. 260). Wages earned elsewhere during the period are
+      deducted.
+
+  - rule_id: qc-saaq-primary
+    domain: insurance
+    source: "Loi sur l'assurance automobile (RLRQ, c. A-25), arts. 44 ff."
+    title: "SAAQ income replacement is primary; coordination runs through the private policy"
+    rule_text: |
+      The SAAQ income replacement indemnity (up to 90% of net income, paid
+      every 14 days) is NOT automatically reduced because the victim also
+      receives private short-term disability. Coordination works the other
+      way: private salary-insurance plans reduce THEIR benefits by amounts
+      payable under public schemes (LAA, LATMP, QPP) when the contract or
+      collective agreement contains an integration/offset clause. So: SAAQ
+      pays primary; whether the private STD tops up or offsets is a matter of
+      reading the policy's coordination clause, not a SAAQ rule.
+
+  - rule_id: qc-notice-cap
+    domain: employment
+    source: "C.c.Q., art. 2091; jurisprudence (upper bound to verify on CanLII)"
+    title: "Indemnity in lieu of notice — quantum"
+    rule_text: |
+      For an indeterminate-term employee terminated without cause, damages
+      are the indemnity in lieu of reasonable notice under art. 2091 C.c.Q.,
+      assessed on length of service, age, position, salary and availability of
+      comparable employment. Quebec and Canadian jurisprudence generally
+      treats ~24 months as the upper bound absent exceptional circumstances
+      (often attributed to the Lachance line of cases — verify the exact
+      citation on CanLII before relying on it). Example anchor: 6 years of
+      service typically supports a range well below that ceiling; the exact
+      quantum is fact-specific and argued, not computed by formula.

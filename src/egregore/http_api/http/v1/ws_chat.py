@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 
+import anyio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from egregore.application.chat_interpreter import ChatContext, execute_message
@@ -18,6 +20,7 @@ from egregore.infrastructure.persistence.user_repository import (
 )
 from egregore.models.user import UserIdentity
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -62,6 +65,7 @@ def _context_from_websocket(websocket: WebSocket, session_id: str) -> ChatContex
 
     inference_service = getattr(websocket.app.state, "inference_service", None)
     agent_registry = getattr(websocket.app.state, "agent_registry", None)
+    job_runtime = getattr(websocket.app.state, "job_runtime", None)
     return ChatContext(
         session_id=session_id,
         user_id=user_id,
@@ -70,6 +74,7 @@ def _context_from_websocket(websocket: WebSocket, session_id: str) -> ChatContex
         env={
             "inference_service": inference_service,
             "agent_registry": agent_registry,
+            "job_runtime": job_runtime,
             "caller_identity_token": caller_identity_token,
         },
     )
@@ -89,9 +94,14 @@ async def chat_ws(websocket: WebSocket, session_id: str) -> None:
         while True:
             message = await websocket.receive_text()
             try:
-                result = execute_message(message, context)
+                # chat interpreter is synchronous and may load/run a GGUF model;
+                # run it in a thread so the websocket can heartbeat/close cleanly.
+                result = await anyio.to_thread.run_sync(
+                    execute_message, message, context
+                )
                 await websocket.send_text(dumps_chat_result(payload=result))
             except Exception as exc:
+                logger.exception("WS chat execute_message failed")
                 error_text = str(exc) or f"{type(exc).__name__}"
                 await websocket.send_text(
                     dumps_chat_error(command="unknown", error=error_text)
