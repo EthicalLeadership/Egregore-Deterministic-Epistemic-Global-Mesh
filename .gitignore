@@ -174,3 +174,23 @@ consent_ledger.jsonl
 fetched/
 # Email tab consent ledger
 email_consent_ledger.jsonl
+
+# Legacy archive / backup
+_legacy_archive_*/
+egregore_legacy_*/
+
+# Generated data
+rag/cases/*.bin
+rag/cases/*.pickle
+rag/cases/chroma.sqlite3
+rag/cases/chroma.sqlite3-journal
+
+# Legacy archive / backup
+_legacy_archive_*/
+egregore_legacy_*/
+
+# Generated data
+rag/cases/*.bin
+rag/cases/*.pickle
+rag/cases/chroma.sqlite3
+rag/cases/chroma.sqlite3-journal
