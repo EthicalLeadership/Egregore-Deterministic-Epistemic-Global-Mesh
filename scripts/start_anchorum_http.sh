@@ -3,7 +3,9 @@
 # Serves the ANCHORUM customer site on port 8080 with no TLS.
 # This lightweight app does NOT load the LLM; it only serves dashboard pages.
 
-REPO_ROOT="/home/kark/blackstar"
+# Derive the repo root from this script's location so the correct answer is
+# automatic on any node, regardless of symlinks (~/blackstar, /opt/egregore).
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
 # Load .env so user-managed keys are available.

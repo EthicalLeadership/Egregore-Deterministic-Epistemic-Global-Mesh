@@ -6,6 +6,7 @@ import LogViewer from './components/LogViewer';
 import SettingsPanel from './components/SettingsPanel';
 import HealthBar from './components/HealthBar';
 import ToastNotification from './components/ToastNotification';
+import AnchorumWorkspace from './components/anchorum/AnchorumWorkspace';
 import { useDashboard } from './hooks/useDashboard';
 import { Loader2 } from 'lucide-react';
 
@@ -24,6 +25,11 @@ function App() {
 
   const [logsOpen, setLogsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showAnchorum, setShowAnchorum] = useState(false);
+
+  if (showAnchorum) {
+    return <AnchorumWorkspace />;
+  }
 
   if (loading) {
     return (
@@ -40,6 +46,7 @@ function App() {
       <Header
         onOpenLogs={() => setLogsOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenAnchorum={() => setShowAnchorum(true)}
         isConnected={isConnected}
       />
 

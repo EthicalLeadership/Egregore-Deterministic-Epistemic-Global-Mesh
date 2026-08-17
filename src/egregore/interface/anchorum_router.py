@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+import sys
 import threading
 import time
 import uuid
@@ -69,6 +70,30 @@ class _IngestRateLimiter:
 
 
 _ingest_limiter = _IngestRateLimiter(rate=0.2, capacity=5)
+
+_ANCHORUM_TOOLS_PATH = Path(
+    os.environ.get(
+        "EGREGORE_ANCHORUM_TOOLS",
+        str(Path(__file__).resolve().parents[3] / "config" / "anchorum_tools.yaml"),
+    )
+)
+
+
+def _load_tools() -> list[dict[str, Any]]:
+    """Load the external tool registry from YAML, fail-soft on missing/bad file."""
+    try:
+        import yaml
+
+        raw = yaml.safe_load(_ANCHORUM_TOOLS_PATH.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return []
+    tools = raw.get("tools", []) if isinstance(raw, dict) else []
+    return [
+        t
+        for t in tools
+        if isinstance(t, dict) and {"id", "kind", "target"}.issubset(t)
+    ]
+
 
 # Standalone ingest router (mounted at the root so the Stage-4 connector can POST
 # to ``/ingest``).
@@ -420,6 +445,14 @@ def _run_anchorum_job(job_id: str, request: BatchRequest) -> None:
             result=result.get("result_summary", {}),
             report_path=result.get("report_path"),
         )
+        try:
+            from egregore.interface import case_rag
+
+            case_rag.index_case(request.case_id)
+        except Exception as exc:  # noqa: BLE001 — indexing is auxiliary
+            logger.warning(
+                "case RAG auto-index failed for %s: %s", request.case_id, exc
+            )
     except Exception as exc:  # noqa: BLE001
         logger.exception("Job %s failed", job_id)
         _jobs.update(
@@ -634,13 +667,62 @@ def delete_case(case_id: str) -> dict[str, Any]:
                 "delete it on the filesystem that owns it.",
             )
         raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+    from egregore.interface import case_rag
+
+    index_removed = case_rag.delete_case_index(case_id)
     return {
         "case_id": case_id,
         "deleted": True,
         "files_removed": removed,
         "workdir_removed": workdir_removed,
+        "index_removed": index_removed,
         "note": "Provenance .zarc chains are append-only evidence and were kept.",
     }
+
+
+class RagQueryRequest(BaseModel):
+    query: str
+    top_k: int = Field(default=4, ge=1, le=20)
+
+
+class RagIndexRequest(BaseModel):
+    extra_dirs: list[str] = Field(
+        default_factory=list,
+        description="Additional evidence directories to index (text-like files only).",
+    )
+
+
+@router.post("/cases/{case_id}/rag/index")
+def index_case_rag(case_id: str, request: RagIndexRequest | None = None) -> dict[str, Any]:
+    """(Re)build the case's isolated vector store from its on-disk text."""
+    _validate_case_id_or_422(case_id)
+    if not _case_exists(case_id):
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+    from egregore.interface import case_rag
+
+    extra_dirs = (request.extra_dirs if request else []) or []
+    for d in extra_dirs:
+        if not Path(d).is_dir():
+            raise HTTPException(
+                status_code=422, detail=f"extra dir is not a directory: {d}"
+            )
+    try:
+        return case_rag.index_case(case_id, extra_dirs=extra_dirs)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"indexing failed: {exc}") from exc
+
+
+@router.post("/cases/{case_id}/rag/query")
+def query_case_rag(case_id: str, request: RagQueryRequest) -> dict[str, Any]:
+    """Top-k relevant chunks for a query, with source citations."""
+    _validate_case_id_or_422(case_id)
+    from egregore.interface import case_rag
+
+    try:
+        chunks = case_rag.query_case(case_id, request.query, top_k=request.top_k)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"query failed: {exc}") from exc
+    return {"case_id": case_id, "chunks": chunks}
 
 
 @router.get("/cases/{case_id}")
@@ -669,6 +751,12 @@ def get_timeline(case_id: str) -> dict[str, Any]:
     return {"timeline": report.get("master_timeline", [])}
 
 
+@router.get("/tools")
+def list_tools() -> dict[str, Any]:
+    """List external tools available from the ANCHORUM workspace."""
+    return {"tools": _load_tools()}
+
+
 @router.get("/cases/{case_id}/summary")
 def get_summary(case_id: str) -> dict[str, Any]:
     """Get a compact case summary."""
@@ -685,6 +773,40 @@ def get_summary(case_id: str) -> dict[str, Any]:
         "medium_count": len(report.get("medium_findings", [])),
         "low_count": len(report.get("low_findings", [])),
     }
+
+
+class AttachSourcesRequest(BaseModel):
+    extra_dirs: list[str] = Field(..., min_length=1)
+
+
+@router.get("/cases/{case_id}/sources")
+def get_case_sources(case_id: str) -> dict[str, Any]:
+    """List all source files feeding this case's RAG index."""
+    _validate_case_id_or_422(case_id)
+    if not _case_exists(case_id):
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+    from egregore.interface import case_rag
+
+    return case_rag.list_case_sources(case_id)
+
+
+@router.post("/cases/{case_id}/sources/attach")
+def attach_case_sources(
+    case_id: str, request: AttachSourcesRequest
+) -> dict[str, Any]:
+    """Attach extra evidence directories to a case and persist them."""
+    _validate_case_id_or_422(case_id)
+    if not _case_exists(case_id):
+        raise HTTPException(status_code=404, detail=f"Case {case_id} not found")
+    from egregore.interface import case_rag
+
+    for d in request.extra_dirs:
+        if not Path(d).is_dir():
+            raise HTTPException(status_code=422, detail=f"Not a directory: {d}")
+    existing = case_rag.get_extra_dirs(case_id)
+    merged = sorted(set(existing) | set(request.extra_dirs))
+    case_rag.set_extra_dirs(case_id, merged)
+    return {"case_id": case_id, "extra_dirs": merged}
 
 
 @router.post("/batch/fuse")
@@ -755,3 +877,465 @@ def ingest_event(event: IngestionEvent, request: Request) -> IngestReceipt:
         raise HTTPException(
             status_code=500, detail=f"Ingest staging failed: {exc}"
         ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Desktop wire — consent-gated file fetch + IMAP ingest
+#
+# The React desktop panels (AnchorumLayout / FileFetchPanel /
+# EmailIngestPanel) call these endpoints through the Vite dev proxy or the
+# Node gateway. They reuse the pure, headless-testable consent/staging
+# logic from the desktop modules (``file_fetch.py`` / ``email_ingest.py``)
+# so the tamper-evident consent ledger and the on-disk staging/manifest
+# behaviour are byte-identical to the Tk app.
+# ---------------------------------------------------------------------------
+_REPO_ROOT = str(Path(__file__).resolve().parents[3])
+
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+
+class _FsFetchRequest(BaseModel):
+    paths: list[str] = Field(..., min_length=1)
+    case_id: str = Field(..., min_length=1)
+    consent: str = Field(
+        ..., pattern="^(once|session|refuse)$",
+        description="Consent decision recorded in the ledger.",
+    )
+
+
+class _ImapConfigIn(BaseModel):
+    host: str = Field(..., min_length=1)
+    port: int = Field(default=993, ge=1, le=65535)
+    username: str = Field(..., min_length=1)
+    password: str = ""
+    use_ssl: bool = True
+
+
+class _ImapConnectRequest(BaseModel):
+    config: _ImapConfigIn
+
+
+class _ImapFetchRequest(BaseModel):
+    config: _ImapConfigIn
+    folders: list[str] = Field(..., min_length=1)
+    case_id: str = Field(..., min_length=1)
+    consent: str = Field(
+        ..., pattern="^(once|session|refuse)$",
+        description="Consent decision recorded in the ledger.",
+    )
+
+
+# In-memory session grants: scoped to the authenticated operator + path
+# prefixes / account, live only while the server process runs. Mirrors the
+# desktop app's in-memory session grants (which die with the app).
+_session_grants: dict[str, list[dict[str, Any]]] = {}
+
+
+def _grant_key(user_id: str, kind: str) -> str:
+    return f"{kind}:{user_id}"
+
+
+def _fs_session_grant(user_id: str, paths: list[str]) -> str | None:
+    for grant in _session_grants.get(_grant_key(user_id, "fs"), []):
+        prefixes = cast(list[str], grant.get("prefixes", []))
+        if all(
+            any(str(p) == pre or str(p).startswith(str(pre) + os.sep) for pre in prefixes)
+            for p in paths
+        ):
+            return cast(str, grant["hash"])
+    return None
+
+
+def _imap_session_grant(user_id: str, account: str) -> str | None:
+    for grant in _session_grants.get(_grant_key(user_id, "imap"), []):
+        if grant.get("account") == account:
+            return cast(str, grant["hash"])
+    return None
+
+
+def _fs_dedupe(paths: list[str]) -> list[str]:
+    """Drop selections already covered by a selected ancestor (mirrors Tk)."""
+    return [
+        p for p in paths
+        if not any(p != o and p.startswith(o + os.sep) for o in paths)
+    ]
+
+
+def _user_id(request: Request) -> str:
+    return getattr(request.state, "user_id", "api_user") or "api_user"
+
+
+@router.get("/fs/partitions")
+def fs_partitions() -> list[dict[str, Any]]:
+    """List real mounted filesystems (pseudo-fs filtered), root first."""
+    from file_fetch import scan_partitions
+
+    parts = scan_partitions()
+    return [
+        {
+            "mount": p.mountpoint,
+            "device": p.device,
+            "fstype": p.fstype,
+            "total": p.total_bytes or 0,
+            "free": p.free_bytes or 0,
+            "readable": p.total_bytes is not None,
+        }
+        for p in parts
+    ]
+
+
+@router.get("/fs/list")
+def fs_list(path: str) -> dict[str, Any]:
+    """List one directory's immediate children (lazy tree browsing)."""
+    from pathlib import Path
+
+    p = Path(path).resolve()
+    if not p.exists():
+        raise HTTPException(status_code=404, detail=f"Path does not exist: {path}")
+    if not p.is_dir():
+        raise HTTPException(status_code=422, detail=f"Not a directory: {path}")
+    try:
+        entries = list(p.iterdir())
+    except OSError as exc:
+        raise HTTPException(status_code=403, detail=f"Access denied: {exc}") from exc
+
+    def _entry(e: Path) -> dict[str, Any]:
+        try:
+            is_dir = e.is_dir()
+            size = 0 if is_dir else e.stat().st_size
+        except OSError:
+            is_dir = False
+            size = 0
+        return {
+            "name": e.name,
+            "path": str(e),
+            "type": "directory" if is_dir else "file",
+            "size": size,
+        }
+
+    dirs = sorted((e for e in entries if e.is_dir()), key=lambda e: e.name.lower())
+    files = sorted((e for e in entries if not e.is_dir()), key=lambda e: e.name.lower())
+    children = [_entry(e) for e in dirs + files]
+    return {
+        "name": p.name or str(p),
+        "path": str(p),
+        "type": "directory",
+        "size": 0,
+        "children": children,
+    }
+
+
+@router.post("/fs/probe")
+def fs_probe(request: _FsFetchRequest, req: Request) -> dict[str, Any]:
+    """Count files/bytes under the selection and write a ledger ``request``."""
+    from pathlib import Path
+
+    from file_fetch import ConsentLedger, probe_paths
+
+    paths = [Path(p) for p in _fs_dedupe(request.paths)]
+    probe = probe_paths(paths)
+    ConsentLedger().append(
+        "request",
+        paths=[str(p) for p in paths],
+        case=request.case_id,
+        file_count=probe.file_count,
+        total_bytes=probe.total_bytes,
+        operator=_user_id(req),
+    )
+    return {
+        "file_count": probe.file_count,
+        "total_bytes": probe.total_bytes,
+        "errors": probe.errors,
+    }
+
+
+@router.post("/fs/fetch")
+def fs_fetch(request: _FsFetchRequest, req: Request) -> dict[str, Any]:
+    """Stage the selected files after recording the consent decision.
+
+    ``consent=once`` logs a fresh grant; ``consent=session`` logs a session
+    grant reused on subsequent fetches within this server run;
+    ``consent=refuse`` logs the refusal and stages nothing.
+    """
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from file_fetch import (
+        ConsentLedger,
+        _sha256_file,
+        derive_staging_dir,
+        probe_paths,
+        stage_fetch,
+    )
+
+    paths = [Path(p) for p in _fs_dedupe(request.paths)]
+    ledger = ConsentLedger()
+    user = _user_id(req)
+    probe = probe_paths(paths)
+
+    if request.consent == "refuse":
+        ledger.append(
+            "refuse",
+            paths=[str(p) for p in paths],
+            case=request.case_id,
+            file_count=probe.file_count,
+            total_bytes=probe.total_bytes,
+            operator=user,
+        )
+        return {
+            "staged": False,
+            "file_count": 0,
+            "message_count": 0,
+            "total_bytes": 0,
+            "errors": ["refused by user"],
+        }
+
+    grant_hash = _fs_session_grant(user, request.paths)
+    via_session = False
+    if grant_hash is None and request.consent == "session":
+        entry = ledger.append(
+            "grant_session",
+            paths=[str(p) for p in paths],
+            case=request.case_id,
+            file_count=probe.file_count,
+            total_bytes=probe.total_bytes,
+            operator=user,
+        )
+        # Normalize to str paths for prefix matching against later selections.
+        prefixes = [str(p) for p in paths]
+        _session_grants.setdefault(_grant_key(user, "fs"), []).append(
+            {"prefixes": prefixes, "hash": entry["hash"]}
+        )
+        grant_hash = entry["hash"]
+    elif grant_hash is None:
+        entry = ledger.append(
+            "grant_once",
+            paths=[str(p) for p in paths],
+            case=request.case_id,
+            file_count=probe.file_count,
+            total_bytes=probe.total_bytes,
+            operator=user,
+        )
+        grant_hash = entry["hash"]
+    else:
+        via_session = True
+        ledger.append(
+            "request",
+            paths=[str(p) for p in paths],
+            case=request.case_id,
+            file_count=probe.file_count,
+            total_bytes=probe.total_bytes,
+            operator=user,
+            via_session=grant_hash,
+        )
+
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    common = Path(os.path.commonpath([str(p) for p in paths]))
+    staging = derive_staging_dir(request.case_id, common, ts)
+    manifest = stage_fetch(
+        paths, staging, grant_hash, case=request.case_id
+    )
+    manifest_path = staging / "manifest.json"
+    ledger.append(
+        "fetch_complete",
+        case=manifest["case"],
+        consent_hash=manifest["consent_hash"],
+        staging_dir=manifest["staging_dir"],
+        file_count=manifest["file_count"],
+        total_bytes=manifest["total_bytes"],
+        error_count=len(manifest["errors"]),
+        manifest_sha256=_sha256_file(manifest_path),
+        operator=user,
+    )
+    return {
+        "staged": True,
+        "via_session": via_session,
+        "staging_dir": str(staging),
+        "file_count": manifest["file_count"],
+        "message_count": 0,
+        "total_bytes": manifest["total_bytes"],
+        "errors": manifest["errors"],
+        "consent_hash": grant_hash,
+    }
+
+
+@router.get("/imap/ledger")
+def imap_ledger() -> dict[str, Any]:
+    """Tamper-evident email consent ledger status (intact / broken chain)."""
+    from email_ingest import EMAIL_LEDGER_PATH
+    from file_fetch import ConsentLedger
+
+    intact, count, broken_at = ConsentLedger(EMAIL_LEDGER_PATH).verify()
+    return {
+        "ok": intact,
+        "entries": count,
+        "broken_at": broken_at,
+        "message": f"intact ({count} entries)" if intact else f"BROKEN CHAIN at {broken_at}",
+    }
+
+
+@router.post("/imap/connect")
+def imap_connect(request: _ImapConnectRequest) -> dict[str, Any]:
+    """Connect and list folders. Fail-soft: returns the error string."""
+    from email_ingest import ImapConfig, list_folders
+
+    config = ImapConfig(
+        host=request.config.host,
+        port=request.config.port,
+        user=request.config.username,
+        password=request.config.password,
+        use_ssl=request.config.use_ssl,
+    )
+    ok, data = list_folders(config)
+    if not ok:
+        raise HTTPException(status_code=502, detail=f"IMAP error: {data}")
+    folders = sorted(data)
+    return {"folders": [{"name": f, "flags": "", "messages": -1} for f in folders]}
+
+
+@router.post("/imap/probe")
+def imap_probe(request: _ImapFetchRequest, req: Request) -> dict[str, Any]:
+    """Count messages per folder and write a ledger ``request``."""
+    from email_ingest import (
+        EMAIL_LEDGER_PATH,
+        ImapConfig,
+        count_messages,
+    )
+    from file_fetch import ConsentLedger
+
+    config = ImapConfig(
+        host=request.config.host,
+        port=request.config.port,
+        user=request.config.username,
+        password=request.config.password,
+        use_ssl=request.config.use_ssl,
+    )
+    ok, maybe_counts = count_messages(config, request.folders)
+    if not ok:
+        raise HTTPException(status_code=502, detail=f"IMAP error: {maybe_counts}")
+    counts = cast(dict[str, int], maybe_counts)
+    total = sum(v for v in counts.values() if v > 0)
+    ConsentLedger(EMAIL_LEDGER_PATH).append(
+        "request",
+        account=config.account,
+        folders=request.folders,
+        case=request.case_id,
+        message_count=total,
+        operator=_user_id(req),
+    )
+    return {
+        "file_count": total,
+        "total_bytes": 0,
+        "errors": [],
+        "per_folder": counts,
+    }
+
+
+@router.post("/imap/fetch")
+def imap_fetch(request: _ImapFetchRequest, req: Request) -> dict[str, Any]:
+    """Stage every message in the selected folders after consent.
+
+    Same consent semantics as ``/fs/fetch``. Cancellation between messages
+    is clean: the manifest records exactly what was staged.
+    """
+    from datetime import UTC, datetime
+
+    from email_ingest import (
+        EMAIL_LEDGER_PATH,
+        ImapConfig,
+        derive_email_staging_dir,
+        stage_email_fetch,
+    )
+    from file_fetch import ConsentLedger, _sha256_file
+
+    ledger = ConsentLedger(EMAIL_LEDGER_PATH)
+    user = _user_id(req)
+    config = ImapConfig(
+        host=request.config.host,
+        port=request.config.port,
+        user=request.config.username,
+        password=request.config.password,
+        use_ssl=request.config.use_ssl,
+    )
+
+    from email_ingest import count_messages as _count_messages
+
+    _ok, maybe_counts = _count_messages(config, request.folders)
+    counts = cast(dict[str, int], maybe_counts) if _ok else {}
+    total = sum(v for v in counts.values() if v > 0)
+
+    if request.consent == "refuse":
+        ledger.append(
+            "refuse",
+            account=config.account,
+            folders=request.folders,
+            case=request.case_id,
+            message_count=total,
+            operator=user,
+        )
+        return {
+            "staged": False,
+            "file_count": 0,
+            "message_count": 0,
+            "total_bytes": 0,
+            "errors": ["refused by user"],
+        }
+
+    grant_hash = _imap_session_grant(user, config.account)
+    if grant_hash is None and request.consent == "session":
+        entry = ledger.append(
+            "grant_session",
+            account=config.account,
+            folders=request.folders,
+            case=request.case_id,
+            message_count=total,
+            operator=user,
+        )
+        _session_grants.setdefault(_grant_key(user, "imap"), []).append(
+            {"account": config.account, "hash": entry["hash"]}
+        )
+        grant_hash = entry["hash"]
+    elif grant_hash is None:
+        entry = ledger.append(
+            "grant_once",
+            account=config.account,
+            folders=request.folders,
+            case=request.case_id,
+            message_count=total,
+            operator=user,
+        )
+        grant_hash = entry["hash"]
+
+    ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    staging = derive_email_staging_dir(request.case_id, config.account, ts)
+    manifest = stage_email_fetch(
+        config,
+        request.folders,
+        staging,
+        grant_hash,
+        case=request.case_id,
+    )
+    manifest_path = staging / "manifest.json"
+    ledger.append(
+        "fetch_complete",
+        case=manifest["case"],
+        consent_hash=manifest["consent_hash"],
+        staging_dir=manifest["staging_dir"],
+        message_count=manifest["message_count"],
+        total_bytes=manifest["total_bytes"],
+        cancelled=manifest["cancelled"],
+        error_count=len(manifest["errors"]),
+        manifest_sha256=_sha256_file(manifest_path),
+        operator=user,
+    )
+    return {
+        "staged": True,
+        "staging_dir": str(staging),
+        "file_count": manifest["message_count"],
+        "message_count": manifest["message_count"],
+        "total_bytes": manifest["total_bytes"],
+        "errors": manifest["errors"],
+        "cancelled": manifest["cancelled"],
+        "consent_hash": grant_hash,
+    }

@@ -35,7 +35,7 @@ from egregore.rfe.integration.mapper import (
     job_request_to_work_unit,
     work_unit_to_job_response,
 )
-from egregore.paths import repo_root
+from egregore.shared.paths import repo_root
 from egregore.shared.canonical import canonical_dumps
 
 DB_PATH = repo_root() / "rag/cell_protocol.db"

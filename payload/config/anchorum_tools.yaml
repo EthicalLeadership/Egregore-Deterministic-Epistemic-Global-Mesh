@@ -1,0 +1,19 @@
+# ANCHORUM external tool registry.
+# Mounted at GET /api/v1/anchorum/tools and rendered in the Dossiers tab.
+# kind: local_exec | url
+# target: executable path (local_exec) or URL (url)
+
+tools:
+  - id: red-dart
+    name: Red Dart
+    description: Client failover and backup snapshot tool.
+    kind: local_exec
+    target: /opt/red-dart/bin/red-dart
+    enabled: false
+
+  - id: ocint
+    name: OCINT
+    description: Open-source intelligence module (placeholder).
+    kind: url
+    target: http://localhost:9999
+    enabled: false

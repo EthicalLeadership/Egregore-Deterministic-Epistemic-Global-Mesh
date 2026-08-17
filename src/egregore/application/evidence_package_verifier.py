@@ -398,15 +398,6 @@ def _verify_package_dir(
     trusted_fingerprints: Mapping[str, str] | None,
     tsa_verify: Any | None,
 ) -> PackageVerificationResult:
-
-
-def _verify_package_dir(
-    root: Path,
-    *,
-    tsa_trust_dir: Path | None,
-    min_witnesses: int,
-    trusted_fingerprints: Mapping[str, str] | None,
-) -> PackageVerificationResult:
     checks: dict[str, bool] = {}
     failures: list[str] = []
 

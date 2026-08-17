@@ -9,6 +9,24 @@ export default defineConfig({
     server: {
         port: 5173,
         proxy: {
+            // ANCHORUM endpoints are served by the ANCHORUM plain-HTTP site
+            // (anchorum_http) on :8080. Match before the generic /api proxy.
+            "/api/v1/anchorum/fs": {
+                target: "http://localhost:8080",
+                changeOrigin: true,
+            },
+            "/api/v1/anchorum/imap": {
+                target: "http://localhost:8080",
+                changeOrigin: true,
+            },
+            "/api/v1/anchorum/tools": {
+                target: "http://localhost:8080",
+                changeOrigin: true,
+            },
+            "/api/v1/anchorum/cases": {
+                target: "http://localhost:8080",
+                changeOrigin: true,
+            },
             "/api": {
                 target: "http://localhost:3001",
                 changeOrigin: true,

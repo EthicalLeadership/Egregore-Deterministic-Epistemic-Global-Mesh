@@ -16,6 +16,8 @@ from pathlib import Path
 from tkinter import ttk
 from typing import Any
 
+from ui_text import install_context_menu, make_readonly_copyable, set_text
+
 REPO_ROOT = Path(__file__).resolve().parent
 TELEMETRY_DIR = REPO_ROOT / "report" / "factory_telemetry"
 DECISION_TABLE = REPO_ROOT / "config" / "factory_decision_table.json"
@@ -81,8 +83,7 @@ class FactoryTab(ttk.Frame):
 
         bottom = ttk.LabelFrame(tab, text="Raw telemetry event", padding=4)
         bottom.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
-        self.raw_txt = tk.Text(bottom, wrap=tk.NONE, height=8, state=tk.DISABLED)
-        self.raw_txt.pack(fill=tk.BOTH, expand=True)
+        self.raw_txt = self._ro_text(bottom, wrap=tk.NONE, height=8)
         return tab
 
     def _build_qc(self, nb: ttk.Notebook) -> ttk.Frame:
@@ -91,14 +92,12 @@ class FactoryTab(ttk.Frame):
         self.qc_tree.bind("<<TreeviewSelect>>", self._on_qc_select)
         bottom = ttk.LabelFrame(tab, text="Verdict detail (raw event)", padding=4)
         bottom.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
-        self.qc_raw = tk.Text(bottom, wrap=tk.NONE, height=10, state=tk.DISABLED)
-        self.qc_raw.pack(fill=tk.BOTH, expand=True)
+        self.qc_raw = self._ro_text(bottom, wrap=tk.NONE, height=10)
         return tab
 
     def _build_decision(self, nb: ttk.Notebook) -> ttk.Frame:
         tab = ttk.Frame(nb, padding=4)
-        self.decision_txt = tk.Text(tab, wrap=tk.WORD, state=tk.DISABLED)
-        self.decision_txt.pack(fill=tk.BOTH, expand=True)
+        self.decision_txt = self._ro_text(tab, wrap=tk.WORD)
         ttk.Button(tab, text="Refresh", command=self._render_decision).pack(anchor=tk.E, pady=(4, 0))
         return tab
 
@@ -110,8 +109,7 @@ class FactoryTab(ttk.Frame):
         self.res_tree.bind("<<TreeviewSelect>>", self._on_res_select)
         bottom = ttk.LabelFrame(tab, text="Raw event", padding=4)
         bottom.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
-        self.res_raw = tk.Text(bottom, wrap=tk.NONE, height=6, state=tk.DISABLED)
-        self.res_raw.pack(fill=tk.BOTH, expand=True)
+        self.res_raw = self._ro_text(bottom, wrap=tk.NONE, height=6)
         return tab
 
     # ------------------------------------------------------------- loading
@@ -333,8 +331,12 @@ class FactoryTab(ttk.Frame):
             self._set_text(self.res_raw, json.dumps(shown[idx], indent=2, default=str))
 
     @staticmethod
+    def _ro_text(parent: ttk.Frame, **kwargs: Any) -> tk.Text:
+        txt = make_readonly_copyable(tk.Text(parent, **kwargs))
+        install_context_menu(txt)
+        txt.pack(fill=tk.BOTH, expand=True)
+        return txt
+
+    @staticmethod
     def _set_text(widget: tk.Text, text: str) -> None:
-        widget.config(state=tk.NORMAL)
-        widget.delete("1.0", tk.END)
-        widget.insert(tk.END, text)
-        widget.config(state=tk.DISABLED)
+        set_text(widget, text)

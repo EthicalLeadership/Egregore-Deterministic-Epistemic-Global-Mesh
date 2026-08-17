@@ -1,7 +1,7 @@
 #!/bin/bash
 # 5-run mini-gauntlet for the salvaged fine-tune (salvage validation).
-API_KEY=$(cat /home/kark/blackstar/secrets/api_key.hex)
-OUT=/home/kark/blackstar/report/salvage_mini_gauntlet.log
+API_KEY=$(cat /home/kark/egregore/secrets/api_key.hex)
+OUT=/home/kark/egregore/report/salvage_mini_gauntlet.log
 : > "$OUT"
 for i in $(seq 1 5); do
   START=$(date +%s)

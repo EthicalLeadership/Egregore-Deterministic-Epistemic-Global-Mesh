@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { FileText, Settings } from 'lucide-react';
+import { FileText, Settings, FolderSearch } from 'lucide-react';
 
 interface HeaderProps {
   onOpenLogs: () => void;
   onOpenSettings: () => void;
+  onOpenAnchorum: () => void;
   isConnected: boolean;
 }
 
-export default function Header({ onOpenLogs, onOpenSettings, isConnected }: HeaderProps) {
+export default function Header({ onOpenLogs, onOpenSettings, onOpenAnchorum, isConnected }: HeaderProps) {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -41,6 +42,10 @@ export default function Header({ onOpenLogs, onOpenSettings, isConnected }: Head
           </span>
 
           {/* Buttons */}
+          <button onClick={onOpenAnchorum} className="btn-secondary !py-1.5 !px-2.5">
+            <FolderSearch className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">ANCHORUM</span>
+          </button>
           <button onClick={onOpenLogs} className="btn-secondary !py-1.5 !px-2.5">
             <FileText className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Logs</span>

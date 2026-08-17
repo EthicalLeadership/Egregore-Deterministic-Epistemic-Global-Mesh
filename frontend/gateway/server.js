@@ -5,8 +5,10 @@ import morgan from 'morgan';
 import { WebSocketServer } from 'ws';
 import axios from 'axios';
 import { createServer } from 'http';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,6 +20,18 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 const PORT = process.env.GATEWAY_PORT || 3000;
 const CORE_URL = process.env.CORE_URL || 'http://localhost:8002';
 const CONTROL_URL = process.env.CONTROL_URL || 'http://localhost:3001';
+// ANCHORUM desktop endpoints are served by the ANCHORUM plain-HTTP site
+// (anchorum_http) which mounts the /api/v1/anchorum/* router on :8080.
+const ANCHORUM_URL = process.env.ANCHORUM_URL || 'http://localhost:8080';
+
+function anchorumApiKey() {
+  if (process.env.EGREGORE_API_KEY) return process.env.EGREGORE_API_KEY;
+  try {
+    return readFileSync(join(__dirname, '../../secrets/api_key.hex'), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -30,6 +44,34 @@ app.use(helmet({
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.json());
+
+// ANCHORUM desktop proxy — filesystem, IMAP consent-gated staging, cases,
+// RAG, and tools. Must be registered before the generic /api/* Control
+// Center catch-all. File staging of large directories can be slow, so the
+// timeout is generous.
+app.all('/api/v1/anchorum/*', async (req, res) => {
+  try {
+    // Use req.originalUrl (path + query string) — /fs/list and other browse
+    // endpoints take their target as ?path=<mount>, and req.path alone drops
+    // the query, causing FastAPI 422 on the backend.
+    const response = await axios({
+      method: req.method,
+      url: ANCHORUM_URL + req.originalUrl,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(anchorumApiKey() ? { 'X-API-Key': anchorumApiKey() } : {}),
+      },
+      timeout: 600000,
+    });
+    res.status(response.status).json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 502).json({
+      error: 'ANCHORUM backend unreachable',
+      detail: err.message,
+    });
+  }
+});
 
 // Control Center API proxy (orchestrator dashboard backend)
 app.all('/api/*', async (req, res) => {

@@ -108,7 +108,7 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["egregore*", "anchorum*"]
+include = ["egregore*", "anchorum*", "asds*", "modules*"]
 namespaces = false
 
 [tool.setuptools.package-data]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any
 
 from egregore.domain.inference_models import (
@@ -247,6 +247,36 @@ class InferenceService:
                 )
 
         return governed_response
+
+    def execute_stream(self, request: ChatRequest) -> Iterator[str]:
+        """Stream a governed inference request as content deltas.
+
+        Runs the same M1-M4 governance pre-checks as execute(), then
+        delegates to the backend's stream_chat() when available; otherwise
+        falls back to a single chunk from a non-streaming call.
+        """
+        _ensure_backend_allowed(self.default_backend)
+        backend = _resolve_backend(request.model, self.default_backend)
+        client = self.clients.get(backend)
+        if client is None:
+            raise RuntimeError(
+                f"Backend '{backend}' is not registered. "
+                f"Available backends: {list(self.clients)}"
+            )
+
+        # Governance checkpoints M1-M4 (same as execute()).
+        self._m1_check(request)
+        self._m2_check(request, client)
+        self._m3_check(request)
+        self._m4_check(request)
+
+        stream_chat = getattr(client, "stream_chat", None)
+        if callable(stream_chat):
+            yield from stream_chat(request)
+            return
+
+        response = client.chat(request)
+        yield response.message.content
 
     def health(self) -> dict[str, Any]:
         """Check inference pipeline health for all registered backends."""

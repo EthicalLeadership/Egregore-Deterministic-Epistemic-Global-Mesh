@@ -281,3 +281,71 @@ class TestEgregoreModelClient:
 
         assert result.ok is False
         assert "timed out" in (result.error or "").lower()
+
+
+class TestEgregoreModelClientTaskType:
+    """Tests for task_type auto-selection via the ModelSelector."""
+
+    def test_default_task_type_is_legal(self, monkeypatch):
+        monkeypatch.delenv("ANCHORUM_LLM_TASK_TYPE", raising=False)
+        client = EgregoreModelClient()
+        assert client._task_type == "legal"
+
+    def test_task_type_from_env(self, monkeypatch):
+        monkeypatch.setenv("ANCHORUM_LLM_TASK_TYPE", "code")
+        client = EgregoreModelClient()
+        assert client._task_type == "code"
+
+    def test_invalid_task_type_rejected(self):
+        client = EgregoreModelClient(task_type="bogus")
+        with pytest.raises(ValueError, match="Invalid task_type"):
+            client._init_selector()
+
+    def test_auto_selection_used_when_no_explicit_model(self):
+        client = EgregoreModelClient(task_type="code")
+        selection = MagicMock()
+        selection.catalog_key = "specialized/coder-Q4_K_M"
+        selection.logical_id = "coder"
+        selection.reason = "best"
+        mock_selector = MagicMock()
+        mock_selector.select.return_value = selection
+
+        mock_orchestrator = MagicMock()
+        mock_orchestrator.list_models.return_value = [
+            "specialized/coder-Q4_K_M",
+            "expert/other-Q4_K_M",
+        ]
+        with (
+            patch.object(client, "_load_orchestrator", return_value=mock_orchestrator),
+            patch.object(client, "_init_selector", return_value=mock_selector),
+        ):
+            resolved = client._resolve_model_id()
+
+        assert resolved == "specialized/coder-Q4_K_M"
+        mock_selector.select.assert_called_once_with("code")
+
+    def test_explicit_model_bypasses_selector(self):
+        client = EgregoreModelClient(model_id="expert/raw-Q4_K_M", task_type="code")
+        mock_orchestrator = MagicMock()
+        mock_orchestrator.list_models.return_value = ["expert/raw-Q4_K_M"]
+        with (
+            patch.object(client, "_load_orchestrator", return_value=mock_orchestrator),
+            patch.object(client, "_init_selector") as init_selector,
+        ):
+            resolved = client._resolve_model_id()
+
+        assert resolved == "expert/raw-Q4_K_M"
+        init_selector.assert_not_called()
+
+    def test_selector_failure_falls_back_to_legacy_resolution(self, caplog):
+        client = EgregoreModelClient()  # no explicit model
+        mock_orchestrator = MagicMock()
+        mock_orchestrator.list_models.return_value = ["qwen2.5-7b-instruct"]
+        with (
+            patch.object(client, "_load_orchestrator", return_value=mock_orchestrator),
+            patch.object(client, "_init_selector", return_value=None),
+        ):
+            resolved = client._resolve_model_id()
+
+        # Legacy behaviour: preferred default is available.
+        assert resolved == "qwen2.5-7b-instruct"

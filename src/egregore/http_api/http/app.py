@@ -43,12 +43,14 @@ def create_app(build_container: bool = True) -> Any:
     from egregore.http_api.http.v1.dossiers import router as dossiers_router
     from egregore.http_api.http.v1.federation import router as federation_router
     from egregore.http_api.http.v1.intake import router as intake_router
+    from egregore.http_api.http.v1.orchestrate import router as orchestrate_router
     from egregore.http_api.http.v1.rfe import router as rfe_router
     from egregore.http_api.http.v1.users import router as users_router
     from egregore.http_api.http.v1.workflows import router as workflows_router
     from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
     from egregore.interface.anchorum_router import ingest_router
     from egregore.interface.anchorum_router import router as anchorum_router
+    from modules.anchorum.interface.routes import router as anchorum_module_router
     from egregore.interface.factory_router import router as factory_router
     from egregore.interface.ombudsman_router import router as ombudsman_router
     from egregore.interface.rag_api import router as rag_router
@@ -112,6 +114,7 @@ def create_app(build_container: bool = True) -> Any:
         auth_router,
         users_router,
         intake_router,
+        orchestrate_router,
         chat_router,
         code_factory_router,
     ]
@@ -162,6 +165,10 @@ def create_app(build_container: bool = True) -> Any:
     # ANCHORUM forensic frontend bridge.
     if anchorum_router is not None:
         app.include_router(anchorum_router)
+
+    # ASDS-hosted ANCHORUM module router (port-clean, parallel to legacy bridge).
+    if anchorum_module_router is not None:
+        app.include_router(anchorum_module_router)
 
     # ANCHORUM Stage-4 ingest endpoint (mounted at root so the connector can POST /ingest).
     if ingest_router is not None:

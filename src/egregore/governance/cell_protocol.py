@@ -18,7 +18,7 @@ from typing import Any
 # PyYAML has no PEP 561 stubs; ignore for compatibility.
 import yaml  # type: ignore[import-untyped]
 
-from egregore.paths import repo_root
+from egregore.shared.paths import repo_root
 from egregore.shared.canonical import canonical_dumps, canonical_loads
 
 DB_PATH = repo_root() / "rag/cell_protocol.db"

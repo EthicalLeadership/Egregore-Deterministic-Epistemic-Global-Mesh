@@ -8,7 +8,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
-from egregore.paths import repo_root
+from egregore.shared.paths import repo_root
 
 router = APIRouter(prefix="/api/v1/rag", tags=["rag"])
 
