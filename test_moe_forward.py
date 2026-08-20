@@ -4,7 +4,7 @@ import torch
 from safetensors import safe_open
 from kimi_pager import ExpertPager
 
-base = "/media/kark/MODELS_2TB3/models/kimi-k2-base"
+base = "/media/kark/MODELS_2TB3/ExecutiveIntelligenceservices.-main/models/kimi-k2-base"
 pager = ExpertPager(base, cache_size=16)
 
 layer = 1

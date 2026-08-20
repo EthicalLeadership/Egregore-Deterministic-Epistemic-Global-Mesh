@@ -2,7 +2,7 @@ import torch
 from safetensors import safe_open
 import time, os
 
-base = "/media/kark/MODELS_2TB3/models/kimi-k2-base"
+base = "/media/kark/MODELS_2TB3/ExecutiveIntelligenceservices.-main/models/kimi-k2-base"
 shard = "model-2-of-61.safetensors"
 layer = 1
 expert_id = 0

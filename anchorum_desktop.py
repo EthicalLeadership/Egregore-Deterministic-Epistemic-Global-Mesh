@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """ANCHORUM Desktop — native Tkinter client for the Egregore ANCHORUM site.
 
-Full toolset, no browser. Talks directly to the local API on 127.0.0.1:8080.
+Full toolset, no browser. Talks directly to the local API server (default
+https://127.0.0.1:8443, override via EGREGORE_BASE_URL).
 Run:  .venv/bin/python anchorum_desktop.py
 """
 
@@ -9,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import queue
 import re
 import threading
@@ -20,6 +22,7 @@ from tkinter import filedialog, messagebox, simpledialog, ttk
 from typing import Any
 
 import requests
+import urllib3
 
 from ui_text import (
     append_text,
@@ -28,10 +31,17 @@ from ui_text import (
     set_text,
 )
 
-BASE_URL = "http://127.0.0.1:8080"
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+BASE_URL = os.environ.get("EGREGORE_BASE_URL", "https://127.0.0.1:8443")
 API_KEY = (Path(__file__).parent / "secrets" / "api_key.hex").read_text().strip()
 HEADERS = {"X-API-Key": API_KEY, "Accept": "application/json"}
 TIMEOUT = 180  # local LLM can be slow
+
+# Single session for all requests — disables TLS verification for self-signed certs.
+session = requests.Session()
+session.verify = False
+session.headers.update(HEADERS)
 
 # Jobs API — adjust if the backend routes differ.
 # Expected surface:
@@ -512,21 +522,20 @@ class AnchorumApp(tk.Tk):
         return self._active_case
 
     def _get(self, path: str, timeout: int = 30):
-        r = requests.get(f"{BASE_URL}{path}", headers=HEADERS, timeout=timeout)
+        r = session.get(f"{BASE_URL}{path}", timeout=timeout)
         r.raise_for_status()
         return r.json()
 
     def _post(self, path: str, payload: dict, timeout: int = TIMEOUT):
-        r = requests.post(
+        r = session.post(
             f"{BASE_URL}{path}",
-            headers={**HEADERS, "Content-Type": "application/json"},
             json=payload, timeout=timeout,
         )
         r.raise_for_status()
         return r.json()
 
     def _delete(self, path: str, timeout: int = 30):
-        r = requests.delete(f"{BASE_URL}{path}", headers=HEADERS, timeout=timeout)
+        r = session.delete(f"{BASE_URL}{path}", timeout=timeout)
         r.raise_for_status()
         try:
             return r.json()
@@ -569,9 +578,8 @@ class AnchorumApp(tk.Tk):
             self._ui(self._set_status, f"Create case failed: {exc}")
 
     def _post_case_create(self, case_id: str) -> dict:
-        r = requests.post(
+        r = session.post(
             f"{BASE_URL}/api/v1/anchorum/cases",
-            headers={**HEADERS, "Content-Type": "application/json"},
             json={"case_id": case_id, "operator": "desktop_app"},
             timeout=30,
         )
@@ -1259,7 +1267,7 @@ class AnchorumApp(tk.Tk):
         return "\n".join(ln for ln in lines if ln)
 
     def _get_text(self, path: str, timeout: int = 15) -> str:
-        r = requests.get(f"{BASE_URL}{path}", headers=HEADERS, timeout=timeout)
+        r = session.get(f"{BASE_URL}{path}", timeout=timeout)
         r.raise_for_status()
         return r.text
 
@@ -1287,9 +1295,9 @@ class AnchorumApp(tk.Tk):
     def _freeze_bg(self, do_freeze: bool) -> None:
         action = "freeze" if do_freeze else "unfreeze"
         try:
-            r = requests.post(
+            r = session.post(
                 f"{BASE_URL}/dashboard/{action}",
-                headers=HEADERS, timeout=15, allow_redirects=False,
+                timeout=15, allow_redirects=False,
             )
             self._ui(self._set_status, f"{action.capitalize()}: HTTP {r.status_code}")
         except Exception as exc:

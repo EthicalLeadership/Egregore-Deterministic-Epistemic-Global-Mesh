@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 # Model-name prefixes that route to specific backends.
 ANTHROPIC_MODEL_PREFIXES = ("claude-",)
 DEEPSEEK_MODEL_PREFIXES = ("deepseek-",)
-LOCAL_MODEL_PREFIXES = ("kimi-", "local-")
+MOONSHOT_MODEL_PREFIXES = ()  # Cloud Moonshot API (disabled; use local kimi- instead)
+LOCAL_MODEL_PREFIXES = ("kimi-", "local-")  # Kimi on local SSD + other local models
 EGREGORE_MODEL_PREFIXES = ("egregore-", "coder-", "architect-", "my-coder")
 GGUF_MODEL_PREFIXES = ("gguf-",)
 
@@ -31,6 +32,8 @@ def _resolve_backend(model: str, default_backend: str = "egregore") -> str:
         return "anthropic"
     if any(lower.startswith(prefix) for prefix in DEEPSEEK_MODEL_PREFIXES):
         return "deepseek"
+    if any(lower.startswith(prefix) for prefix in MOONSHOT_MODEL_PREFIXES):
+        return "moonshot"
     if any(lower.startswith(prefix) for prefix in LOCAL_MODEL_PREFIXES):
         return "local"
     if any(lower.startswith(prefix) for prefix in GGUF_MODEL_PREFIXES):
@@ -57,6 +60,7 @@ def build_inference_service_from_env() -> InferenceService:
     from egregore.infrastructure.coder_backend import CoderBackend
     from egregore.infrastructure.deepseek_client import DeepSeekClient
     from egregore.infrastructure.local_model_client import LocalModelClient
+    from egregore.infrastructure.moonshot_client import MoonshotClient
 
     clients: dict[str, ILlmClient] = {}
 
@@ -113,6 +117,12 @@ def build_inference_service_from_env() -> InferenceService:
     deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if deepseek_api_key:
         clients["deepseek"] = DeepSeekClient(api_key=deepseek_api_key)
+
+    # Moonshot (Kimi) backend when an API key is present.
+    kimi_api_key = os.environ.get("KIMI_API_KEY", "")
+    if kimi_api_key:
+        clients["moonshot"] = MoonshotClient(api_key=kimi_api_key)
+        logger.info("Moonshot (Kimi) backend registered")
 
     return InferenceService(clients, default_backend=default_backend)
 
