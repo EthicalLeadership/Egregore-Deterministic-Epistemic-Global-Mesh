@@ -17,6 +17,7 @@ pip-delete-this-directory.txt
 
 # === Virtual environments ===
 .venv/
+.venv-local/
 venv/
 ENV/
 env/
@@ -176,8 +177,12 @@ fetched/
 email_consent_ledger.jsonl
 
 # Legacy archive / backup
+_legacy_archive/
 _legacy_archive_*/
 egregore_legacy_*/
+
+# Accidental shell-redirect junk files
+/traceback
 
 # Generated data
 rag/cases/*.bin
