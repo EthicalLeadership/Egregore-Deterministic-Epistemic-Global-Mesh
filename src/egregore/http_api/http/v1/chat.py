@@ -25,11 +25,13 @@ router = APIRouter(prefix="/v1", tags=["chat"])
 class ChatMessageSchema(BaseModel):
     role: str
     content: str
+    tool_calls: list[dict] | None = None
 
 
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: list[ChatMessageSchema]
+    tool_choice: str | dict | None = None
     mode: str = "deterministic"
     max_tokens: int = 2048
     seed: int = 42
@@ -46,6 +48,7 @@ class ChatCompletionResponse(BaseModel):
     id: str
     model: str
     message: ChatMessageSchema
+    tool_calls: list[dict] | None = None
     usage: dict[str, int]
     finish_reason: str
     governance: dict[str, bool]
@@ -217,6 +220,28 @@ def chat_completions(
         raise HTTPException(status_code=503, detail="No LLM backend available")
 
     # Check model exists; fall back to native GGUF host for catalog models.
+    # If tools are provided, use prompt-based tool calling
+    if req.tools:
+        tool_prompt = "You have access to the following tools:\n"
+        for tool in req.tools:
+            tool_prompt += f"- {tool['function']['name']}: {tool['function'].get('description','')}\n"
+        tool_prompt += "\nIf you need to use a tool, respond with ONLY a JSON object in this format:\n"
+        tool_prompt += '{"tool_calls": [{"name": "tool_name", "arguments": {arg1: value1, ...}}]}\n'
+        tool_prompt += "Otherwise, respond normally with your message."
+
+        # Prepend as system message
+        system_msg = {"role": "system", "content": tool_prompt}
+        messages = [system_msg] + req.messages
+
+        # Reconstruct request preserving all fields except tools/tool_choice
+        if hasattr(req, "model_dump"):
+            req_dict = req.model_dump(exclude={"tools", "tool_choice"})
+        else:
+            req_dict = req.dict(exclude={"tools", "tool_choice"})
+        req_dict["messages"] = messages
+        req = ChatCompletionRequest(**req_dict)
+
+
     if not service.model_exists(req.model):
         gguf_response = _try_gguf_fallback(req)
         if gguf_response is not None:
@@ -268,9 +293,33 @@ def chat_completions(
             completion_tokens=usage.get("completion_tokens", 0),
             error=error,
         )
-    return _to_http_response(response)
+    http_response = _to_http_response(response)
 
+    if req.tools:
 
+        import json, re
+
+        content = http_response.choices[0].message.content
+
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+
+        if json_match:
+
+            try:
+
+                tool_data = json.loads(json_match.group(0))
+
+                if 'tool_calls' in tool_data:
+
+                    http_response.choices[0].message.tool_calls = tool_data['tool_calls']
+
+                    http_response.choices[0].message.content = None
+
+            except json.JSONDecodeError:
+
+                pass
+
+    return http_response
 def _to_http_response(response: ChatResponse) -> ChatCompletionResponse:
     return ChatCompletionResponse(
         id=response.inference_id,
