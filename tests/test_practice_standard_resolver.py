@@ -43,7 +43,6 @@ def test_resolve_ontario_motion():
 
 
 def test_resolve_internal_strategy_memo_falls_back():
-    # Quebec jurisdiction but internal forum and strategy memo document type
     scope = Scope(
         jurisdiction=Jurisdiction.QUEBEC,
         forum=Forum.INTERNAL,
@@ -52,7 +51,6 @@ def test_resolve_internal_strategy_memo_falls_back():
         purpose="business strategy",
     )
     std = resolve(scope)
-    # No Quebec-specific strategy memo registered, so falls back to generic strategy memo
     assert std.id == "internal_strategy_memo"
     assert std.required_sections[0] == "executive_summary"
     assert std.advocacy_level == "persuasive"
@@ -73,7 +71,6 @@ def test_resolve_diplomatic_briefing():
 
 
 def test_resolve_unknown_scope_returns_generic():
-    # A combination not registered anywhere
     scope = Scope(
         jurisdiction=Jurisdiction.FEDERAL_CANADA,
         forum=Forum.ARBITRATION,

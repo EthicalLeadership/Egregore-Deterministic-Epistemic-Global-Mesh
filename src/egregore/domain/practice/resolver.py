@@ -12,7 +12,7 @@ to a generic legal standard.
 
 from __future__ import annotations
 
-from typing import Dict, Tuple, Optional, Any, FrozenSet
+from typing import Dict, Tuple, FrozenSet
 from .models import (
     Scope,
     PracticeStandard,
@@ -180,7 +180,7 @@ def resolve(scope: Scope) -> PracticeStandard:
         if dt == scope.document_type:
             return std
 
-    # 5. Generic legal standard (default)
+    # 5. Generic legal standard
     return PracticeStandard(
         id="generic_legal",
         jurisdiction=scope.jurisdiction,

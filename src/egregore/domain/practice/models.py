@@ -19,12 +19,9 @@ class Jurisdiction(str, Enum):
     QUEBEC = "QC"
     ONTARIO = "ON"
     FEDERAL_CANADA = "CA"
-    # Additional provinces can be added here as the system learns their rules.
-    # Example: BRITISH_COLUMBIA = "BC"
 
     @classmethod
     def from_label(cls, label: str) -> "Jurisdiction":
-        """Normalize common jurisdiction labels to enum values."""
         mapping = {
             "quebec": cls.QUEBEC,
             "qc": cls.QUEBEC,
