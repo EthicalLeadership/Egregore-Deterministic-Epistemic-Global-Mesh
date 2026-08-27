@@ -28,11 +28,6 @@ def build_empty_ast(spec: DocumentSpecification) -> DocumentAST:
         # Add an empty paragraph placeholder
         children.append(make_empty_paragraph(section))
 
-    # Add exhibits section if exhibits are required
-    if spec.exhibits:
-        children.append(make_heading(level=1, text="Exhibits"))
-        children.append(make_empty_paragraph("exhibits"))
-
     root = RootNode(id="root", children=tuple(children))
     return DocumentAST(
         root=root,

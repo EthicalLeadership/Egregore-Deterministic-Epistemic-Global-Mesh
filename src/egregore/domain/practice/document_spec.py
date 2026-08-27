@@ -42,11 +42,15 @@ class DocumentSpecification(BaseModel):
     @classmethod
     def from_practice_standard(cls, standard: PracticeStandard, scope: Scope) -> "DocumentSpecification":
         """Construct a specification from a practice standard and scope."""
+        required = list(standard.required_sections)
+        if standard.exhibits and "Exhibits" not in required:
+            required.append("Exhibits")
+
         return cls(
             id=f"doc-spec-{standard.id}-{scope.jurisdiction.value}-{scope.document_type.value}",
             standard=standard,
             scope=scope,
-            required_sections=standard.required_sections,
+            required_sections=tuple(required),
             optional_sections=standard.optional_sections,
             prohibited_content=standard.prohibited_content,
             citation_standard=standard.citation_standard,
