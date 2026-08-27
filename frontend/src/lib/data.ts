@@ -1,20 +1,15 @@
 // Data layer: bundled vector data + deterministic procedural sensor lattice.
-// Land: Natural Earth 1:110m (public domain). City: OpenStreetMap (ODbL),
-// pre-processed into compact geometry — no runtime Overpass calls.
+// Land/city: fictional "Blackstar" world (de-identified) — plain GeoJSON land
+// and pre-processed city geometry. No runtime network calls, no topojson decode
+// needed (LAND is already a FeatureCollection).
 
-import { feature } from 'topojson-client';
-import type { GeometryObject, Topology } from 'topojson-specification';
-import landTopo from '../assets/land-110m.json';
-import mtl from '../assets/montreal.json';
+import blackstarCity from '../assets/blackstar-city.json';
+import blackstarLand from '../assets/blackstar-land.json';
 
-// ---------- World land ----------
-const topo = landTopo as unknown as Topology;
-export const LAND = feature(
-  topo,
-  topo.objects.land as GeometryObject
-) as GeoJSON.FeatureCollection | GeoJSON.Feature;
+// ---------- World land (already plain GeoJSON) ----------
+export const LAND = blackstarLand as unknown as GeoJSON.FeatureCollection | GeoJSON.Feature;
 
-// ---------- Montréal dataset ----------
+// ---------- Blackstar city dataset (formerly Montréal) ----------
 export interface Road {
   t: string;
   p: [number, number][];
@@ -28,13 +23,16 @@ export interface Building {
   sys: string;
   seed: number;
 }
-interface MtlData {
+interface CityData {
   roads: Road[];
   buildings: Building[];
   bbox: [number, number, number, number];
 }
-export const MTL = mtl as unknown as MtlData;
-export const MTL_CENTER: [number, number] = [-73.5673, 45.5035];
+export const CITY = blackstarCity as unknown as CityData;
+export const CITY_CENTER: [number, number] = [
+  (CITY.bbox[0] + CITY.bbox[2]) / 2,
+  (CITY.bbox[1] + CITY.bbox[3]) / 2,
+];
 
 // ---------- Seeded RNG (deterministic sensor data) ----------
 export function mulberry32(seed: number) {
@@ -123,14 +121,14 @@ function buildSensors(b: Building): Sensor[] {
   return sensors;
 }
 
-export const SENSORS: Sensor[] = MTL.buildings.flatMap(buildSensors);
+export const SENSORS: Sensor[] = CITY.buildings.flatMap(buildSensors);
 export const SENSORS_BY_BUILDING = new Map<string, Sensor[]>();
 for (const s of SENSORS) {
   const arr = SENSORS_BY_BUILDING.get(s.buildingId) ?? [];
   arr.push(s);
   SENSORS_BY_BUILDING.set(s.buildingId, arr);
 }
-export const BUILDING_BY_ID = new Map(MTL.buildings.map((b) => [b.id, b]));
+export const BUILDING_BY_ID = new Map(CITY.buildings.map((b) => [b.id, b]));
 
 /** Aggregate activity per 15-min bin (0..95) across a sensor subset. */
 export function aggregateSeries(sensors: Sensor[]): number[] {
@@ -150,35 +148,27 @@ export function sensorActiveInRange(s: Sensor, range: [number, number]): boolean
 }
 
 // ---------- World cities (watchlist / region tier) ----------
-export interface City {
+// Fictional Blackstar node-cities. `hq` marks the fully-built capital.
+// `pop` is a raw headcount — resolution for rendering happens in the canvas
+// (log-scale marker radius), not baked into the data.
+export interface CityMarker {
   name: string;
-  country: string;
   lon: number;
   lat: number;
-  pop: number; // millions
-  hq?: boolean;
+  hq: boolean;
+  pop: number;
 }
-export const CITIES: City[] = [
-  { name: 'Montréal', country: 'CA', lon: -73.5673, lat: 45.5035, pop: 4.3, hq: true },
-  { name: 'Toronto', country: 'CA', lon: -79.3832, lat: 43.6532, pop: 6.4 },
-  { name: 'Vancouver', country: 'CA', lon: -123.1207, lat: 49.2827, pop: 2.6 },
-  { name: 'New York', country: 'US', lon: -74.006, lat: 40.7128, pop: 19.5 },
-  { name: 'San Francisco', country: 'US', lon: -122.4194, lat: 37.7749, pop: 4.7 },
-  { name: 'Mexico City', country: 'MX', lon: -99.1332, lat: 19.4326, pop: 22.0 },
-  { name: 'São Paulo', country: 'BR', lon: -46.6333, lat: -23.5505, pop: 22.4 },
-  { name: 'Buenos Aires', country: 'AR', lon: -58.3816, lat: -34.6037, pop: 15.2 },
-  { name: 'London', country: 'GB', lon: -0.1276, lat: 51.5074, pop: 14.8 },
-  { name: 'Paris', country: 'FR', lon: 2.3522, lat: 48.8566, pop: 11.2 },
-  { name: 'Berlin', country: 'DE', lon: 13.405, lat: 52.52, pop: 6.0 },
-  { name: 'Madrid', country: 'ES', lon: -3.7038, lat: 40.4168, pop: 6.7 },
-  { name: 'Lagos', country: 'NG', lon: 3.3792, lat: 6.5244, pop: 15.4 },
-  { name: 'Cairo', country: 'EG', lon: 31.2357, lat: 30.0444, pop: 21.3 },
-  { name: 'Nairobi', country: 'KE', lon: 36.8219, lat: -1.2921, pop: 4.9 },
-  { name: 'Mumbai', country: 'IN', lon: 72.8777, lat: 19.076, pop: 21.0 },
-  { name: 'Singapore', country: 'SG', lon: 103.8198, lat: 1.3521, pop: 6.0 },
-  { name: 'Tokyo', country: 'JP', lon: 139.6917, lat: 35.6895, pop: 37.4 },
-  { name: 'Seoul', country: 'KR', lon: 126.978, lat: 37.5665, pop: 25.5 },
-  { name: 'Sydney', country: 'AU', lon: 151.2093, lat: -33.8688, pop: 5.3 },
+export const CITIES: CityMarker[] = [
+  // The detailed city — formerly Montréal, now fully built out with
+  // CITY.buildings/roads. Capital of the Information Arm.
+  { name: 'Lumen Prime', lon: CITY_CENTER[0], lat: CITY_CENTER[1], hq: true, pop: 3_000_000 },
+
+  // Remote node-cities — markers only, no building-level detail.
+  { name: 'The Mint',       lon: -23.5, lat: 6,   hq: false, pop: 900_000 },  // Aurum Reach (Economic Arm)
+  { name: 'Forge Prime',    lon: 22,    lat: 6,   hq: false, pop: 750_000 },  // Ferrum Expanse (Builder)
+  { name: 'Redoubt',        lon: 53,    lat: -24, hq: false, pop: 600_000 },  // Bastion Rim (Defense)
+  { name: 'Sentinel Cairn', lon: 0,     lat: -22, hq: false, pop: 40_000 },   // Auditor's Isle
+  { name: 'Proxima Vale',   lon: -144,  lat: -55, hq: false, pop: 5_000 },    // Fractal Archipelago (colony)
 ];
 
 export const LAYER_DEFS = [

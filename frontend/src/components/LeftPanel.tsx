@@ -1,7 +1,7 @@
 // Left rail: live services (with start/stop/restart), scale-tier statechart,
 // layer controls, node watchlist.
 
-import { CITIES, LAYER_DEFS } from '../lib/data';
+import { CITIES, CITY_CENTER, LAYER_DEFS } from '../lib/data';
 import { store } from '../lib/store';
 import { TIERS } from '../lib/statechart';
 import { useStore } from '../hooks/useStore';
@@ -69,7 +69,7 @@ function NodeRow({ node }: { node: LiveNode }) {
   const online = node.status === 'online';
   return (
     <button
-      onClick={() => store.dispatch('FLY_TO', { lon: -73.5673, lat: 45.5035, k: 2 })}
+      onClick={() => store.dispatch('FLY_TO', { lon: CITY_CENTER[0], lat: CITY_CENTER[1], k: 2 })}
       className="group flex w-full items-center justify-between py-[5px] text-left"
     >
       <span className="flex items-center gap-2">

@@ -1,0 +1,12 @@
+total 64
+drwxr-x---   6 kark kark  4096 Aug 22 14:18 .
+drwxr-xr-x 113 kark kark 40960 Aug 22 14:18 ..
+drwxr-x---   2 kark kark  4096 Aug 22 14:18 audit
+drwxrwxr-x   2 kark kark  4096 Aug 22 14:18 inbound
+drwxrwxr-x   2 kark kark  4096 Aug 22 14:18 queue
+drwxrwxr-x   2 kark kark  4096 Aug 22 14:18 workspace
+NODE:
+v22.22.3
+GREP MJS:
+GREP CORE:
+DONE

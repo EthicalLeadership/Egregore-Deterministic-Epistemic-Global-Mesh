@@ -259,7 +259,7 @@ class EgregoreCritic:
         prose around the JSON object, remove trailing commas, normalize
         single quotes. Only if repair also fails is the verdict malformed.
         """
-        from egregore.interface.factory_router import _extract_json
+        from egregore.shared.json_utils import _extract_json
 
         parsed = _extract_json(text or "")
         if not isinstance(parsed, dict):

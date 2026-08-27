@@ -16,7 +16,7 @@ import ToastNotification from '../components/ToastNotification';
 import { store } from '../lib/store';
 import { useStore } from '../hooks/useStore';
 import { TIERS } from '../lib/statechart';
-import { MTL_CENTER } from '../lib/data';
+import { CITY_CENTER } from '../lib/data';
 import type { LiveState } from '../hooks/useLiveEgregore';
 import type { ServiceStatus, Toast } from '../hooks/useDashboard';
 
@@ -27,14 +27,14 @@ function Breadcrumb() {
   ];
   if (state.tier >= 2) {
     crumbs.push({
-      label: 'MONTRÉAL',
-      onClick: () => store.dispatch('FLY_TO', { lon: MTL_CENTER[0], lat: MTL_CENTER[1], k: 4200 }),
+      label: 'LUMEN PRIME',
+      onClick: () => store.dispatch('FLY_TO', { lon: CITY_CENTER[0], lat: CITY_CENTER[1], k: 4200 }),
     });
   }
   if (state.tier >= 3) {
     crumbs.push({
       label: 'DOWNTOWN',
-      onClick: () => store.dispatch('FLY_TO', { lon: MTL_CENTER[0], lat: MTL_CENTER[1], k: 18000 }),
+      onClick: () => store.dispatch('FLY_TO', { lon: CITY_CENTER[0], lat: CITY_CENTER[1], k: 18000 }),
     });
   }
   if (state.selectedBuildingId) {

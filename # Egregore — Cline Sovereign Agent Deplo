@@ -1,0 +1,816 @@
+# Egregore — Cline Sovereign Agent Deployment Directive v2
+
+## Mission
+
+Integrate Cline as a native Egregore local agent using Egregore's own model infrastructure.
+
+The target architecture is:
+
+`Cline Agent → Egregore EMS/OpenAI-compatible API → Egregore local model backend`
+
+Target endpoint:
+
+`http://127.0.0.1:8001/v1`
+
+**Ollama must NOT be introduced as a runtime dependency.**
+
+Do not install Ollama.
+
+Do not configure Cline to use Ollama.
+
+Do not create a dependency on port `11434`.
+
+The objective is a sovereign, local, reboot-safe Cline agent integrated into the existing Egregore control plane.
+
+---
+
+# HARD RULE — INSPECTION BEFORE MODIFICATION
+
+Do not modify, build-install, enable, or restart production services until the inspection phase is complete.
+
+Do not assume:
+
+* Cline has a daemon mode.
+* Cline's CLI is suitable for systemd.
+* Cline supports arbitrary OpenAI-compatible endpoints.
+* Egregore's EMS proxy implements every API feature Cline requires.
+* `SERVICE_MAP` is the only dashboard registration point.
+* Egregore nodes use static health state.
+* the Egregore user has systemd lingering enabled.
+* Bun is the correct Cline package manager.
+
+Every one of those assumptions must be verified against the actual code.
+
+---
+
+# PHASE 0 — ARCHITECTURE DISCOVERY
+
+## A. Cline inspection
+
+Inspect:
+
+`/home/kark/cline-main`
+
+Determine:
+
+1. package manager from:
+
+   * `package.json`
+   * lockfiles
+   * workspace configuration
+   * package-manager metadata
+
+2. exact CLI package:
+
+   * package name
+   * entrypoint
+   * build script
+   * output artifact
+
+3. supported CLI commands:
+
+Run/read the equivalent of:
+
+`cline --help`
+
+and inspect the source if necessary.
+
+Determine whether Cline supports:
+
+* one-shot/headless execution
+* persistent server/daemon mode
+* stdin/stdout operation
+* HTTP API
+* MCP operation
+* workspace/project arguments
+* non-interactive operation
+* configurable provider/model
+* OpenAI-compatible endpoints
+* custom API base URL
+
+Do not infer this from documentation alone if the local source can establish it.
+
+## B. Provider inspection
+
+Inspect the actual Cline provider implementation.
+
+Determine exactly how Cline configures:
+
+* provider type
+* base URL
+* API key
+* model identifier
+* streaming
+* tool calls
+* context length
+* reasoning parameters, if applicable
+
+Determine whether the existing `ollama-ai-provider-v2` dependency is mandatory or merely one provider implementation.
+
+The goal is to identify the cleanest supported path to:
+
+`http://127.0.0.1:8001/v1`
+
+without modifying Cline source unnecessarily.
+
+## C. Egregore EMS inspection
+
+Inspect:
+
+`/media/kark/EGREGORE/egregore`
+
+Find the EMS server implementation and determine:
+
+* listening address
+* listening port
+* supported routes
+* OpenAI compatibility
+* `/v1/models`
+* `/v1/chat/completions`
+* streaming support
+* tool/function calling
+* authentication requirements
+* model naming
+* error behavior
+* health endpoint
+* startup mechanism
+
+Determine whether Cline's required API semantics are actually supported.
+
+Do not call the integration compatible merely because the URL contains `/v1`.
+
+## D. GgufBackend inspection
+
+Determine how EMS reaches the local model backend.
+
+Confirm that the complete chain remains local:
+
+`Cline → EMS → GgufBackend/local model`
+
+Identify any unexpected external network calls.
+
+Do not modify the backend unless required.
+
+## E. Existing Egregore service architecture
+
+Inspect:
+
+* existing launcher scripts
+* existing systemd units
+* user/system services
+* dashboard service controls
+* service health mechanisms
+* logging conventions
+* startup ordering
+
+Determine the canonical Egregore approach and reuse it.
+
+## F. Dashboard discovery
+
+Search the entire frontend for all service-registration/control paths.
+
+Identify every location that may need modification:
+
+* `SERVICE_MAP`
+* API validation
+* service allowlists
+* frontend service definitions
+* status aggregation
+* start/stop/restart logic
+* service labels
+* health reporting
+
+Do not assume one file is sufficient.
+
+## G. World-map discovery
+
+Inspect:
+
+`config/nodes/*.json`
+
+and the code that consumes those files.
+
+Determine:
+
+* node schema
+* node identity
+* capabilities
+* state semantics
+* whether state is static or dynamic
+* whether service health affects node state
+* how nodes are discovered
+* whether duplicate IDs are rejected
+
+The new node must not claim `ACTIVE` merely because its JSON file exists.
+
+## H. Boot discovery
+
+Determine whether the relevant services are:
+
+* system services
+* user services
+* launcher-managed processes
+
+If user systemd services are involved:
+
+Check:
+
+`loginctl show-user <user>`
+
+and determine whether lingering is enabled.
+
+Do not enable lingering automatically unless the deployment architecture requires it and the change is appropriate for the Egregore service account.
+
+---
+
+# PHASE 0 DELIVERABLE
+
+Before modifying anything, produce a compatibility matrix:
+
+| Component      | Required capability   | Verified? | Evidence |
+| -------------- | --------------------- | --------: | -------- |
+| Cline CLI      | Headless execution    |           |          |
+| Cline CLI      | Persistent mode       |           |          |
+| Cline provider | Custom base URL       |           |          |
+| Cline provider | OpenAI-compatible API |           |          |
+| Cline          | Streaming             |           |          |
+| Cline          | Tool calling          |           |          |
+| EMS            | `/v1/models`          |           |          |
+| EMS            | chat completions      |           |          |
+| EMS            | streaming             |           |          |
+| EMS            | tool calls            |           |          |
+| GgufBackend    | local inference       |           |          |
+| Dashboard      | service registration  |           |          |
+| World map      | dynamic health        |           |          |
+| systemd        | reboot persistence    |           |          |
+
+Do not proceed to deployment until this matrix identifies the correct architecture.
+
+---
+
+# PHASE 1 — SELECT THE MINIMAL ARCHITECTURE
+
+Choose exactly one architecture based on Phase 0.
+
+## Preferred architecture
+
+If Cline supports a persistent/headless CLI and directly supports Egregore's OpenAI-compatible endpoint:
+
+`systemd → Cline headless service → EMS → local model`
+
+Use this.
+
+No adapter server.
+
+No Ollama.
+
+No unnecessary proxy.
+
+## Alternative architecture
+
+If Cline supports headless execution but requires an API interface that EMS does not directly provide:
+
+Create the smallest possible local adapter between Cline and EMS.
+
+The adapter must:
+
+* bind only to `127.0.0.1`
+* contain no external network dependency
+* translate only the incompatible API semantics
+* preserve streaming where required
+* preserve tool calls where required
+* expose health information
+* fail closed
+* be independently testable
+
+Do not introduce a general-purpose gateway when a small compatibility layer is sufficient.
+
+## Stop condition
+
+If Cline cannot operate headlessly in any supported manner, do NOT manufacture a fake daemon.
+
+Report that Cline cannot safely be deployed as a persistent Egregore service using the discovered CLI.
+
+Then determine whether the appropriate solution is:
+
+* a job-based invocation model,
+* a local API wrapper,
+* or a different Cline runtime interface.
+
+Do not force a `Type=simple` systemd service around an interactive CLI.
+
+---
+
+# PHASE 2 — BUILD
+
+Use the package manager and build mechanism discovered in Phase 0.
+
+Do not blindly run `bun install`.
+
+Build in a temporary/staging directory where possible.
+
+Record:
+
+* Cline version
+* source revision
+* dependency lock state
+* build command
+* resulting artifact
+* SHA256 checksum
+
+Test the artifact before installation.
+
+The resulting runtime must not depend on:
+
+`/home/kark/cline-main`
+
+unless that dependency is explicitly required by the Cline runtime and cannot reasonably be removed.
+
+---
+
+# PHASE 3 — ATOMIC VERSIONED DEPLOYMENT
+
+Deploy into:
+
+`/media/kark/EGREGORE/egregore/bin/`
+
+Use versioned artifacts.
+
+Example structure:
+
+`bin/cline-<version>`
+
+with stable symlink:
+
+`bin/cline → cline-<version>`
+
+Do not overwrite the active binary in place.
+
+Before changing the active symlink:
+
+1. record current target
+2. record SHA256
+3. validate new artifact
+4. install new version
+5. atomically update symlink
+6. validate executable
+7. restart service
+
+Rollback is therefore:
+
+`cline → previous-version`
+
+followed by service restart.
+
+Do not create redundant backups when the current artifact is unchanged.
+
+Retain a reasonable number of previous known-good versions according to the existing Egregore deployment convention.
+
+---
+
+# PHASE 4 — SOVEREIGN RUNTIME CONFIGURATION
+
+Configure Cline to use Egregore EMS.
+
+Expected endpoint:
+
+`http://127.0.0.1:8001/v1`
+
+But use the exact configuration mechanism verified in Phase 0.
+
+Do not invent environment variables.
+
+Do not put secrets in the executable or source tree.
+
+If EMS requires authentication, use the appropriate Egregore-owned environment/configuration mechanism.
+
+Verify that Cline can enumerate/select Egregore models if model enumeration is required.
+
+The runtime must not contact:
+
+* Ollama
+* external model APIs
+* telemetry endpoints
+* unnecessary third-party services
+
+unless the Cline runtime itself has an unavoidable external dependency that has been explicitly identified and approved.
+
+Inspect network behavior during validation where practical.
+
+---
+
+# PHASE 5 — SYSTEMD ARCHITECTURE
+
+Only create a persistent systemd service if Phase 0 proves Cline has a persistent/headless runtime.
+
+Service:
+
+`egregore-cline.service`
+
+Follow existing Egregore conventions.
+
+Requirements:
+
+* correct user
+* explicit working directory
+* explicit environment
+* correct wrapper/runtime
+* clean signal handling
+* controlled restart policy
+* journald logging
+* no interactive TTY requirement
+* no orphaned processes
+* no restart storm
+
+If Cline is a job-oriented process rather than a daemon, use an appropriate systemd architecture instead of pretending it is a daemon.
+
+---
+
+# PHASE 6 — BOOT PERSISTENCE
+
+If using a user systemd service, explicitly verify the user session architecture.
+
+Determine whether:
+
+`loginctl enable-linger <user>`
+
+is required.
+
+If required and authorized, enable it.
+
+Verify:
+
+`systemctl --user is-enabled egregore-cline.service`
+
+and:
+
+`systemctl --user is-active egregore-cline.service`
+
+Do not consider "enabled" equivalent to "will start after reboot."
+
+Actual reboot validation is mandatory for final production status.
+
+---
+
+# PHASE 7 — EMS READINESS
+
+Do not introduce Ollama readiness logic.
+
+Instead ensure the Cline service handles EMS availability correctly.
+
+The startup architecture must tolerate:
+
+1. Egregore booting.
+2. EMS starting.
+3. EMS becoming ready.
+4. Cline starting.
+5. local model backend becoming ready.
+
+If Cline cannot tolerate EMS startup races, implement an appropriate bounded readiness mechanism using the actual EMS health endpoint.
+
+Avoid a fragile `ExecStartPre` that permanently fails the service because EMS took several seconds longer than expected.
+
+The desired behavior is:
+
+`EMS unavailable → Cline waits/retries appropriately → EMS ready → Cline becomes operational`
+
+without manual intervention.
+
+---
+
+# PHASE 8 — DASHBOARD
+
+Register the service using the existing Egregore service architecture.
+
+If `SERVICE_MAP` is the correct registration mechanism:
+
+`ClineLocalAgents → egregore-cline.service`
+
+Also update any additional discovered registration/allowlist/validation layers.
+
+Dashboard state must represent actual systemd state.
+
+Required controls:
+
+* start
+* stop
+* restart
+
+Required states:
+
+* active
+* inactive
+* failed
+* transitional states where supported
+
+Never fabricate health.
+
+---
+
+# PHASE 9 — WORLD MAP
+
+Create:
+
+`config/nodes/cline-local.json`
+
+using the exact existing node schema.
+
+The node should identify Cline as:
+
+* local agent
+* LLM-capable
+* Egregore-connected
+* EMS-backed
+
+Do not hard-code `ACTIVE` unless the map architecture explicitly defines that as static metadata.
+
+If the map currently has no dynamic health mechanism, determine the smallest safe integration that allows:
+
+`systemd health → dashboard health → map state`
+
+If modifying map health architecture would be disproportionate to the task, clearly report that limitation rather than presenting static state as live health.
+
+---
+
+# PHASE 10 — FUNCTIONAL TESTING
+
+Test the entire chain:
+
+`Cline → EMS → GgufBackend → local model → response`
+
+Not merely:
+
+`curl EMS`
+
+and not merely:
+
+`cline --version`
+
+The test must demonstrate that Cline can perform an actual minimal agent/model operation through Egregore.
+
+Verify:
+
+* model discovery or explicit model selection
+* prompt
+* response
+* streaming if required
+* tool calling if required by the chosen Cline mode
+* clean process termination
+
+Capture failures precisely.
+
+---
+
+# PHASE 11 — NEGATIVE TESTING
+
+Test:
+
+### EMS unavailable
+
+Expected:
+
+* no false healthy state
+* no uncontrolled restart loop
+* useful logs
+* automatic recovery when EMS returns
+
+### Cline crash
+
+Expected:
+
+* systemd detects failure
+* controlled restart
+* dashboard reflects recovery
+
+### Dashboard restart
+
+Expected:
+
+* Cline remains independently operational
+* dashboard reconnects
+* service state is accurate
+* node remains registered
+
+### Model backend unavailable
+
+Expected:
+
+* clear failure state
+* no misleading ACTIVE state
+* recovery after backend returns
+
+---
+
+# PHASE 12 — REBOOT
+
+Perform an actual machine reboot if operationally safe.
+
+Before reboot record:
+
+* Cline service state
+* EMS state
+* local model/backend state
+* dashboard state
+* map node state
+
+After reboot verify:
+
+* EMS starts
+* backend starts
+* Cline starts
+* dependency ordering/readiness works
+* dashboard starts
+* Cline appears as healthy
+* world-map node appears
+* actual Cline inference succeeds
+
+Also check:
+
+* no duplicate processes
+* no stale PID files
+* no stale sockets
+* no manual intervention
+* no unexpected external network activity
+
+If reboot is impossible, mark the deployment:
+
+**PROVISIONALLY COMPLETE — REBOOT VALIDATION PENDING**
+
+Do not call it fully production-validated.
+
+---
+
+# PHASE 13 — IDEMPOTENCY
+
+Run the deployment/update procedure again.
+
+Expected:
+
+* same version does not create unnecessary changes
+* unchanged artifact is not redeployed unnecessarily
+* no duplicate systemd units
+* no duplicate service-map entries
+* no duplicate map nodes
+* no process duplication
+* no configuration corruption
+
+Then test an actual version upgrade path if practical:
+
+`version N → version N+1 → rollback N`
+
+The rollback must work without rebuilding the old version.
+
+---
+
+# PHASE 14 — FINAL SECURITY/SOVEREIGNTY CHECK
+
+Before completion, verify the running architecture contains no unintended Ollama dependency.
+
+Specifically search:
+
+* service files
+* environment files
+* wrappers
+* configuration
+* process command lines
+
+for:
+
+`11434`
+
+and Ollama references.
+
+Any remaining reference must be explained.
+
+Verify the Cline process communicates only with the intended local Egregore infrastructure unless an external dependency was explicitly identified during Phase 0.
+
+The intended production graph is:
+
+`Cline`
+↓
+`127.0.0.1:8001/v1`
+↓
+`Egregore EMS`
+↓
+`GgufBackend / Egregore local model`
+↓
+`Local inference`
+
+There should be no:
+
+`Cline → Ollama`
+
+dependency.
+
+---
+
+# DEFINITION OF DONE
+
+Production deployment is complete only when:
+
+* [ ] Cline CLI architecture has been verified.
+* [ ] Headless/persistent operation has been proven.
+* [ ] Correct package manager has been identified.
+* [ ] Cline build succeeds.
+* [ ] Cline runs independently of its source checkout where practical.
+* [ ] EMS compatibility has been verified against the actual Cline provider.
+* [ ] Actual Cline → EMS → local-model inference succeeds.
+* [ ] No Ollama dependency exists.
+* [ ] Versioned artifact deployment works.
+* [ ] Stable symlink deployment works.
+* [ ] Rollback works.
+* [ ] Systemd architecture matches the actual Cline runtime model.
+* [ ] Boot persistence is configured correctly.
+* [ ] EMS startup race is handled.
+* [ ] Dashboard registration works.
+* [ ] Dashboard start/stop/restart works.
+* [ ] Dashboard reports real service state.
+* [ ] World-map node is registered exactly once.
+* [ ] World-map health semantics are truthful.
+* [ ] Cline recovers from process failure.
+* [ ] Cline recovers from EMS becoming temporarily unavailable.
+* [ ] Deployment is idempotent.
+* [ ] Reboot validation succeeds.
+* [ ] No unintended external model/telemetry dependency has been introduced.
+* [ ] No unrelated Egregore service has been damaged.
+* [ ] Previous known-good Cline version remains available for rollback.
+
+---
+
+# FINAL REPORT FORMAT
+
+Return:
+
+## Architecture
+
+`Cline → EMS → GgufBackend → local model`
+
+## Cline
+
+* version:
+* source revision:
+* runtime mode:
+* artifact:
+* SHA256:
+
+## Egregore
+
+* EMS endpoint:
+* backend:
+* tested model:
+* inference test:
+
+## Service
+
+* systemd unit:
+* user/system scope:
+* lingering:
+* boot persistence:
+* restart behavior:
+
+## Dashboard
+
+* registration:
+* API state:
+* start:
+* stop:
+* restart:
+
+## World Map
+
+* node:
+* node ID:
+* capabilities:
+* health source:
+* rendered:
+
+## Sovereignty
+
+* Ollama dependency: NONE
+* external model API: NONE / explicitly documented
+* external network dependency: NONE / explicitly documented
+
+## Reboot
+
+* performed:
+* result:
+
+## Rollback
+
+* previous version:
+* rollback mechanism:
+* rollback tested:
+
+## Final Status
+
+One of:
+
+**PRODUCTION READY**
+
+**PROVISIONALLY COMPLETE — REBOOT VALIDATION PENDING**
+
+**BLOCKED — COMPATIBILITY ISSUE**
+
+**ROLLED BACK — DEPLOYMENT FAILED**
+
+Never report `PRODUCTION READY` if a Definition-of-Done item remains unresolved.

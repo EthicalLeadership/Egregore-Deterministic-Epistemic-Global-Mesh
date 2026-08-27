@@ -1,0 +1,1 @@
+{"id":"chatcmpl-1787451949255388105","object":"chat.completion","created":1787451949,"model":"ds-coder-6.7b","choices":[{"index":0,"message":{"role":"assistant","content":"<s>[INST][/INST]<"},"finish_reason":"length"}],"usage":{"prompt_tokens":17,"completion_tokens":10,"total_tokens":27}}EXIT=0

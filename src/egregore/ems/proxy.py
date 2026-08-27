@@ -22,10 +22,6 @@ from egregore.ems.registry import EmsRegistry, ModelStatus, build_registry_from_
 
 # Federation router is optional; the EMS proxy can serve treaty/entropy endpoints
 # when EGREGORE_MOUNT_FEDERATION_ON_EMS is enabled.
-try:
-    from egregore.http_api.http.v1.federation import router as federation_router
-except Exception as _federation_import_exc:  # pragma: no cover
-    federation_router = None  # type: ignore[assignment]
 
 DEFAULT_PROXY_PORT = int(os.environ.get("EGREGORE_EMS_PROXY_PORT", "8001"))
 DEFAULT_PROXY_HOST = os.environ.get("EGREGORE_EMS_PROXY_HOST", "0.0.0.0")  # noqa: S104
@@ -255,20 +251,6 @@ class EmsProxy:
         async def health_ready() -> dict[str, str]:
             return {"status": "ready"}
 
-        # Optionally expose federation treaty/entropy endpoints on the EMS proxy
-        # so that nodes which only run the proxy (port 8001) can still federate.
-        if os.environ.get("EGREGORE_MOUNT_FEDERATION_ON_EMS", "").lower() in (
-            "1",
-            "true",
-            "yes",
-            "on",
-        ):
-            if federation_router is not None:
-                app.include_router(federation_router)
-            else:
-                logging.getLogger(__name__).warning(
-                    "EGREGORE_MOUNT_FEDERATION_ON_EMS is set but federation router failed to import."
-                )
 
         @app.get("/v1/models")
         async def list_models() -> JSONResponse:

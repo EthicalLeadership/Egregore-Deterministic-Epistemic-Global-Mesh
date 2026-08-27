@@ -49,6 +49,23 @@ function handleHealth(req, res) {
   sendJSON(res, 200, store.healthStore.current);
 }
 
+// Route: GET /api/models
+async function handleModels(req, res) {
+  try {
+    const resp = await fetch("http://127.0.0.1:8002/v1/models", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!resp.ok) {
+      return sendJSON(res, 502, { error: "Bridge models endpoint returned " + resp.status });
+    }
+    const data = await resp.json();
+    sendJSON(res, 200, data);
+  } catch (err) {
+    sendJSON(res, 502, { error: "Bridge unreachable", detail: String(err) });
+  }
+}
+
 // Route: GET /api/services/:name/status
 function handleServiceStatus(req, res, name) {
   const status = store.getServiceStatus(name);
@@ -150,6 +167,11 @@ const server = http.createServer(async (req, res) => {
           "GET  /api/dashboard",
         ],
       });
+    }
+
+    // GET /api/models
+    if (pathname === "/api/models" && method === "GET") {
+      return await handleModels(req, res);
     }
 
     // GET /api/metrics

@@ -1,0 +1,264 @@
+apiVersion: v1
+kiny: Node
+metadata:
+  annotations:
+    flannel.alpha.coreos.com/backend-data: '{"VNI":1,"VtepMAC":"ca:2d:24:44:ff:46"}'
+    flannel.alpha.coreos.com/backend-type: vxlan
+    flannel.alpha.coreos.com/kube-subnet-manager: "true"
+    flannel.alpha.coreos.com/public-ip: 172.21.0.2
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2026-02-13T09:33:18Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: blackstar-kind-control-plane
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/control-plane: ""
+  name: blackstar-kind-control-plane
+  resourceVersion: "24024631"
+  uid: dd54fd50-7838-4323-85b6-22bcb8dad5ef
+spec:
+  podCIDR: 10.244.0.0/24
+  podCIDRs:
+  - 10.244.0.0/24
+  providerID: kind://docker/blackstar-kind/blackstar-kind-control-plane
+status:
+  addresses:
+  - address: 172.21.0.2
+    type: InternalIP
+  - address: blackstar-kind-control-plane
+    type: Hostname
+  allocatable:
+    cpu: "16"
+    ephemeral-storage: 955837812Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 32767412Ki
+    pods: "110"
+  capacity:
+    cpu: "16"
+    ephemeral-storage: 955837812Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 32767412Ki
+    pods: "110"
+  conditions:
+  - lastHeartbeatTime: "2026-08-18T14:35:53Z"
+    lastTransitionTime: "2026-08-18T14:35:53Z"
+    message: Flannel is running on this node
+    reason: FlannelIsUp
+    status: "False"
+    type: NetworkUnavailable
+  - lastHeartbeatTime: "2026-08-20T23:23:58Z"
+    lastTransitionTime: "2026-02-13T09:33:16Z"
+    message: kubelet has sufficient memory available
+    reason: KubeletHasSufficientMemory
+    status: "False"
+    type: MemoryPressure
+  - lastHeartbeatTime: "2026-08-20T23:23:58Z"
+    lastTransitionTime: "2026-02-13T09:33:16Z"
+    message: kubelet has no disk pressure
+    reason: KubeletHasNoDiskPressure
+    status: "False"
+    type: DiskPressure
+  - lastHeartbeatTime: "2026-08-20T23:23:58Z"
+    lastTransitionTime: "2026-02-13T09:33:16Z"
+    message: kubelet has sufficient PID available
+    reason: KubeletHasSufficientPID
+    status: "False"
+    type: PIDPressure
+  - lastHeartbeatTime: "2026-08-20T23:23:58Z"
+    lastTransitionTime: "2026-08-18T05:13:42Z"
+    message: kubelet is posting ready status
+    reason: KubeletReady
+    status: "True"
+    type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  features:
+    supplementalGroupsPolicy: true
+  images:
+  - names:
+    - registry.blackstar:5000/observability-grafana@sha256:9419d74cb14745b96cf7068c6c5de30851d63ee45bfbe6387d48b12e62146ea4
+    sizeBytes: 213872649
+  - names:
+    - registry.blackstar:5000/observability-prometheus@sha256:82bb24e3e06c60145789c95653b187f9b73fe7012489a756a0c4fa490a7829f6
+    sizeBytes: 143644994
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/grafana@sha256:1c4886d2d57a1304c76cea9444e21ea59cfc7788890c95035a55d8ea30b0f28b
+    sizeBytes: 123110301
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/prometheus@sha256:fba2e95be638edf412bcab92eeb378158082ab441b5962417bd3fa5936e8b3c1
+    sizeBytes: 108262190
+  - names:
+    - reg.kyverno.io/kyverno/kyverno-cli@sha256:f5058dcbe7e9593c8af1cdd79ecf3a9bfec1ba644f92a3d3270d81ed1116c742
+    - reg.kyverno.io/kyverno/kyverno-cli:v1.17.0
+    sizeBytes: 99468157
+  - names:
+    - registry.k8s.io/kube-apiserver-amd64:v1.35.0
+    - registry.k8s.io/kube-apiserver:v1.35.0
+    sizeBytes: 90838775
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/blackstar/blackstar-api@sha256:b53b15203b69a0f8376c0182345a96a1fa285d2abc12d2223d3c3e3acb88689a
+    sizeBytes: 84481237
+  - names:
+    - registry.blackstar:5000/dt1-tectonicd@sha256:9eefb711566f30527816e99d925a42f02bdc1a33fff2bedbcf9e1497b18a158a
+    sizeBytes: 81949110
+  - names:
+    - registry.blackstar:5000/dt1-tectonicd@sha256:a2a24cb45e2f57100d5b668050384c56590f4ff17e996c992df87c108c8a7391
+    sizeBytes: 81935258
+  - names:
+    - registry.k8s.io/kube-controller-manager-amd64:v1.35.0
+    - registry.k8s.io/kube-controller-manager:v1.35.0
+    sizeBytes: 76888155
+  - names:
+    - registry.k8s.io/kube-proxy-amd64:v1.35.0
+    - registry.k8s.io/kube-proxy:v1.35.0
+    sizeBytes: 71984329
+  - names:
+    - registry.blackstar:5000/envoy@sha256:6b2295b239d6e2b3d9cbe6d02c16c3393272151ff21845791ca9fb1a6af16cc5
+    sizeBytes: 62407425
+  - names:
+    - registry.blackstar:5000/blackstar-api@sha256:5d27939bf6dce0b87fcd6d3ea1c6de2ef533d0b56361811823ad96ac1b940461
+    sizeBytes: 55761531
+  - names:
+    - registry.blackstar:5000/blackstar-api@sha256:93aefb8af01823a7cf360efae9ea8d18f3d32d796e82ac8860df6fb27d9e3f5c
+    sizeBytes: 55761389
+  - names:
+    - registry.blackstar:5000/blackstar-notary@sha256:af7bcecaeb507379f943cd4ef6f681ed27da894b914700612df472a34db15c00
+    sizeBytes: 55759708
+  - names:
+    - registry.k8s.io/kube-scheduler-amd64:v1.35.0
+    - registry.k8s.io/kube-scheduler:v1.35.0
+    sizeBytes: 52758621
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/tempo@sha256:b9a142312ff215cd7ee69dd3035fd991e8ad348aafbe4cf710d5dc13c8bf9f40
+    sizeBytes: 52358767
+  - names:
+    - registry.blackstar:5000/blackstar-sync@sha256:d7d0b49240f870134fc7b37742fd2a5e30b7b58a5af228e929bdc292f3903292
+    sizeBytes: 46448202
+  - names:
+    - reg.kyverno.io/kyverno/kyverno@sha256:ff2ca78b0703c1bcce7f22576f4e3e90d1dd17e710475dc88f3b7f10fc9f019d
+    - reg.kyverno.io/kyverno/kyverno:v1.17.0
+    sizeBytes: 45752606
+  - names:
+    - reg.kyverno.io/kyverno/background-controller@sha256:a38173ad69f0ad02779a6b20d40253a35608aac922d7d3ac39ac8d26f8382ca4
+    - reg.kyverno.io/kyverno/background-controller:v1.17.0
+    sizeBytes: 44845759
+  - names:
+    - reg.kyverno.io/kyverno/reports-controller@sha256:d5d0358e658b9d1b90954bf666f457bd6af5db36209e9ba792c182f212a11c0b
+    - reg.kyverno.io/kyverno/reports-controller:v1.17.0
+    sizeBytes: 44469132
+  - names:
+    - docker.io/kindest/kindnetd:v20251212-v0.29.0-alpha-105-g20ccfc88
+    sizeBytes: 42673934
+  - names:
+    - reg.kyverno.io/kyverno/cleanup-controller@sha256:01af176e0af8f1b1f3388a8223ba3e6e19ed02517444df20b5e1e27e6ffa7c66
+    - reg.kyverno.io/kyverno/cleanup-controller:v1.17.0
+    sizeBytes: 41657241
+  - names:
+    - reg.kyverno.io/kyverno/kyvernopre@sha256:0b21526834219a8d7d0123632ab4308106444049cee4be7a46cbf209c21e11bb
+    - reg.kyverno.io/kyverno/kyvernopre:v1.17.0
+    sizeBytes: 40783481
+  - names:
+    - ghcr.io/flannel-io/flannel@sha256:6a9c170acece4457ccb9cdfe53c787cc451e87990e20451bf20070b8895fa538
+    - ghcr.io/flannel-io/flannel:v0.28.1
+    sizeBytes: 34114824
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/alertmanager@sha256:8522736e3f720bac70eca9df7ccad916c062e12f2b65661eeb51721dacfe3f6e
+    sizeBytes: 32411160
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/blackstar/otel-collector@sha256:1d0305eeb3d54fc26e1b9cd990b8533fae2a236bbd623e8c35bf35eb15246e68
+    sizeBytes: 30067241
+  - names:
+    - registry.blackstar:5000/spire-server@sha256:8ecff499a06e06b4bd208009f69535d4674b4f4ec32232e43d48638cf69f001b
+    sizeBytes: 29407705
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/loki@sha256:24db971b8cf10f13f15fcc34cf1e9309d1c8cb37b50f56883e418c2592bafbe3
+    sizeBytes: 27560532
+  - names:
+    - docker.io/kindest/local-path-provisioner:v20251212-v0.29.0-alpha-105-g20ccfc88
+    sizeBytes: 24735319
+  - names:
+    - registry.k8s.io/etcd:3.6.6-0
+    sizeBytes: 23641797
+  - names:
+    - registry.k8s.io/coredns/coredns:v1.13.1
+    sizeBytes: 23553139
+  - names:
+    - registry.blackstar:5000/spire-agent@sha256:6ef48a28505b50c3c944a1f65b9ba1ce51431cc7dd25aadf673723c904ae2013
+    sizeBytes: 19499993
+  - names:
+    - registry.blackstar:5000/nats@sha256:30a9df8989eb4b7fc6b528f9103c18c1f8ddbc2ce6c536c7240d7bfdf08b3576
+    sizeBytes: 10447703
+  - names:
+    - docker.io/library/registry@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+    - docker.io/library/registry:2
+    sizeBytes: 10131312
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/gbs@sha256:ac66b47c554fab6ad09cf0667bd7b9b668bce616e9d612389f11d7bfe5b83521
+    sizeBytes: 7788546
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/bpc@sha256:8afca66731877f56f59edb8c7ae104d5ac075a8a307b48aa41ede9f70f2d6a04
+    sizeBytes: 7787715
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/cir@sha256:65744dae40b4077e68c31114477074e14dfedf71ee25d915ce41f251d708672b
+    sizeBytes: 7665606
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/gbw@sha256:ec2a30b98652c31314c443a49f0d5255e711810e3ee71732752e8f40cb37b9e5
+    sizeBytes: 7665588
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/co@sha256:e2785a8806d60e21ba6c5149ab465751e6d9a4f7892456a6d745cd735b7db48d
+    sizeBytes: 7665510
+  - names:
+    - ghcr.io/flannel-io/flannel-cni-plugin@sha256:c6a08fe5bcb23b19c2fc7c1e47b95a967cc924224ebedf94e8623f27b6c258fa
+    - ghcr.io/flannel-io/flannel-cni-plugin:v1.9.0-flannel1
+    sizeBytes: 5142124
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/gbs@sha256:98080db2b719933c24b77d9dd8677ce93682012c3a838c84021c97532bbea14a
+    sizeBytes: 5072260
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/dt1/bpc@sha256:8be7db865cce3a7615dc192636f78603053e736e1e0585514e599f17e30182d3
+    sizeBytes: 5069935
+  - names:
+    - docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1
+    - docker.io/library/alpine:3.19
+    sizeBytes: 3429495
+  - names:
+    - docker.io/kindest/local-path-helper:v20251211-v0.29.0-alpha-100-g82a92c5d
+    sizeBytes: 3084679
+  - names:
+    - registry.blackstar.svc.cluster.local:5000/blackstar/blackstar-ui@sha256:34a9a045090b54ca937b385dcedefc68a7a8223f12f7ab27382d7ede6ff3da7a
+    sizeBytes: 900344
+  - names:
+    - registry.k8s.io/pause:3.10
+    sizeBytes: 320368
+  nodeInfo:
+    architecture: amd64
+    bootID: f37ec801-9c33-490d-986a-682068e0dfed
+    containerRuntimeVersion: containerd://2.2.0
+    kernelVersion: 7.0.0-29-generic
+    kubeProxyVersion: ""
+    kubeletVersion: v1.35.0
+    machineID: 50f1793e348245899d04e099806a743e
+    operatingSystem: linux
+    osImage: Debian GNU/Linux 12 (bookworm)
+    swap:
+      capacity: 8589930496
+    systemUUID: 20ffd29f-e0b2-4e7b-a5c6-53a8f439a111
+  runtimeHandlers:
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: ""
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: runc
+  - features:
+      recursiveReadOnlyMounts: true
+      userNamespaces: true
+    name: test-handler

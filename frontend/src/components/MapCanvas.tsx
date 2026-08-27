@@ -9,7 +9,7 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
 import { select, type Selection } from 'd3-selection';
 import 'd3-transition';
 import {
-  LAND, MTL, MTL_CENTER, CITIES, SENSORS, BUILDING_BY_ID,
+  LAND, CITY, CITY_CENTER, CITIES, SENSORS, BUILDING_BY_ID,
   sensorActiveInRange, SYSTEM_COLOR, type Building, type Sensor,
 } from '../lib/data';
 import { store } from '../lib/store';
@@ -149,11 +149,11 @@ export function MapCanvas({
     }
 
     function buildingAt(ll: [number, number]): Building | null {
-      const [w0, s0, e0, n0] = MTL.bbox;
+      const [w0, s0, e0, n0] = CITY.bbox;
       if (ll[0] < w0 || ll[0] > e0 || ll[1] < s0 || ll[1] > n0) return null;
       if (transform.current.k < 1400) return null;
       // deeper footprint first (taller buildings on top)
-      const sorted = [...MTL.buildings].sort((a, b) => b.lv - a.lv);
+      const sorted = [...CITY.buildings].sort((a, b) => b.lv - a.lv);
       for (const b of sorted) if (pip(ll, b.p)) return b;
       return null;
     }
@@ -237,11 +237,12 @@ export function MapCanvas({
     }
 
     // --- flow lines (planet tier) ------------------------------------------
-    const FLOWS = [1, 3, 8, 9, 17].map((i) => CITIES[i]); // spokes from HQ
+    // filter(Boolean): resilient if CITIES ever shrinks below these indices.
+    const FLOWS = [1, 3, 8, 9, 17].map((i) => CITIES[i]).filter(Boolean);
     function drawFlows(k: number, t: number) {
       const a = 1 - ramp(k, 8, 40);
       if (a <= 0) return;
-      const hq = projection([MTL_CENTER[0], MTL_CENTER[1]])!;
+      const hq = projection([CITY_CENTER[0], CITY_CENTER[1]])!;
       ctx.save();
       ctx.lineWidth = 1 / k;
       ctx.setLineDash([6 / k, 8 / k]);
@@ -308,7 +309,7 @@ export function MapCanvas({
       // roads
       const roadA = ramp(k, 150, 320);
       if (s.layers.roads && roadA > 0) {
-        for (const r of MTL.roads) {
+        for (const r of CITY.roads) {
           const major = r.t === 'primary' || r.t === 'secondary' || r.t === 'trunk';
           ctx.strokeStyle = major
             ? `rgba(148,197,255,${0.5 * roadA})`
@@ -327,7 +328,7 @@ export function MapCanvas({
       // buildings
       const bldA = ramp(k, 1300, 2600);
       if (s.layers.buildings && bldA > 0) {
-        for (const b of MTL.buildings) {
+        for (const b of CITY.buildings) {
           const isSel = b.id === s.selectedBuildingId;
           const sysHit = !s.systemFilter || b.sys === s.systemFilter;
           const dim = s.systemFilter && !sysHit;
@@ -421,6 +422,12 @@ export function MapCanvas({
       ctx.restore();
     }
 
+    /** Log-scale marker radius — behaves across a wide headcount range without
+     *  baking unit conventions into the data. ~7px HQ dot down to ~3px colony. */
+    function cityDotRadius(pop: number) {
+      return Math.max(2, Math.log10(Math.max(1, pop)) * 1.4 - 2);
+    }
+
     function drawCityMarkers(t: typeof zoomIdentity, show: boolean, flows: boolean) {
       if (!show && !flows) return;
       const k = t.k;
@@ -436,7 +443,7 @@ export function MapCanvas({
         const y = t.applyY(p[1]);
         if (x < -20 || x > W + 20 || y < -20 || y > H + 20) continue;
         if (show && dotA > 0) {
-          const r = Math.max(2, Math.sqrt(c.pop) * 1.4);
+          const r = cityDotRadius(c.pop);
           ctx.fillStyle = c.hq ? `rgba(34,211,238,${dotA})` : `rgba(148,197,255,${0.75 * dotA})`;
           ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
           if (c.hq) {
@@ -506,7 +513,7 @@ export function MapCanvas({
         else mctx.lineTo(p[0], p[1]);
       });
       mctx.stroke();
-      const hq = mp(MTL_CENTER)!;
+      const hq = mp(CITY_CENTER)!;
       mctx.fillStyle = ACCENT;
       mctx.beginPath(); mctx.arc(hq[0], hq[1], 2, 0, Math.PI * 2); mctx.fill();
     }

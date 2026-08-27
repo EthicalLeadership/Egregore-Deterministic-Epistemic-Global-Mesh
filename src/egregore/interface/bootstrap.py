@@ -1,6 +1,7 @@
 """Egregore Plane 2 (Projection) bootstrap — clean."""
 
 from __future__ import annotations
+from egregore.http_api.http.middleware.tool_call_middleware import ToolCallMiddleware
 
 # Load .env so uvicorn picks up EGREGORE_API_KEYS and other config even when
 # started directly (not through the desktop launcher).
@@ -257,6 +258,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
         docs_url=None,
         redoc_url=None,
     )
+    app.add_middleware(ToolCallMiddleware)
 
     # Build composition root and store on app state
     root = CompositionRoot(freeze_controller=freeze_controller)

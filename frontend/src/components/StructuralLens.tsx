@@ -7,7 +7,7 @@ import {
   forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide,
   type SimulationNodeDatum, type SimulationLinkDatum,
 } from 'd3-force';
-import { MTL, SYSTEMS, SENSORS, sensorActiveInRange, BUILDING_BY_ID } from '../lib/data';
+import { CITY, SYSTEMS, SENSORS, sensorActiveInRange, BUILDING_BY_ID } from '../lib/data';
 import { store } from '../lib/store';
 import { useStore } from '../hooks/useStore';
 
@@ -39,7 +39,7 @@ export function StructuralLens({ reducedMotion }: { reducedMotion: boolean }) {
       }
     }
     // attach a deterministic sample of buildings per system
-    for (const b of MTL.buildings) {
+    for (const b of CITY.buildings) {
       if (b.seed % 3 !== 0) continue; // keep the graph legible
       const hubIdx = b.seed % 3;
       const hub = SYSTEMS.find((s) => s.key === b.sys)!.hubs[hubIdx];
@@ -187,8 +187,8 @@ export function StructuralLens({ reducedMotion }: { reducedMotion: boolean }) {
   }, [nodes, links, reducedMotion]);
 
   const buildingCount = state.systemFilter
-    ? MTL.buildings.filter((b) => b.sys === state.systemFilter).length
-    : MTL.buildings.length;
+    ? CITY.buildings.filter((b) => b.sys === state.systemFilter).length
+    : CITY.buildings.length;
 
   return (
     <div className="flex h-full flex-col">
