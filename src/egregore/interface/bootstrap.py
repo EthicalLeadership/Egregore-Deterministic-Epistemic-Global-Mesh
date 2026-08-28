@@ -35,6 +35,7 @@ from egregore.http_api.http.v1.embeddings import router as embeddings_router
 from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
 from egregore.interface.anchorum_router import ingest_router
 from egregore.interface.anchorum_router import router as anchorum_router
+from egregore.interface.legal_chat_router import router as legal_chat_router
 from egregore.interface.control_router import router as control_router
 from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
 from egregore.interface.dashboard import router as dashboard_router
