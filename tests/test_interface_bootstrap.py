@@ -4,8 +4,23 @@ from fastapi.testclient import TestClient
 from egregore.interface.bootstrap import create_app
 
 
+class MockInferenceService:
+    def list_models(self):
+        return []
+    def execute(self, request):
+        return None
+
+@pytest.fixture(autouse=True)
+def mock_inference(monkeypatch):
+    monkeypatch.setattr(
+        "egregore.interface.bootstrap.build_inference_service_from_env",
+        lambda: MockInferenceService(),
+    )
+
+
 @pytest.fixture
-def client():
+def client(monkeypatch):
+    monkeypatch.setenv("EGREGORE_TEST_MODE", "1")
     return TestClient(create_app(), base_url="http://localhost")
 
 

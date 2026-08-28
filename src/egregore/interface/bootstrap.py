@@ -265,7 +265,20 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.state.composition_root = root
 
     # Build multi-backend inference service for chat (native Coder, Anthropic, DeepSeek)
-    app.state.inference_service = build_inference_service_from_env()
+    # In test mode we skip heavy model loading.
+    if os.environ.get("EGREGORE_TEST_MODE") == "1":
+        from egregore.interface import llm_ports
+
+        class _DummyInference:
+            def list_models(self):
+                return []
+
+            def execute(self, request):
+                raise RuntimeError("Inference disabled in test mode")
+
+        app.state.inference_service = _DummyInference()
+    else:
+        app.state.inference_service = build_inference_service_from_env()
 
     # Discover CLI agents for chat dispatch
     app.state.agent_registry = AgentRegistry()
