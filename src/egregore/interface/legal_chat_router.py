@@ -49,11 +49,8 @@ async def anchorum_chat(payload: ChatIn) -> Any:
         grounding = _legal_grounding(payload.message)
         if grounding:
             system += (
-                "
-
-Quebec legal reference (verified excerpts; still flag "
-                "anything uncertain as 'to verify on LégisQuébec'):
-" + grounding
+                "\n\nQuebec legal reference (verified excerpts; still flag "
+                "anything uncertain as 'to verify on LégisQuébec'):\n" + grounding
             )
         if payload.case_id:
             system += "
