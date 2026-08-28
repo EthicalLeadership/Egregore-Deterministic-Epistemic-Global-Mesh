@@ -105,8 +105,8 @@ def build_inference_service_from_env() -> InferenceService:
         if local_models_dir
         else LocalModelClient()
     )
-    if local_client.health():
-        clients["local"] = local_client
+    # Always register local backend; health may be checked later.
+    clients["local"] = local_client
 
     # Anthropic Claude backend when an API key is present.
     anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -123,6 +123,13 @@ def build_inference_service_from_env() -> InferenceService:
     if kimi_api_key:
         clients["moonshot"] = MoonshotClient(api_key=kimi_api_key)
         logger.info("Moonshot (Kimi) backend registered")
+
+    if default_backend not in clients:
+        if "local" in clients:
+            logger.warning("Default backend '%s' not registered; falling back to 'local'.", default_backend)
+            default_backend = "local"
+        else:
+            raise RuntimeError("No inference backends could be registered.")
 
     return InferenceService(clients, default_backend=default_backend)
 

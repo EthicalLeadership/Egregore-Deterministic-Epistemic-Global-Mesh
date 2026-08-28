@@ -667,7 +667,14 @@ def create_app() -> FastAPI:  # noqa: C901
                 resp.raise_for_status()
                 result["models"] = resp.json().get("data", [])
         except httpx.HTTPError as exc:
-            result["error"] = f"EMS unreachable: {exc}"
+            # Fallback: list models from the built inference service (if available)
+            try:
+                from egregore.application.inference_service import build_inference_service_from_env
+                service = build_inference_service_from_env()
+                result["models"] = service.list_models()
+                result["error"] = f"EMS unreachable, falling back to inference service: {exc}"
+            except Exception as fallback_exc:
+                result["error"] = f"EMS unreachable: {exc}; fallback failed: {fallback_exc}"
         return result
 
     @app.get("/api/v1/anchorum/cases/{case_id}/index")
