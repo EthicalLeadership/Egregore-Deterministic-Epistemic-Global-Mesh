@@ -1,6 +1,6 @@
 """Legal chat router for bootstrap app.
 
-Reuses the chat logic from anchorum_http so the same endpoint is available
+Reuses chat logic from anchorum_http so the same endpoint is available
 on the main Projection Plane (port 8443) without duplicating code.
 """
 
@@ -53,10 +53,7 @@ async def anchorum_chat(payload: ChatIn) -> Any:
                 "anything uncertain as 'to verify on LégisQuébec'):\n" + grounding
             )
         if payload.case_id:
-            system += "
-
-Live case data:
-" + _case_context(payload.case_id)
+            system += "\n\nLive case data:\n" + _case_context(payload.case_id)
             from starlette.concurrency import run_in_threadpool
 
             retrieved, sources = await run_in_threadpool(
@@ -64,9 +61,7 @@ Live case data:
             )
             if retrieved:
                 evidence_provided = True
-                system += "
-
-" + _EVIDENCE_INSTRUCTION
+                system += "\n\n" + _EVIDENCE_INSTRUCTION
                 evidence_budget = max(
                     2000,
                     _MAX_CONTEXT_CHARS
@@ -77,14 +72,9 @@ Live case data:
                 )
                 retrieved = _truncate_evidence(retrieved, evidence_budget)
                 user_content = (
-                    "CASE DOCUMENTS:
-"
-                    f"{retrieved}
-
-"
-                    f"QUESTION: {payload.message}
-
-"
+                    "CASE DOCUMENTS:\n"
+                    f"{retrieved}\n\n"
+                    f"QUESTION: {payload.message}\n\n"
                     "Answer using ONLY the case documents above, citing each "
                     "claim as [1], [2], etc. If they do not answer the "
                     "question, say exactly: 'The provided case documents do "
@@ -92,9 +82,7 @@ Live case data:
                 )
             else:
                 system += (
-                    "
-
-No relevant documents found in the case file for "
+                    "\n\nNo relevant documents found in the case file for "
                     "this question. If the question is about the case, say "
                     "that explicitly. If it is a general legal question, "
                     "answer it from the Quebec legal reference and your "
