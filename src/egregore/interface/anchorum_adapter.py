@@ -94,11 +94,15 @@ class AnchorumAdapter:
         start = time.perf_counter()
         result = func(*args, **kwargs)
 
-        # Serialize output (handle Pydantic models, dicts, etc.)
+        # Serialize output (handle Pydantic models, dicts, dataclasses, etc.)
+        import dataclasses
+
         if hasattr(result, "model_dump"):
             output_payload = result.model_dump()
         elif isinstance(result, dict):
             output_payload = result
+        elif dataclasses.is_dataclass(result):
+            output_payload = dataclasses.asdict(result)
         else:
             output_payload = {"result": str(result)}
 

@@ -16,6 +16,7 @@ from egregore.domain.semantics.canonical_ir import (
     FactStatement,
     SemanticStatementType,
 )
+from egregore.domain.legal_agent.execution_authority import ExecutionAuthority
 from egregore.domain.legal_agent.legal_models import LegalAnalysisOutput
 from egregore.domain.epistemic_mapper import map_legal_output_to_graph
 from egregore.interface.anchorum_adapter import AnchorumAdapter
@@ -42,7 +43,10 @@ class StrategyPerspectiveAgent(BaseAgent):
         self.agent_id = f"strategy_{perspective.value}_{horizon.value}"
 
     def _build_ir(self, scope: StrategyScope) -> CanonicalSemanticIR:
-        """Create a minimal CanonicalSemanticIR from the scope evidence."""
+        """Create a minimal CanonicalSemanticIR from the scope evidence.
+
+        The IR expects `FactStatement` objects, not `LegalFact`.
+        """
         statements = []
         for i, ev_id in enumerate(scope.evidence_refs):
             statements.append(
@@ -76,7 +80,8 @@ class StrategyPerspectiveAgent(BaseAgent):
         ir = self._build_ir(scope)
 
         # 2. Call real legal reasoning engine via adapter
-        raw = self.adapter.run_legal_analysis(ir=ir, case_id=scope.matter_id)
+        with ExecutionAuthority.governed():
+            raw = self.adapter.run_legal_analysis(ir=ir, case_id=scope.matter_id)
 
         # 3. Reconstruct LegalAnalysisOutput from raw payload dict
         output_dict = raw.raw_payload.get("output")
