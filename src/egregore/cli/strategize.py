@@ -26,13 +26,17 @@ def main() -> None:
     parser.add_argument("--evidence", nargs="*", default=[], help="Evidence IDs")
     args = parser.parse_args()
 
+    from egregore.application.strategy.dossier_loader import load_evidence_from_report
+    evidence_contents = load_evidence_from_report(args.dossier_id)
+
     scope = StrategyScope(
         matter_id=args.dossier_id,
         jurisdiction=args.jurisdiction,
         goals=args.goals,
         constraints=tuple(args.constraints),
         stakeholders=tuple(args.stakeholders),
-        evidence_refs=tuple(args.evidence),
+        evidence_refs=tuple(evidence_contents.keys()),
+        evidence_contents=evidence_contents,
     )
 
     # Build real adapter and assurance.

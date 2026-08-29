@@ -31,6 +31,7 @@ class StrategyScope(BaseModel):
     constraints: tuple[str, ...] = ()
     stakeholders: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
+    evidence_contents: dict[str, str] = Field(default_factory=dict)
 
     def to_context(self) -> dict[str, Any]:
         return self.model_dump()

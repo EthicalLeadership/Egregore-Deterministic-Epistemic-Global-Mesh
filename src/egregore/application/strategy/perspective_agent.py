@@ -48,11 +48,12 @@ class StrategyPerspectiveAgent(BaseAgent):
         The IR expects `FactStatement` objects, not `LegalFact`.
         """
         statements = []
-        for i, ev_id in enumerate(scope.evidence_refs):
+        for ev_id in scope.evidence_refs:
+            content = scope.evidence_contents.get(ev_id, f"Evidence {ev_id}")
             statements.append(
                 FactStatement(
                     statement_type=SemanticStatementType.FACT,
-                    content=f"Evidence {ev_id}",
+                    content=content,
                     source_id=ev_id,
                 )
             )
@@ -87,12 +88,29 @@ class StrategyPerspectiveAgent(BaseAgent):
         output_dict = raw.raw_payload.get("output")
         if not isinstance(output_dict, dict):
             raise TypeError("Adapter output must be dict")
-        # Normalize agent_version dict -> LegalAgentVersion dataclass
-        from egregore.domain.legal_agent.legal_models import LegalAgentVersion
+        # Normalize nested dataclasses from dicts
+        from egregore.domain.legal_agent.legal_models import (
+            LegalAgentVersion,
+            RuleMatch,
+            InferenceNode,
+        )
 
         av = output_dict.get("agent_version")
         if isinstance(av, dict):
             output_dict["agent_version"] = LegalAgentVersion(**av)
+
+        rules = output_dict.get("applicable_rules")
+        if isinstance(rules, (list, tuple)):
+            output_dict["applicable_rules"] = tuple(
+                RuleMatch(**r) if isinstance(r, dict) else r for r in rules
+            )
+
+        nodes = output_dict.get("inference_chain")
+        if isinstance(nodes, (list, tuple)):
+            output_dict["inference_chain"] = tuple(
+                InferenceNode(**n) if isinstance(n, dict) else n for n in nodes
+            )
+
         analysis_output = LegalAnalysisOutput(**output_dict)
 
         # 4. Map to EpistemicGraph
