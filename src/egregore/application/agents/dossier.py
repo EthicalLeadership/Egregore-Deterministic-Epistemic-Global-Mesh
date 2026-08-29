@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from egregore.application.agents.base import BaseAgent, AgentContext, AgentResult
+from egregore.domain.artifact.access import AgentArtifactAccessor
 from egregore.interface.anchorum_adapter import AnchorumAdapter
 from egregore.assurance.assurance_engine import AssuranceEngine
 
@@ -33,12 +34,14 @@ class DossierAgent(BaseAgent):
         workspace_root: Path,
         adapter: AnchorumAdapter,
         assurance: AssuranceEngine,
+        artifact_accessor: AgentArtifactAccessor | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
         self.workspace_root = workspace_root.resolve()
         self.adapter = adapter
         self.assurance = assurance
+        self.artifact_accessor = artifact_accessor
 
     def list_files(self, extension: Optional[str] = None) -> List[str]:
         """Return relative paths of all files in the workspace."""
