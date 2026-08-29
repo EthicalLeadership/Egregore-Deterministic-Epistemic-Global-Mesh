@@ -15,7 +15,6 @@ def _truncate_fact_list(text: str) -> str:
             return match.group(0)
         return f"[{len(ids)} fact IDs]"
 
-    # Matches the parenthesized list of IDs after "facts "
     return re.sub(r"\([^)]*\)", repl, text)
 
 
@@ -32,20 +31,12 @@ def render_memo(memo: StrategyMemo) -> str:
         lines.append(
             f"## {analysis.perspective.value.upper()} / {analysis.horizon.value.upper()}"
         )
-
-        # Show up to 3 findings, truncating fact lists
-        findings = analysis.findings[:3]
-        for f in findings:
+        for f in analysis.findings[:3]:
             lines.append(f"- Finding: {_truncate_fact_list(f)}")
-
-        # Show up to 2 risks
         for r in analysis.risks[:2]:
             lines.append(f"- Risk: {r}")
-
-        # Show up to 2 options, truncating fact lists
         for o in analysis.options[:2]:
             lines.append(f"- Option: {_truncate_fact_list(o)}")
-
         lines.append("")
 
     return "\n".join(lines)
