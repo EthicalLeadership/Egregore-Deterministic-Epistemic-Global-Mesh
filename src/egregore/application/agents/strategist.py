@@ -8,17 +8,19 @@ from egregore.application.agents.base import BaseAgent, AgentContext, AgentResul
 from egregore.application.strategy.engine import StrategyEngine
 from egregore.application.strategy.memo_builder import render_memo
 from egregore.application.strategy.models import StrategyScope
+from egregore.interface.anchorum_adapter import AnchorumAdapter
+from egregore.assurance.assurance_engine import AssuranceEngine
 
 
 class StrategistAgent(BaseAgent):
     """Elite strategy agent using deterministic/epistemic tools."""
 
     agent_id = "strategist"
-    version = "0.1.0"
+    version = "0.2.0"
 
-    def __init__(self, engine: StrategyEngine | None = None, **kwargs: Any):
+    def __init__(self, adapter: AnchorumAdapter, assurance: AssuranceEngine, **kwargs: Any):
         super().__init__(**kwargs)
-        self.engine = engine or StrategyEngine()
+        self.engine = StrategyEngine(adapter, assurance)
 
     def run(self, context: AgentContext) -> AgentResult:
         """Run the strategy engine on the scope from raw_inputs."""

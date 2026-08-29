@@ -62,8 +62,21 @@ class AnchorumAdapter:
             f.write(raw.model_dump_json() + "\n")
 
     def _compute_hash(self, data: Any) -> str:
-        """Return SHA-256 hash of canonical JSON representation."""
-        canonical = canonical_dumps(data)
+        """Return SHA-256 hash of canonical JSON representation.
+
+        Handles dataclasses and objects with a ``to_dict`` method by
+        converting them to plain dicts before serialization.
+        """
+        import dataclasses
+
+        def _default(obj: Any) -> Any:
+            if dataclasses.is_dataclass(obj):
+                return dataclasses.asdict(obj)
+            if hasattr(obj, "to_dict"):
+                return obj.to_dict()
+            return str(obj)
+
+        canonical = canonical_dumps(data, default=_default)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))

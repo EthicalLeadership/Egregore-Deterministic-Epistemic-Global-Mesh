@@ -39,7 +39,26 @@ def map_legal_output_to_graph(
 
     # Get facts from IR – try common attribute names
     raw_facts = getattr(ir, "facts", None) or getattr(ir, "statements", None) or []
-    fact_map: Dict[str, LegalFact] = {fact.fact_id: fact for fact in raw_facts}
+    fact_map: Dict[str, LegalFact] = {}
+    for idx, fact in enumerate(raw_facts):
+        if hasattr(fact, "fact_id"):
+            legal_fact = fact
+        else:
+            # Convert FactStatement/other semantic statement to LegalFact
+            from egregore.domain.semantics.canonical_ir import FactStatement
+
+            if isinstance(fact, FactStatement):
+                legal_fact = LegalFact(
+                    fact_id=fact.source_id or f"stmt-{idx}",
+                    content=fact.content,
+                    source_statement_type=fact.statement_type.value,
+                    source_id=fact.source_id,
+                    confidence_weight=1.0,
+                )
+            else:
+                # Skip non-fact statements (classification, etc.)
+                continue
+        fact_map[legal_fact.fact_id] = legal_fact
 
     evidences = []
     for ev_id in output.supporting_evidence_ids:
