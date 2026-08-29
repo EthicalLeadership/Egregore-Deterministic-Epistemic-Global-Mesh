@@ -32,7 +32,6 @@ from egregore.application.inference_service import build_inference_service_from_
 from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
 from egregore.http_api.http.v1.chat import router as chat_router
 from egregore.http_api.http.v1.embeddings import router as embeddings_router
-from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
 from egregore.interface.anchorum_router import ingest_router
 from egregore.interface.anchorum_router import router as anchorum_router
 from egregore.interface.legal_chat_router import router as legal_chat_router
@@ -42,7 +41,6 @@ from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
 from egregore.interface.factory_router import router as factory_router
 from egregore.interface.ombudsman_router import router as ombudsman_router
-from egregore.interface.rag_api import router as rag_router
 from egregore.shared.freeze_state import FreezeController, FreezeState
 
 logger = logging.getLogger("egregore.bootstrap")
@@ -455,12 +453,11 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.include_router(control_router)
     app.include_router(factory_router, prefix=f"{API_PREFIX}/factory")
     app.include_router(ombudsman_router)
-    app.include_router(rag_router)
     app.include_router(anchorum_router)
+    app.include_router(legal_chat_router)
     app.include_router(ingest_router)
 
     # Chat WebSocket endpoint (requires api_key cookie/session)
-    app.include_router(ws_chat_router)
 
     # Federation treaty and entropy exchange router.
     if federation_router is not None:
@@ -479,6 +476,11 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     )
     DashboardServiceProvider.set(dashboard_service)
     app.include_router(dashboard_router)
+
+    @app.get('/')
+    async def root():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url='/dashboard/anchorum')
 
     # Fail-closed route check
     routes = _all_paths(app)

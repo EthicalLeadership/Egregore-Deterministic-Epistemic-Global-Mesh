@@ -103,7 +103,7 @@ async def anchorum_chat(payload: ChatIn) -> Any:
             content={"detail": f"Egregore core unreachable: {exc}"},
         )
 
-    content = data.get("message", {}).get("content", "")
+    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
     refusal_retry = False
     citation_missing = False
 
@@ -117,7 +117,7 @@ async def anchorum_chat(payload: ChatIn) -> Any:
         messages.append({"role": "user", "content": _REFUSAL_RECOVERY_NOTE})
         try:
             data = await _chat_with_retries(messages)
-            content = data.get("message", {}).get("content", "")
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
         except httpx.HTTPError as exc:
             logger.error("Refusal-recovery chat failed: %s", exc)
 
