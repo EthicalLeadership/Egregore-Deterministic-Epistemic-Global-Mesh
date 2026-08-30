@@ -1,0 +1,26 @@
+usage: anchorum.py [-h] [--config CONFIG] [--dossier DOSSIER]
+                   [--output-dir OUTPUT_DIR] [--no-stage2] [--no-stage3]
+                   [--no-stage4]
+                   {ingest-proton,ingest-dir,demo,verify,verify-chain,status}
+                   ...
+
+ANCHORUM — Unified 4-Stage Evidence Intelligence Pipeline
+
+positional arguments:
+  {ingest-proton,ingest-dir,demo,verify,verify-chain,status}
+    ingest-proton       Ingest from ProtonMail IMAP
+    ingest-dir          Ingest .eml files from directory
+    demo                Run 3-email demo through all 4 stages
+    verify              Full chain/replay/projection verification
+    verify-chain        Stage 1 hash chain integrity check
+    status              Show ANCHORUM component availability
+
+options:
+  -h, --help            show this help message and exit
+  --config CONFIG       Path to JSON config file (anchorum or stage1 format)
+  --dossier DOSSIER     Override dossier ID
+  --output-dir OUTPUT_DIR
+                        Override output directory
+  --no-stage2           Skip Stage 2 (dossier registry)
+  --no-stage3           Skip Stage 3 (Red DART)
+  --no-stage4           Skip Stage 4 (osint-platform)
