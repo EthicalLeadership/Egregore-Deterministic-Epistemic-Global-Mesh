@@ -29,6 +29,7 @@ def main() -> None:
         if user_input.lower() in ("exit", "quit"):
             break
         response = orchestrator.run(user_input)
+        orchestrator.history.append({"role": "assistant", "content": response})
         print(response)
         print()
 

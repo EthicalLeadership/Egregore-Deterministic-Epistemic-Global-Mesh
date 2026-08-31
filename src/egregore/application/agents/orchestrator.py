@@ -24,6 +24,8 @@ CORE_API_URL = os.environ.get("EGREGORE_CORE_API_URL", "http://127.0.0.1:8002")
 class AgentOrchestrator:
     def __init__(self, core_api_url: str = CORE_API_URL):
         self.core_api_url = core_api_url
+        self.history: list[dict[str, str]] = []
+        self.last_case_id: str | None = None
         self.legal_module = None
         try:
             import anchorum_legal_service as legal_module
@@ -77,6 +79,19 @@ class AgentOrchestrator:
 
     def run(self, user_text: str) -> str:
         lower = user_text.lower().strip()
+
+        # Resolve case_id from current input or history
+        case_match = re.search(r"\b([A-Z]{2,}-\d{4})\b", user_text, re.IGNORECASE)
+        if case_match:
+            self.last_case_id = case_match.group(1).upper()
+        elif self.last_case_id:
+            # If no case in current input, prepend last case for context
+            if any(kw in lower for kw in ["strategy", "strateg", "risk", "exposure", "intel", "deception", "manipulation"]):
+                user_text = f"{user_text} for case {self.last_case_id}"
+                lower = user_text.lower()
+
+        # Append to history
+        self.history.append({"role": "user", "content": user_text})
 
         # Greetings
         if lower in ("hello", "hi", "hey", "good morning", "good evening"):
