@@ -15,6 +15,7 @@ sys.path.insert(0, '/home/kark/egregore-core-agent/workspace/legal')
 from typing import Any, Dict, Optional
 
 import httpx
+from egregore.application.agents import tool_search, tool_code
 
 
 CORE_API_URL = os.environ.get("EGREGORE_CORE_API_URL", "http://127.0.0.1:8002")
@@ -103,6 +104,27 @@ class AgentOrchestrator:
                 return "Which case? Please provide a case ID (e.g., MOLSON-2026)."
         elif lower.endswith("?") or lower.startswith("ask"):
             return self._ask(user_text)
+
+        # New tool routing
+        if lower.startswith("find ") or lower.startswith("search ") or lower.startswith("read "):
+            if lower.startswith("find "):
+                query = user_text[5:].strip()
+                return self._run_file_search(query)
+            elif lower.startswith("search "):
+                query = user_text[7:].strip()
+                return self._run_web_search(query)
+            elif lower.startswith("read "):
+                path = user_text[5:].strip()
+                return tool_search.read_file(path)
+
+        if lower.startswith("code ") or lower.startswith("run "):
+            # Expect format: code <language> <code>
+            parts = user_text.split(maxsplit=2)
+            if len(parts) >= 3:
+                lang = parts[1]
+                code = parts[2]
+                return self._run_code(lang, code)
+            return "Usage: code <python|javascript> <code>"
 
         # Fallback to LLM intent
         tool_call = self._llm_intent(user_text)
@@ -214,6 +236,24 @@ class AgentOrchestrator:
             f"- Countermeasures: {n_rec}\n"
         )
         return brief
+
+
+    def _run_file_search(self, query: str) -> str:
+        files = tool_search.search_files(query)
+        if not files:
+            return f"No files matching '{query}' found."
+        return "Files matching:\n" + "\n".join(f"  {f}" for f in files[:20])
+
+    def _run_web_search(self, query: str) -> str:
+        return tool_search.web_search(query)
+
+    def _run_code(self, language: str, code: str) -> str:
+        if language == "python":
+            return tool_code.run_python(code)
+        elif language == "javascript":
+            return tool_code.run_javascript(code)
+        else:
+            return f"Unsupported language: {language}"
 
     def _ask(self, question: str) -> str:
         if self.legal_module:
