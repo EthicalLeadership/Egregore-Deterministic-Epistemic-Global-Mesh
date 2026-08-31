@@ -64,13 +64,41 @@ def main() -> None:
 
     collection_result, counter_result = unit.run(args.dossier_id, raw_inputs)
 
-    print("=== INTELLIGENCE REPORT ===")
     report = collection_result.findings.get("intel_report")
-    print(report.model_dump_json(indent=2))
+    findings = counter_result.findings
 
-    print()
-    print("=== COUNTER-INTELLIGENCE ===")
-    print(counter_result.findings)
+    indicators = findings.get("indicators", ())
+    hypotheses = findings.get("hypotheses", ())
+    recommendations = findings.get("recommendations", ())
+
+    print("INTELLIGENCE BRIEF")
+    print("==================")
+    print(f"Case: {args.dossier_id}")
+    print(f"Sources: {len(report.sources)}")
+    print(f"Findings: {len(report.findings)}")
+    print(f"Manipulation indicators: {len(indicators)}")
+    print(f"Deception hypotheses: {len(hypotheses)}")
+    print(f"Countermeasure recommendations: {len(recommendations)}")
+
+    if indicators:
+        print("\nTop manipulation indicators:")
+        for ind in indicators[:5]:
+            print(f"  - {ind.type} on {ind.evidence_ids[0][:16]}...")
+
+    if recommendations:
+        print("\nTop countermeasures:")
+        for rec in recommendations[:5]:
+            print(f"  - {rec.action[:100]}")
+
+    full_report = {
+        "intelligence_report": report.model_dump(),
+        "indicators": [i.model_dump() for i in indicators],
+        "hypotheses": [h.model_dump() for h in hypotheses],
+        "recommendations": [r.model_dump() for r in recommendations],
+    }
+    out_path = FilePath("/tmp/anchorum_intel_report.json")
+    out_path.write_text(json.dumps(full_report, indent=2, default=str))
+    print(f"\nFull report saved to {out_path}")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,7 @@ from starlette.responses import Response
 
 from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
 from egregore.interface.anchorum_router import router as anchorum_router
+from egregore.application.agents.orchestrator import AgentOrchestrator
 from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
 from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
@@ -540,6 +541,18 @@ def create_app() -> FastAPI:  # noqa: C901
     @app.get("/health/ready")
     async def health_ready() -> JSONResponse:
         return JSONResponse({"status": "ready", "plane": "anchorum", "timestamp": time.time_ns() / 1e9})
+
+    @app.post("/api/v1/anchorum/agent")
+    async def anchorum_agent(payload: ChatIn) -> Any:
+        """Use the conversational agent orchestration."""
+        from egregore.application.agents.orchestrator import AgentOrchestrator
+        orchestrator = AgentOrchestrator()
+        if payload.case_id:
+            message = f"Case {payload.case_id}: {payload.message}"
+        else:
+            message = payload.message
+        response = orchestrator.run(message)
+        return {"response": response}
 
     @app.post("/api/v1/anchorum/chat")
     async def anchorum_chat(payload: ChatIn) -> Any:

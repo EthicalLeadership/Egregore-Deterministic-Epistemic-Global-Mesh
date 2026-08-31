@@ -455,6 +455,8 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.include_router(ombudsman_router)
     app.include_router(anchorum_router)
     app.include_router(legal_chat_router)
+    from egregore.interface.agent_router import router as agent_router
+    app.include_router(agent_router)
     app.include_router(ingest_router)
 
     # Chat WebSocket endpoint (requires api_key cookie/session)

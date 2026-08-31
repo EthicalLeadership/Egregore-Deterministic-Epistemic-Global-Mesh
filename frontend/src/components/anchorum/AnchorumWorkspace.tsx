@@ -9,6 +9,7 @@ import AnchorumLayout from './AnchorumLayout';
 import FileFetchPanel from './FileFetchPanel';
 import EmailIngestPanel from './EmailIngestPanel';
 import DossiersPanel from './DossiersPanel';
+import AgentChat from './AgentChat';
 
 export default function AnchorumWorkspace() {
   const [activeTab, setActiveTab] = useState('dossiers');
@@ -16,6 +17,7 @@ export default function AnchorumWorkspace() {
   return (
     <AnchorumLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {activeTab === 'dossiers' && <DossiersPanel />}
+      {activeTab === 'agent' && <AgentChat />}
       {activeTab === 'fetch' && <FileFetchPanel />}
       {activeTab === 'email' && <EmailIngestPanel />}
       {activeTab !== 'dossiers' && activeTab !== 'fetch' && activeTab !== 'email' && (
