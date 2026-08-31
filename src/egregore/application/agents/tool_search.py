@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 from typing import List
-import urllib.request
+import httpx
 import urllib.parse
 
 WORKSPACE_ROOT = Path(os.environ.get("EGREGORE_AGENT_CWD", Path.cwd())).resolve()
@@ -54,12 +54,13 @@ def read_file(relative_path: str) -> str:
         return f"Read error: {e}"
 
 def web_search(query: str) -> str:
-    """Perform a web search using DuckDuckGo Lite with short timeout."""
+    """Perform a web search using DuckDuckGo Lite with redirect follow."""
     url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote_plus(query)}"
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            html = resp.read().decode("utf-8", errors="ignore")
+        with httpx.Client(follow_redirects=True, timeout=5) as client:
+            resp = client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+            html = resp.text
         results = re.findall(
             r'<a rel="nofollow" class="result__a" href="([^"]+)">([^<]+)</a>.*?class="result__snippet"[^>]*>(.*?)</a>',
             html,
@@ -73,7 +74,7 @@ def web_search(query: str) -> str:
             formatted.append(f"- {title}\n  {clean_snippet}\n  {href}")
         return "\n".join(formatted)
     except Exception as e:
-        return f"Web search failed (network likely unavailable): {e}"
+        return f"Web search failed: {e}"
 
 def search_canlii(query: str) -> str:
     """Search CanLII for Canadian legal cases/legislation."""
