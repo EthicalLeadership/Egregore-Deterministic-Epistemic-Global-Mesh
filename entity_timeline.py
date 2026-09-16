@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import tkinter as tk
+from datetime import UTC, datetime
 from collections.abc import Iterable
 from tkinter import ttk
 from typing import Any
@@ -116,6 +117,17 @@ class TextAdapter:
 TICK_COUNT = 4
 
 
+def _tick_label(stamp: float, span: float) -> str:
+    moment = datetime.fromtimestamp(stamp, tz=UTC)
+    if span < 86_400:
+        return moment.strftime("%H:%M")
+    if span < 86_400 * 60:
+        return moment.strftime("%d %b")
+    if span < 86_400 * 365:
+        return moment.strftime("%b %Y")
+    return moment.strftime("%Y")
+
+
 class EntityTimeline(ttk.Frame):
     """Canvas timeline of case events with a copyable detail pane.
 
@@ -206,10 +218,18 @@ class EntityTimeline(ttk.Frame):
         ``fit=False`` to never refit automatically.
         """
         self._events = normalize_events(events or ())
+        if not any(ev.timestamp is not None for ev in self._events):
+            self._view = None
+            self._has_fitted = False
         self._selected = None
         self._active = None
         self._range = None
-        self._count_lbl.config(text=f"{len(self._events)} event(s)")
+        distinct = len({ev.entity for ev in self._events})
+        lanes = self._lane_count(*self._plot_bounds()[2:])
+        suffix = f" · {distinct} entities"
+        if distinct > lanes:
+            suffix += " (lanes merged)"
+        self._count_lbl.config(text=f"{len(self._events)} event(s){suffix}")
         self._hover_lbl.config(text="")
 
         if fit is None:
@@ -330,23 +350,30 @@ class EntityTimeline(ttk.Frame):
         if self._range is None:
             return
         start, end = self._range
-        x0 = self._x_for(start)
-        x1 = self._x_for(end)
+        left, right, _, _ = self._plot_bounds()
+
+        x0 = min(max(self._x_for(start), left), right)
+        x1 = min(max(self._x_for(end),   left), right)
         if x1 < x0:
             x0, x1 = x1, x0
-        left, right, _, _ = self._plot_bounds()
+
         canvas = self._canvas
-        canvas.create_rectangle(
-            left, top, x0, bottom,
-            fill=OVERLAY_FILL, outline="", stipple=OVERLAY_STIPPLE, tags="overlay",
-        )
-        canvas.create_rectangle(
-            x1, top, right, bottom,
-            fill=OVERLAY_FILL, outline="", stipple=OVERLAY_STIPPLE, tags="overlay",
-        )
-        canvas.create_rectangle(
-            x0, top, x1, bottom, outline=OVERLAY_EDGE, tags="overlay",
-        )
+        if x0 > left:
+            canvas.create_rectangle(
+                left, top, x0, bottom,
+                fill=OVERLAY_FILL, outline="", stipple=OVERLAY_STIPPLE,
+                tags="overlay",
+            )
+        if x1 < right:
+            canvas.create_rectangle(
+                x1, top, right, bottom,
+                fill=OVERLAY_FILL, outline="", stipple=OVERLAY_STIPPLE,
+                tags="overlay",
+            )
+        if x1 > x0:
+            canvas.create_rectangle(
+                x0, top, x1, bottom, outline=OVERLAY_EDGE, tags="overlay",
+            )
 
     def _draw_axis(
         self, left: float, right: float, top: float, bottom: float
@@ -364,7 +391,7 @@ class EntityTimeline(ttk.Frame):
             canvas.create_line(x, bottom, x, bottom + 4, fill=TICK_COLOUR, tags="axis")
             canvas.create_text(
                 x, bottom + 14,
-                text=format_timestamp(stamp)[:10],
+                text=_tick_label(stamp, span),
                 fill=TICK_TEXT,
                 font=("TkDefaultFont", 8),
                 tags="axis",
@@ -380,11 +407,22 @@ class EntityTimeline(ttk.Frame):
             entity_order.setdefault(event.entity, len(entity_order))
 
         self._dot_items = {}
+        undated_seen: dict[int, int] = {}
         for event in self._events:
             stamp = event.timestamp
-            x = left + 6.0 if stamp is None else self._x_for(stamp)
-            lane = entity_order[event.entity] % lanes
-            y = bottom - LANE_HEIGHT * (lane + 0.5)
+            order = entity_order[event.entity]
+            lane = order % lanes
+            cycle = order // lanes
+            if stamp is None:
+                k = undated_seen.get(lane, 0)
+                undated_seen[lane] = k + 1
+                x = left + 6.0
+                y = bottom - LANE_HEIGHT * (lane + 0.5) - k * (DOT_RADIUS + 2)
+                outline = EMPTY_TEXT
+            else:
+                x = self._x_for(stamp)
+                y = bottom - LANE_HEIGHT * (lane + 0.5) + cycle * 3
+                outline = ""
 
             selected = self._selected is not None and event.index == self._selected.index
             active = self._active is not None and event.index == self._active.index
@@ -399,7 +437,7 @@ class EntityTimeline(ttk.Frame):
 
             item = canvas.create_oval(
                 x - radius, y - radius, x + radius, y + radius,
-                fill=colour, outline="", tags="dot",
+                fill=colour, outline=outline, width=1, tags="dot",
             )
             self._dot_items[item] = event.index
 
@@ -444,7 +482,12 @@ class EntityTimeline(ttk.Frame):
 
     def _on_double_click(self, _event: tk.Event) -> str:
         # Double-clicking the canvas is the quickest way to refit the view.
+        # The click that preceded this double-click may have selected a
+        # nearby event; refitting is a reset gesture, so clear it too.
         self._range = None
+        self._selected = None
+        self._active = None
+        self._set_detail("")
         self.fit_to_events()
         return "break"
 
@@ -474,17 +517,24 @@ class EntityTimeline(ttk.Frame):
         self._canvas.tag_lower("overlay")
 
     def _hit_test(self, x: int, y: int) -> TimelineEvent | None:
+        if not self._dot_items:
+            return None
+        r = CLICK_TOLERANCE_PX
+        candidates = self._canvas.find_overlapping(x - r, y - r, x + r, y + r)
         best: TimelineEvent | None = None
-        best_distance = CLICK_TOLERANCE_PX
-        for item, index in self._dot_items.items():
+        best_d2 = r * r
+        for item in candidates:
+            index = self._dot_items.get(item)
+            if index is None:
+                continue
             coords = self._canvas.coords(item)
             if len(coords) != 4:
                 continue
-            centre_x = (coords[0] + coords[2]) / 2.0
-            centre_y = (coords[1] + coords[3]) / 2.0
-            distance = ((centre_x - x) ** 2 + (centre_y - y) ** 2) ** 0.5
-            if distance <= best_distance:
-                best_distance = distance
+            cx = (coords[0] + coords[2]) / 2.0
+            cy = (coords[1] + coords[3]) / 2.0
+            d2 = (cx - x) ** 2 + (cy - y) ** 2
+            if d2 <= best_d2:
+                best_d2 = d2
                 best = self._event_by_index(index)
         return best
 
