@@ -106,7 +106,6 @@ yarn-error.log*
 secrets/*.pem
 secrets/*.bin
 secrets/*.key
-.env
 *.env
 !.env.example
 .secrets_backup_*
@@ -126,14 +125,10 @@ ANCHORUM_reports/
 ANCHORUM_AUDIT_*.md
 output/
 report/molson_live_run_*/
-sandbox_outputs/
-.pids/
-.update_log
 rag/chroma_db/
 audit_cfca/
 external_from_usb_MODELS_2TB3/
 models/
-models_tmp/
 uploads/
 workspace.db
 .secrets_backup_*/
@@ -157,13 +152,7 @@ audit_filesystem.log
 # === Runtime caches ===
 .hypothesis/
 .continue/
-.sixth/
 .ruff_cache/
-.mypy_cache/
-.pytest_cache/
-.aider*
-.aider.chat.history.md
-.aider.input.history
 .aider.tags.cache.v4/
 
 # Deployment artifacts and runtime telemetry data
@@ -191,14 +180,8 @@ rag/cases/chroma.sqlite3
 rag/cases/chroma.sqlite3-journal
 
 # Legacy archive / backup
-_legacy_archive_*/
-egregore_legacy_*/
 
 # Generated data
-rag/cases/*.bin
-rag/cases/*.pickle
-rag/cases/chroma.sqlite3
-rag/cases/chroma.sqlite3-journal
 
 # Editor and runtime artifacts
 *.bak
@@ -208,7 +191,20 @@ _sixth_probe_marker.txt
 signal
 
 # Python caches
-__pycache__/
-*.py[cod]
-.mypy_cache/
-.pytest_cache/
+
+# Local virtualenv (regenerate with: python -m venv .venv-local)
+
+# Regenerable Chroma vector stores (rebuild from case source documents)
+rag/cases/
+
+# Local virtualenv (regenerate with: python -m venv .venv-local)
+
+# Regenerable Chroma vector stores (rebuild from case source documents)
+
+# Local virtualenv (regenerate with: python -m venv .venv-local)
+
+# Regenerable Chroma vector stores (rebuild from case source documents)
+
+# Local virtualenv (regenerate with: python -m venv .venv-local)
+
+# Regenerable Chroma vector stores (rebuild from case source documents)
