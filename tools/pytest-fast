@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Skip pytest plugin autoload. On this checkout the venv sits on a slow
+# ext2/ext3 mount, and pytest's plugin-discovery pass reads entry_points.txt
+# from every .dist-info before collecting any test — minutes of small-file
+# IO. Autoload off skips it entirely.
+exec env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 "${PWD}/.venv/bin/python" -m pytest "$@"
