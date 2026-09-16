@@ -8,9 +8,10 @@ adapters alike.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Iterable, Mapping
+from datetime import UTC, datetime
+from typing import Any
 
 ENTITY_FIELD_RANKING: tuple[str, ...] = (
     "entity_type", "entity", "entity_id", "actor", "participant",
@@ -25,6 +26,11 @@ LABEL_FIELD_RANKING: tuple[str, ...] = (
     "summary", "description", "title", "label", "event", "action",
     "kind", "type",
 )
+
+_SKIP_FALLBACK_KEYS: frozenset[str] = frozenset(
+    set(ENTITY_FIELD_RANKING) | set(LABEL_FIELD_RANKING)
+)
+
 UNKNOWN_ENTITY = "(unknown)"
 _MILLIS_THRESHOLD = 1e11
 _NUMERIC_RE = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
@@ -66,7 +72,7 @@ def parse_timestamp(value: Any) -> float | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     try:
         return parsed.timestamp()
     except (OSError, OverflowError, ValueError):
@@ -75,7 +81,7 @@ def parse_timestamp(value: Any) -> float | None:
 
 def format_timestamp(epoch_seconds: float) -> str:
     try:
-        moment = datetime.fromtimestamp(epoch_seconds, tz=timezone.utc)
+        moment = datetime.fromtimestamp(epoch_seconds, tz=UTC)
     except (OSError, OverflowError, ValueError):
         return str(epoch_seconds)
     return moment.strftime("%Y-%m-%d %H:%M:%SZ")
@@ -95,7 +101,9 @@ def detect_timestamp(event: Mapping[str, Any]) -> float | None:
             stamp = parse_timestamp(event.get(key))
             if stamp is not None:
                 return stamp
-    for value in event.values():
+    for key, value in event.items():
+        if key in _SKIP_FALLBACK_KEYS:
+            continue
         stamp = parse_timestamp(value)
         if stamp is not None:
             return stamp

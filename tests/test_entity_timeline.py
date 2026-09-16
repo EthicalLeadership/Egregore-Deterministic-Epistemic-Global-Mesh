@@ -150,3 +150,17 @@ def test_timeline_kernel_has_no_ui_or_site_imports() -> None:
         for alias in node.names
     )
     assert imports.isdisjoint(forbidden)
+
+
+def test_timestamp_fallback_skips_entity_and_label_keys() -> None:
+    """Regression: `id`, `entity`, `name` values must not be read as epochs."""
+    assert detect_timestamp({"id": "7"}) is None
+    assert detect_timestamp({"entity": "42"}) is None
+    assert detect_timestamp({"name": "1700000000"}) is None
+    assert detect_timestamp({"occurred": 1_700_000_000}) == pytest.approx(EPOCH_SECONDS)
+
+
+def test_normalize_does_not_invent_1970_timestamps() -> None:
+    (event,) = normalize_events([{"id": "7", "summary": "no date"}])
+    assert event.timestamp is None
+    assert event.entity == "7"
