@@ -210,3 +210,5 @@ signal
 # Python caches
 __pycache__/
 *.py[cod]
+.mypy_cache/
+.pytest_cache/
