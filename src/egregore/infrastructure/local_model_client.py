@@ -144,7 +144,11 @@ def _available_system_memory_bytes() -> int:
 
 
 class LocalModelClient:
-    """ILlmClient backend for locally stored HuggingFace-format models."""
+    """ILlmClient backend for locally stored HuggingFace-format models.
+    
+    Models are loaded once and cached in memory for the process lifetime,
+    avoiding repeated disk I/O overhead for large models.
+    """
 
     def __init__(self, models_dir: Path | str | None = None):
         self.models_dir = (
@@ -153,6 +157,8 @@ class LocalModelClient:
             else _local_models_dir()
         )
         self._models = _discover_models(self.models_dir)
+        # Model cache: maps model_id → (tokenizer, model) tuple
+        self._loaded_models: dict[str, tuple[Any, Any]] = {}
 
     # ------------------------------------------------------------------
     # ILlmClient protocol
@@ -243,10 +249,22 @@ class LocalModelClient:
     # ------------------------------------------------------------------
     # Inference implementation (lazily imported)
     # ------------------------------------------------------------------
-    def _run_transformers_chat(
-        self, request: ChatRequest, info: LocalModelInfo
-    ) -> ChatResponse:
-        """Load model via transformers and generate a response."""
+    def _get_cached_model(self, model_id: str, info: LocalModelInfo) -> tuple[Any, Any]:
+        """Get or load a model and tokenizer, caching for the process lifetime.
+        
+        This avoids reloading large models (e.g., 959GB) from disk on every request.
+        Models stay in memory between requests for performance.
+        
+        Args:
+            model_id: Model identifier
+            info: LocalModelInfo with model path
+            
+        Returns:
+            (tokenizer, model) tuple
+        """
+        if model_id in self._loaded_models:
+            return self._loaded_models[model_id]
+
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -266,6 +284,24 @@ class LocalModelClient:
             device_map="auto" if device == "cuda" else None,
             trust_remote_code=True,
         )
+        
+        # Cache for future requests
+        self._loaded_models[model_id] = (tokenizer, model)
+        return tokenizer, model
+
+    def _run_transformers_chat(
+        self, request: ChatRequest, info: LocalModelInfo
+    ) -> ChatResponse:
+        """Load model via transformers and generate a response.
+        
+        Models are cached in memory across requests to avoid repeated
+        disk I/O overhead for large models.
+        """
+        import torch
+
+        tokenizer, model = self._get_cached_model(request.model, info)
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
         inputs = tokenizer.apply_chat_template(

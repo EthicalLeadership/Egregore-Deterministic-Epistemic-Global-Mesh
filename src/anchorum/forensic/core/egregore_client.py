@@ -30,6 +30,7 @@ except Exception:  # pragma: no cover - pydantic is required by Egregore anyway
 logger = logging.getLogger("anchorum.forensic.egregore_client")
 
 DEFAULT_MODEL_ID = "qwen2.5-7b-instruct"
+DEFAULT_TASK_TYPE = "legal"
 DEFAULT_TEMPERATURE = 0.0
 DEFAULT_TOP_P = 0.95
 DEFAULT_SEED = 42
@@ -112,6 +113,7 @@ class EgregoreModelClient:
         self,
         model_id: str | None = None,
         *,
+        task_type: str | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
         seed: int | None = None,
@@ -119,9 +121,12 @@ class EgregoreModelClient:
         timeout_seconds: float | None = None,
         redact_pii: bool | None = None,
     ) -> None:
-        self._preferred_model_id = model_id or os.environ.get(
-            "ANCHORUM_LLM_MODEL_ID", DEFAULT_MODEL_ID
-        )
+        self._explicit_model_id = model_id or os.environ.get("ANCHORUM_LLM_MODEL_ID")
+        self._preferred_model_id = self._explicit_model_id or DEFAULT_MODEL_ID
+        self._task_type = (
+            task_type
+            or os.environ.get("ANCHORUM_LLM_TASK_TYPE", DEFAULT_TASK_TYPE)
+        ).strip()
         self._temperature = (
             temperature
             if temperature is not None
@@ -156,6 +161,7 @@ class EgregoreModelClient:
             in ("1", "true", "yes")
         )
         self._orchestrator: Any | None = None
+        self._selector: Any | None = None
         self._import_error: str | None = None
 
     def _load_orchestrator(self) -> Any | None:
@@ -195,10 +201,66 @@ class EgregoreModelClient:
             logger.debug("Failed to list Egregore models: %s", exc)
             return []
 
+    def _init_selector(self) -> Any | None:
+        """Lazily build a ModelSelector over the catalog + profile manifest."""
+        if self._selector is not None:
+            return self._selector
+        try:
+            from egregore.application.model_selector import (
+                ALLOWED_TASKS,
+                ModelSelector,
+                load_profiles,
+            )
+            from egregore.infrastructure.gguf_catalog import GGUFCatalog
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Model selector unavailable: %s", exc)
+            return None
+        if self._task_type not in ALLOWED_TASKS:
+            raise ValueError(
+                f"Invalid task_type: {self._task_type}. "
+                f"Allowed: {list(ALLOWED_TASKS)}"
+            )
+        try:
+            self._selector = ModelSelector(
+                GGUFCatalog().get_catalog(), load_profiles()
+            )
+            return self._selector
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Model selector unavailable: %s", exc)
+            return None
+
     def _resolve_model_id(self) -> str | None:
         available = self.list_models()
+
+        # Auto-selection path: no explicit model requested.
+        if not self._explicit_model_id:
+            selector = self._init_selector()
+            if selector is not None:
+                try:
+                    selection = selector.select(self._task_type)
+                    logger.info(
+                        "Auto-selected model %s for task '%s': %s",
+                        selection.logical_id,
+                        self._task_type,
+                        selection.reason,
+                    )
+                    return selection.catalog_key
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "Model selection failed (%s); using default resolution", exc
+                    )
+
         if self._preferred_model_id in available:
             return self._preferred_model_id
+        # Legacy IDs resolve through the catalog alias map to raw keys.
+        try:
+            from egregore.infrastructure.gguf_catalog import GGUFCatalog
+
+            entry = GGUFCatalog().get(self._preferred_model_id)
+            if entry is not None:
+                return entry.model_id
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Catalog alias resolution unavailable: %s", exc)
         if available:
             fallback = available[0]
             logger.warning(

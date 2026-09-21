@@ -9,7 +9,6 @@ Type=simple
 WorkingDirectory=%h/egregore
 Environment=PYTHONPATH=src
 EnvironmentFile=-%h/egregore/.env
-Environment=EGREGORE_DEFAULT_BACKEND=egregore
 ExecStart=%h/egregore/.venv/bin/python -m uvicorn egregore.http_api.http.main:app --host 0.0.0.0 --port 8002 --log-level info
 Restart=on-failure
 RestartSec=10

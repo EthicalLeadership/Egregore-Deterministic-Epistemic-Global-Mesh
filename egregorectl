@@ -9,7 +9,7 @@ PID_DIR="${REPO_ROOT}/.pids"
 LOG_DIR="${REPO_ROOT}/logs"
 
 APP_HOST="${EGREGORE_HOST:-0.0.0.0}"
-APP_PORT="${EGREGORE_PORT:-8000}"
+APP_PORT="${EGREGORE_PORT:-8002}"
 APP_MODULE="${EGREGORE_APP_MODULE:-egregore.http_api.http.app:create_app}"
 
 log_info()  { echo "[INFO] $*"; }

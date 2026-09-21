@@ -1,4 +1,4 @@
-import { Database, Wifi, Brain, CheckCircle, AlertCircle } from 'lucide-react';
+import { Cpu, Network, Bot, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface HealthCheck {
   name: string;
@@ -14,9 +14,9 @@ interface Props {
 }
 
 const icons: Record<string, React.ReactNode> = {
-  database: <Database className="h-3 w-3" />,
-  rabbitmq: <Wifi className="h-3 w-3" />,
-  ollama: <Brain className="h-3 w-3" />,
+  EgregoreOrchestrator: <Cpu className="h-3 w-3" />,
+  EgregoreBroker: <Network className="h-3 w-3" />,
+  EgregoreAgent: <Bot className="h-3 w-3" />,
 };
 
 const statusColors = {

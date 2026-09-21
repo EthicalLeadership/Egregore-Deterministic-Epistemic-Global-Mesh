@@ -20,6 +20,7 @@ class JobStatus(StrEnum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     FROZEN = "FROZEN"
+    PENDING_TRAINING = "PENDING_TRAINING"
 
 
 class ComplexityTier(StrEnum):

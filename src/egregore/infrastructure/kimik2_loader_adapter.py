@@ -8,8 +8,11 @@ from src.egregore.interface.semantics_ports import IKimik2Loader, Kimik2LoaderEr
 
 
 class Kimik2LoaderAdapter(IKimik2Loader):
-    def __init__(self, model_dir: str):
-        self.model_dir = model_dir
+    def __init__(self, model_dir: str | None = None):
+        self.model_dir = model_dir or os.environ.get(
+            "EGREGORE_KIMIK2_MODEL_PATH",
+            "/media/kark/MODELS_2TB3/ExecutiveIntelligenceservices.-main/models/kimi-k2-base",
+        )
         self._validate_artifacts()
 
         # CI/tests may provide dummy shard files (empty placeholders). In that case,
@@ -20,9 +23,9 @@ class Kimik2LoaderAdapter(IKimik2Loader):
             return
 
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
             self.model = AutoModelForCausalLM.from_pretrained(
-                model_dir,
+                self.model_dir,
                 device_map="auto",
                 torch_dtype=torch.bfloat16,
             )

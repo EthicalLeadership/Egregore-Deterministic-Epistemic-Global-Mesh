@@ -194,3 +194,7 @@ rag/cases/*.bin
 rag/cases/*.pickle
 rag/cases/chroma.sqlite3
 rag/cases/chroma.sqlite3-journal
+*.txt
+.env
+*.txt
+.env

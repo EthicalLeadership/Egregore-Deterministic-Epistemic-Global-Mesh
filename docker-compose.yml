@@ -1,9 +1,24 @@
+# === EGREGORE API ===
 services:
-  # === EGREGORE API ===
-  egregore:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  nats:
+    image: nats:2.10-alpine
+    container_name: egregore-nats
+    command: ["-js", "-m", "8222"]   # -js enables JetStream, -m enables monitoring
+    ports:
+      - "4222:4222"     # client port
+      - "8222:8222"     # monitoring (optional)
+    networks:
+      - egregore-net
+    restart: unless-stopped
+
+  # Your core API service (whichever one runs app.py) should have:
+  #   environment:
+  #     NATS_URL: nats://nats:4222
+    Services:               
+    egregore:
+       build:
+     context: .
+  dockerfile: Dockerfile
       target: runtime
     container_name: egregore-api
     restart: unless-stopped

@@ -4,7 +4,7 @@
 set -u
 
 DEST="/media/kark/7A7666CA4E34EADC2/blackstar-backup"
-LOG="/home/kark/blackstar/logs/usb_backup.log"
+LOG="/home/kark/egregore/logs/usb_backup.log"
 
 if [ ! -d "/media/kark/7A7666CA4E34EADC2" ]; then
     echo "$(date -Is) SKIP: USB drive not mounted" >> "$LOG"
@@ -18,7 +18,7 @@ mkdir -p "$DEST"
         "/mnt/blackstar/vol-hdd-b/home_reloc/Desktop/Dossier Molson" "$DEST/"
     RS1=$?
     rsync -rL --no-perms --no-owner --no-group \
-        /home/kark/blackstar/report "$DEST/egregore/"
+        /home/kark/egregore/report "$DEST/egregore/"
     RS2=$?
     rsync -rL --no-perms --no-owner --no-group \
         /home/kark/anchorum-workspace/reports "$DEST/"

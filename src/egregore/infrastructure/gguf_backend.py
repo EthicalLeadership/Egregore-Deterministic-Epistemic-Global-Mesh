@@ -23,6 +23,8 @@ import logging
 import os
 import threading
 import time
+from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 from egregore.domain.inference_models import (
@@ -36,15 +38,37 @@ from egregore.interface.llm_ports import ILlmClient
 logger = logging.getLogger(__name__)
 
 _DEFAULT_MODELS = {
-    "my-coder-ft": "/mnt/blackstar/vol-hdd-a/models/gguf/specialized/my_coder_ft-q4_k_m.gguf",
+    "my-coder-ft": "/mnt/blackstar/vol-hdd-a/models/gguf/specialized/my_coder_ft_fixed-Q4_K_M.gguf",
     "qwen-1.5b": "/mnt/blackstar/vol-hdd-a/models/gguf/general/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "qwen-7b": "/mnt/blackstar/vol-hdd-a/models/gguf/expert/Qwen2.5-7B-Instruct-Q4_K_M.gguf",
+    "ds-coder-6.7b": "/mnt/blackstar/vol-hdd-a/models/gguf/specialized/deepseek-coder-6.7b-instruct.Q4_K_M.gguf",
 }
+
+
+def _models_root() -> Path:
+    return Path(
+        os.environ.get(
+            "EGREGORE_MODELS_ROOT",
+            os.environ.get("MODELS_DIR", "/opt/egregore/models"),
+        )
+    )
 
 
 def _is_enabled() -> bool:
     return os.environ.get("EGREGORE_GGUF_ENABLED", "true").lower() not in (
         "0", "false", "no", "off",
     )
+
+
+def _validate_model_path(name: str, path_str: str) -> str:
+    """Fail closed: every dispatch path must stay inside the models root."""
+    root = _models_root().resolve()
+    path = Path(path_str).resolve()
+    if not str(path).startswith(str(root) + os.sep):
+        raise ValueError(
+            f"Model '{name}': path {path} escapes allowed root {root}"
+        )
+    return str(path)
 
 
 def _parse_models_env() -> dict[str, str]:
@@ -55,7 +79,8 @@ def _parse_models_env() -> dict[str, str]:
     for pair in raw.split(","):
         if "=" in pair:
             name, path = pair.split("=", 1)
-            models[name.strip()] = path.strip()
+            name = name.strip()
+            models[name] = _validate_model_path(name, path.strip())
     return models or dict(_DEFAULT_MODELS)
 
 
@@ -120,7 +145,8 @@ class GgufBackend(ILlmClient):
         return sorted(self._instances)
 
     # ------------------------------------------------------------ inference
-    def chat(self, request: ChatRequest) -> ChatResponse:
+    def _prepare(self, request: ChatRequest) -> tuple[Any, list[dict[str, str]], float, Any]:
+        """Resolve the llama instance and common completion kwargs."""
         if not self.health():
             raise RuntimeError("GgufBackend is disabled or has no models configured")
         # Routing prefix (gguf-my-coder-ft) selects this backend; strip for lookup.
@@ -135,6 +161,10 @@ class GgufBackend(ILlmClient):
             from llama_cpp import LlamaGrammar
 
             grammar = LlamaGrammar.from_string(request.grammar, verbose=False)
+        return llm, messages, temperature, grammar
+
+    def chat(self, request: ChatRequest) -> ChatResponse:
+        llm, messages, temperature, grammar = self._prepare(request)
 
         with self._lock:
             result = llm.create_chat_completion(
@@ -161,6 +191,28 @@ class GgufBackend(ILlmClient):
             },
             finish_reason=str(choice.get("finish_reason", "stop")),
         )
+
+    def stream_chat(self, request: ChatRequest) -> Iterator[str]:
+        """Stream chat-completion content deltas (OpenAI-style chunks)."""
+        llm, messages, temperature, grammar = self._prepare(request)
+
+        with self._lock:
+            stream = llm.create_chat_completion(
+                messages=messages,
+                max_tokens=request.max_tokens,
+                temperature=temperature,
+                seed=request.seed,
+                grammar=grammar,
+                stream=True,
+            )
+            for chunk in stream:
+                choices = chunk.get("choices") or []
+                if not choices:
+                    continue
+                delta = choices[0].get("delta") or {}
+                content = delta.get("content")
+                if content:
+                    yield content
 
     def generate(self, prompt: str, model: str | None = None) -> str:
         name = model or next(iter(self._models))

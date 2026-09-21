@@ -17,7 +17,7 @@ from pathlib import Path
 
 from sentence_transformers import SentenceTransformer
 
-ROOT = Path("/opt/egregore")
+ROOT = Path(__file__).resolve().parents[1]
 CHROMA_PATH = ROOT / "rag" / "chroma_db"
 
 

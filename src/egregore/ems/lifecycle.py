@@ -63,6 +63,9 @@ class EmsLifecycle:
         try:
             if rec.backend_type == "native" or model_id.startswith("coder-ft-"):
                 backend = self._load_native_backend(str(path))
+            elif rec.backend_type == "gguf":
+                from egregore.infrastructure.gguf_backend import GgufBackend
+                backend = GgufBackend(models={rec.model_id: str(path)})
             else:
                 raise EmsLifecycleError(
                     f"Unsupported backend type: {rec.backend_type}"

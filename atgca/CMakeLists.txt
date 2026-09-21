@@ -18,23 +18,18 @@ add_library(atgca_core STATIC
 
 target_include_directories(atgca_core PUBLIC src)
 
-# Tests via FetchContent GoogleTest
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-FetchContent_MakeAvailable(googletest)
-
+# Tests use the lightweight in-tree registry framework (tests/unit/test_registry.h),
+# not GoogleTest.
 enable_testing()
 
 add_executable(atgca_test
+    tests/unit/main.cpp
     tests/unit/test_conservation.cpp
     tests/unit/test_hysteresis.cpp
     tests/unit/test_gearbox.cpp
 )
 
-target_link_libraries(atgca_test atgca_core GTest::gtest_main)
+target_include_directories(atgca_test PRIVATE tests/unit)
+target_link_libraries(atgca_test atgca_core)
 
-include(GoogleTest)
-gtest_discover_tests(atgca_test)
+add_test(NAME atgca_test COMMAND atgca_test)

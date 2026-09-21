@@ -1057,6 +1057,7 @@ def run_batch(  # noqa: C901
     deep_revision: bool = False,
     verbose: bool = False,
     llm_model_id: str | None = None,
+    llm_task_type: str | None = None,
     llm_temperature: float | None = None,
     llm_top_p: float | None = None,
     llm_seed: int | None = None,
@@ -1337,10 +1338,14 @@ def run_batch(  # noqa: C901
     llm_result_dict: dict[str, Any] | None = None
     llm_enrichment_path: Path | None = None
     effective_llm_model_id = llm_model_id or os.environ.get("ANCHORUM_LLM_MODEL_ID")
-    if effective_llm_model_id:
+    effective_llm_task_type = llm_task_type or os.environ.get("ANCHORUM_LLM_TASK_TYPE")
+    # Auto-selection: a task type alone enables enrichment (model chosen by the
+    # ModelSelector); an explicit model id preserves the legacy behaviour.
+    if effective_llm_model_id or effective_llm_task_type:
         try:
             client = EgregoreModelClient(
                 model_id=effective_llm_model_id,
+                task_type=effective_llm_task_type,
                 temperature=llm_temperature,
                 top_p=llm_top_p,
                 seed=llm_seed,
@@ -1525,6 +1530,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Egregore model ID for case narrative summary (or ANCHORUM_LLM_MODEL_ID env)",
     )
     parser.add_argument(
+        "--llm-task-type",
+        default=None,
+        help="Task type for LLM auto-selection: general|code|legal|fast "
+        "(or ANCHORUM_LLM_TASK_TYPE env; enables enrichment without --llm-model-id)",
+    )
+    parser.add_argument(
         "--llm-temperature",
         type=float,
         default=None,
@@ -1565,6 +1576,7 @@ def main(argv: list[str] | None = None) -> int:
         deep_revision=args.deep_revision,
         verbose=args.verbose,
         llm_model_id=args.llm_model_id,
+        llm_task_type=args.llm_task_type,
         llm_temperature=args.llm_temperature,
         llm_top_p=args.llm_top_p,
         llm_seed=args.llm_seed,

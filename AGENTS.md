@@ -233,6 +233,59 @@ offload, lazy per-model load):
 
 - `my-coder-ft` -> 7B Q4_K_M (standard stations)
 - `qwen-1.5b` -> 1.5B Q4_K_M (QC critic, ~230 ms verdicts)
+- `qwen-7b` -> Qwen2.5-7B-Instruct Q4_K_M (ANCHORUM legal chat,
+  `EGREGORE_CHAT_MODEL=qwen-7b`; the coder fine-tunes hard-refuse legal
+  questions, so do not point legal chat at `my-coder-ft`/`coder-ft-v2`)
+- `ds-coder-6.7b` -> DeepSeek-Coder 6.7B Q4_K_M (code/reasoning)
+- `hermes-8b` -> Hermes-3-Llama-3.1-8B Q4_K_M (general/reasoning)
+
+Every path in `EGREGORE_GGUF_MODELS` is validated at parse time to stay
+inside `EGREGORE_MODELS_ROOT` (fail-closed `ValueError` on escape).
+`GgufBackend.stream_chat()` streams via llama.cpp; `InferenceService.execute_stream()`
+delegates to it (single-chunk fallback otherwise) and backs the SSE path in
+`/v1/chat/completions`.
+
+## Model catalog + auto-selection (added 2026-08-10)
+
+- **Catalog**: `src/egregore/infrastructure/gguf_catalog.py` is a filesystem
+  mirror of `EGREGORE_MODELS_ROOT/gguf/` — entries keyed by raw relative path
+  (e.g. `expert/Qwen2.5-7B-Instruct-Q4_K_M`), corrupt/missing catalog JSON
+  triggers a rescan, stale entries are pruned, legacy model IDs resolve via an
+  alias map in `get()`. Writes refuse paths outside the models root.
+- **Manifest**: `config/model_profiles.json` (`MODEL_PROFILES_PATH`) maps
+  logical IDs -> `catalog_key` + `routes_to` (GgufBackend env name) +
+  `task_tags` + `quality_score`. Malformed manifests fail closed.
+- **Selector**: `src/egregore/application/model_selector.py` — deterministic
+  (quality desc, size asc, ID asc); tasks whitelisted to
+  `general|code|fast|legal`; `NoModelAvailableError` when nothing is
+  catalogued.
+- **Endpoint**: `POST /v1/orchestrate/chat/completions`
+  (`http_api/http/v1/orchestrate.py`) auto-selects by `task_type` (explicit
+  `model` bypasses), executes via the governed InferenceService, supports SSE
+  streaming with disconnect detection. Internal resolution details hidden
+  unless `ORCHESTRATE_DISCLOSE_INTERNAL=true`.
+- **Consumers**: ANCHORUM `EgregoreModelClient(task_type=...)` (batch runner
+  flag `--llm-task-type`) and chat `/ask --task <type>` auto-select when no
+  explicit model is set.
+
+## ANCHORUM legal chat (added 2026-08-10)
+
+- Legal chat is grounded by the Quebec legal KB in `config/legal/quebec/*.yaml`
+  (query-relevance-ranked, budget `EGREGORE_LEGAL_KB_BUDGET`, hot-reload by
+  mtime). Add domains as new YAML files; verify every citation against
+  LégisQuébec/CanLII before adding — a wrong KB entry is worse than none.
+- Posture is prompt-enforced in `src/egregore/interface/anchorum_http.py`
+  (`_LEGAL_SYSTEM`): comment on what the law is + procedural steps +
+  lawyer-stage flags; never outcome predictions; verbatim citations from the
+  KB; uncertain citations marked "to verify on LégisQuébec".
+- Per-case RAG (`src/egregore/interface/case_rag.py`) is how user files shape
+  answers: `POST /api/v1/anchorum/cases/{id}/reindex` rebuilds a case's vector
+  store (report + transcripts + `fetched/{case_id}/` staged evidence);
+  `GET .../index` reports stats. `GET /api/v1/anchorum/models` shows which
+  model serves chat.
+- Kill test: `.venv/bin/python scripts/legal_kill_test.py` — Quebec-law
+  regression questions with a keyword scorecard. Run after any prompt, model,
+  or KB change.
 
 Configured by `EGREGORE_GGUF_MODELS` (name=path,...) and `EGREGORE_GGUF_CTX`.
 Routing: `gguf-` prefix -> `"gguf"` client; when the HF backend is disabled

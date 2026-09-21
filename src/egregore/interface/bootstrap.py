@@ -28,12 +28,13 @@ from pydantic import BaseModel, Field
 from egregore.application.agent_registry import AgentRegistry
 from egregore.application.job_runtime import build_job_runtime
 from egregore.application.inference_service import build_inference_service_from_env
-from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
+from egregore.http_api.http.middleware.api_key_middleware import ApiKeyMiddleware
 from egregore.http_api.http.v1.chat import router as chat_router
 from egregore.http_api.http.v1.embeddings import router as embeddings_router
 from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
 from egregore.interface.anchorum_router import ingest_router
 from egregore.interface.anchorum_router import router as anchorum_router
+from egregore.interface.control_router import router as control_router
 from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
 from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
@@ -41,6 +42,7 @@ from egregore.interface.factory_router import router as factory_router
 from egregore.interface.ombudsman_router import router as ombudsman_router
 from egregore.interface.rag_api import router as rag_router
 from egregore.shared.freeze_state import FreezeController, FreezeState
+# from egregore.interface.trust_safety_router import router as trust_router
 
 logger = logging.getLogger("egregore.bootstrap")
 
@@ -262,7 +264,11 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.state.composition_root = root
 
     # Build multi-backend inference service for chat (native Coder, Anthropic, DeepSeek)
-    app.state.inference_service = build_inference_service_from_env()
+    try:
+        app.state.inference_service = build_inference_service_from_env()
+    except Exception as exc:
+        logger.warning("Inference service unavailable: %s", exc)
+        app.state.inference_service = None
 
     # Discover CLI agents for chat dispatch
     app.state.agent_registry = AgentRegistry()
@@ -272,7 +278,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.add_middleware(FreezeGateMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(AuditLogMiddleware)
-    app.add_middleware(APIKeyMiddleware)
+    app.add_middleware(ApiKeyMiddleware)
     _trusted_hosts_raw = os.environ.get(
         "EGREGORE_TRUSTED_HOSTS", "localhost,127.0.0.1,*.egregore.local,*"
     )
@@ -435,10 +441,12 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.include_router(api_router)
     app.include_router(chat_router)
     app.include_router(embeddings_router)
+    app.include_router(control_router)
     app.include_router(factory_router, prefix=f"{API_PREFIX}/factory")
     app.include_router(ombudsman_router)
     app.include_router(rag_router)
     app.include_router(anchorum_router)
+    # app.include_router(trust_router)
     app.include_router(ingest_router)
 
     # Chat WebSocket endpoint (requires api_key cookie/session)

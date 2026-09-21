@@ -24,8 +24,7 @@ const CORE_API_KEY = (() => {
 
 // Map dashboard-facing service names to systemd user units.
 const SERVICE_MAP = {
-  EgregoreOrchestrator: "egregore-core-api.service",
-  EgregoreBroker: "egregore-gateway.service",
+  ClineLocalAgents: 'egregore-cline-bridge.service',
   EgregoreAgent: "egregore-control-center.service",
 };
 
@@ -224,8 +223,6 @@ async function performServiceAction(name, action) {
 
 function getLogs({ source, level, tail } = {}) {
   const logFiles = {
-    EgregoreOrchestrator: "core-api.log",
-    EgregoreBroker: "gateway.log",
     EgregoreAgent: "control-center.log",
   };
 

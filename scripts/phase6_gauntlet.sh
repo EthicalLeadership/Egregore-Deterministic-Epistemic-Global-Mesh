@@ -1,8 +1,8 @@
 #!/bin/bash
 # Phase 6 done-criteria gauntlet: 20 consecutive factory runs on :8002.
 # Logs per-run HTTP status, QC terminal state, and VRAM after each run.
-API_KEY=$(cat /home/kark/blackstar/secrets/api_key.hex)
-OUT=/home/kark/blackstar/report/phase6_gauntlet.log
+API_KEY=$(cat /home/kark/egregore/secrets/api_key.hex)
+OUT=/home/kark/egregore/report/phase6_gauntlet.log
 : > "$OUT"
 
 INFRA_BLOCKS=0

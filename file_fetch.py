@@ -69,6 +69,27 @@ def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+CLIPBOARD_CAP = 256 * 1024  # max bytes copied to the clipboard for chat
+
+
+def read_for_clipboard(path: Path, cap: int = CLIPBOARD_CAP) -> tuple[str, bool, int]:
+    """Read a file for pasting into the AI chat.
+
+    Returns (text, truncated, size_bytes). Undecodable bytes are replaced,
+    never raised; missing/unreadable files raise OSError for the caller to
+    surface. Content is hard-capped with a visible truncation marker.
+    """
+    data = path.read_bytes()
+    size = len(data)
+    truncated = size > cap
+    if truncated:
+        data = data[:cap]
+    text = data.decode("utf-8", errors="replace")
+    if truncated:
+        text += f"\n[\u2026 truncated at {cap // 1024} KiB — {path.name} is {size} bytes]"
+    return text, truncated, size
+
+
 def _fmt_bytes(n: int | None) -> str:
     if n is None:
         return "?"
@@ -361,9 +382,20 @@ class FetchTab(ttk.Frame):
             value=f"FETCH-{datetime.now(UTC).strftime('%Y%m%d')}"
         )
         ttk.Entry(bar, textvariable=self.case_var, width=28).pack(side=tk.LEFT, padx=6)
-        ttk.Label(bar, text=f"Staging: {FETCH_ROOT}").pack(side=tk.LEFT, padx=(12, 0))
+        ttk.Label(
+            bar,
+            text=f"Staging: {FETCH_ROOT} \u2014 use a real case id (e.g. "
+            "MOLSON-2026) so the AI can read these files for that case",
+            foreground="#888888",
+        ).pack(side=tk.LEFT, padx=(12, 0))
         self.fetch_btn = ttk.Button(bar, text="Fetch selected", command=self._on_fetch)
         self.fetch_btn.pack(side=tk.RIGHT)
+        ttk.Button(bar, text="Copy content \u2192 chat", command=self._copy_content).pack(
+            side=tk.RIGHT, padx=(0, 6)
+        )
+        ttk.Button(bar, text="Copy path(s)", command=self._copy_paths).pack(
+            side=tk.RIGHT, padx=(0, 6)
+        )
 
     # ------------------------------------------------------------ partitions
     def _load_partitions(self) -> None:
@@ -456,6 +488,53 @@ class FetchTab(ttk.Frame):
             self._on_fetch_done(payload)
         elif kind == "fetch_error":
             self._on_fetch_error(payload)
+
+    # -------------------------------------------------- clipboard (to chat)
+    def _selected_paths(self) -> list[Path]:
+        return [self._paths[iid] for iid in self.tree.selection() if iid in self._paths]
+
+    def _copy_paths(self) -> None:
+        paths = [str(p) for p in self._selected_paths()]
+        if not paths:
+            self._set_status("Copy paths: nothing selected")
+            return
+        self.clipboard_clear()
+        self.clipboard_append("\n".join(paths))
+        self._set_status(f"{len(paths)} path(s) copied to clipboard")
+
+    def _copy_content(self) -> None:
+        """Copy one file's content to the clipboard for pasting into chat.
+
+        Not dialog-gated (that gate is for forensic staging), but every byte
+        read for AI exploration is recorded in the consent ledger.
+        """
+        sel = self._selected_paths()
+        if len(sel) != 1:
+            self._set_status("Copy content: select exactly one file")
+            return
+        path = sel[0]
+        if path.is_dir():
+            self._set_status("Copy content: select a file, not a directory")
+            return
+        try:
+            text, truncated, size = read_for_clipboard(path)
+        except OSError as exc:
+            self._set_status(f"Cannot read {path}: {exc.strerror or exc}")
+            return
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self._ledger.append(
+            "clipboard_copy",
+            path=str(path),
+            size_bytes=size,
+            bytes_copied=min(size, CLIPBOARD_CAP),
+            truncated=truncated,
+        )
+        self._refresh_ledger_label()
+        note = " (truncated)" if truncated else ""
+        self._set_status(
+            f"Copied {path.name}{note} \u2014 paste into the AI Agent tab (Ctrl+V)"
+        )
 
     # -------------------------------------------------------------- consent
     @staticmethod

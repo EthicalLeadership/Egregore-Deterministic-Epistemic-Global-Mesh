@@ -399,3 +399,64 @@ def test_batch_allowed_over_empty_manual_case(
         f"/api/v1/anchorum/jobs/{job_id}", headers={"X-API-Key": _api_key()}
     )
     assert resp.json()["status"] == "completed"
+
+
+# --------------------------------------------------------------- case sources
+def test_get_case_sources(client: TestClient, tmp_path: Path) -> None:
+    _write_report(tmp_path, "SRC-001", {"case_id": "SRC-001", "artifact_count": 1})
+    resp = client.get(
+        "/api/v1/anchorum/cases/SRC-001/sources", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["case_id"] == "SRC-001"
+    assert any(s["source_type"] == "report" for s in data["sources"])
+    report_source = next(s for s in data["sources"] if s["source_type"] == "report")
+    assert report_source["sha256"]
+    assert report_source["size"] > 0
+
+
+def test_attach_case_sources(client: TestClient, tmp_path: Path) -> None:
+    _write_report(tmp_path, "SRC-002", {"case_id": "SRC-002", "artifact_count": 1})
+    extra = tmp_path / "extra_evidence"
+    extra.mkdir()
+    (extra / "note.txt").write_text("key fact", encoding="utf-8")
+
+    resp = client.post(
+        "/api/v1/anchorum/cases/SRC-002/sources/attach",
+        json={"extra_dirs": [str(extra)]},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert str(extra) in data["extra_dirs"]
+
+    # Sources endpoint now includes the attached file.
+    resp = client.get(
+        "/api/v1/anchorum/cases/SRC-002/sources", headers={"X-API-Key": _api_key()}
+    )
+    assert resp.status_code == 200
+    assert any(s["source_type"] == "evidence" for s in resp.json()["sources"])
+
+
+def test_attach_case_sources_rejects_missing_dir(
+    client: TestClient, tmp_path: Path
+) -> None:
+    _write_report(tmp_path, "SRC-003", {"case_id": "SRC-003", "artifact_count": 1})
+    resp = client.post(
+        "/api/v1/anchorum/cases/SRC-003/sources/attach",
+        json={"extra_dirs": ["/does/not/exist"]},
+        headers={"X-API-Key": _api_key()},
+    )
+    assert resp.status_code == 422
+
+
+# --------------------------------------------------------------- tools registry
+def test_list_tools_returns_registry(client: TestClient) -> None:
+    resp = client.get("/api/v1/anchorum/tools", headers={"X-API-Key": _api_key()})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "tools" in data
+    ids = {t["id"] for t in data["tools"]}
+    assert "red-dart" in ids
+    assert "ocint" in ids
