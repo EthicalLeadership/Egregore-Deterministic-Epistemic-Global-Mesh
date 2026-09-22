@@ -1,0 +1,27 @@
+source_type: statute
+jurisdiction: ontario
+source_name: Human Rights Code
+citation: R.S.O. 1990, c. H.19
+domain: human_rights
+topic:
+- pregnancy
+- discrimination
+- employment
+effective_date: '2026-01-01'
+official_url: https://www.ontario.ca/laws/statute/90h19
+rules:
+- id: O1
+  article: 5(1)
+  title: Employment discrimination prohibited
+  official_text: Every person has a right to equal treatment with respect to employment
+    without discrimination because of race, ancestry, place of origin, colour, ethnic
+    origin, citizenship, creed, sex, sexual orientation, gender identity, gender expression,
+    age, record of offences, marital status, family status or disability.
+  sha256: c0f697c24ff4183757e993a0e9232b1db84a17b40b22c5cb9f240d26bff84962
+- id: O2
+  article: 10(2)
+  title: Pregnancy included in sex discrimination
+  official_text: The right to equal treatment without discrimination because of sex
+    includes the right to equal treatment without discrimination because a woman is
+    or may become pregnant.
+  sha256: de0eeb37f513e3b7bb27f6bffce322a3038ecf0f042d5748f8dd14948000b833

@@ -1,0 +1,27 @@
+rules:
+  - domain: "Quebec labour standards"
+    source: "Act respecting labour standards, CQLR c N-1.1"
+    title: "Absence owing to sickness"
+    article: "79.1"
+    keywords: [sick, illness, absence, sick leave, employee, paid, day, 26 weeks, 12 month]
+    rule_text: |
+      An employee may be absent from work for a period of not more than 26 weeks over a period of 12 months for sickness, organ or tissue donation, or other family obligations specified by law.
+
+  - domain: "Quebec labour standards"
+    source: "Act respecting labour standards, CQLR c N-1.1"
+    title: "Notice and supporting document"
+    article: "79.2"
+    keywords: [sick, illness, absence, doctor note, medical certificate, supporting information, three days, notice]
+    rule_text: |
+      An employee who is absent for sickness must notify the employer as soon as possible and give the reason for the absence.
+      The employer may request a document supporting the reasons for the absence only when justified by the circumstances, such as the duration or repetitive nature of the absence.
+      However, the employer may not request such a document for the first three periods of absence of three consecutive days or less in a 12-month period.
+
+  - domain: "Quebec labour standards"
+    source: "Act respecting labour standards, CQLR c N-1.1"
+    title: "Reinstatement and permitted sanctions"
+    article: "79.4"
+    keywords: [sick, illness, absence, dismissal, suspension, transfer, good and sufficient cause, reinstatement]
+    rule_text: |
+      At the end of an absence for sickness, the employer must reinstate the employee in their former position with the same benefits.
+      The employer may nevertheless dismiss, suspend or transfer the employee if, in the circumstances, the consequences of the sickness or the repetitive nature of the absences constitute good and sufficient cause.

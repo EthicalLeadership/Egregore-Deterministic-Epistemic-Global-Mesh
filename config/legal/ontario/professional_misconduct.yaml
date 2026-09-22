@@ -1,0 +1,15 @@
+rules:
+  - domain: "Ontario health professions"
+    source: "Regulated Health Professions Act, 1991, S.O. 1991, c. 18"
+    title: "Professional Misconduct - Impaired Practice"
+    article: null
+    keywords: [therapist, psychotherapist, psychologist, social worker, beer, alcohol, drink, impaired, review, session, treatment, misconduct, discipline, CRPO, CPO, OCSWSSW]
+    rule_text: |
+      Under Ontario's Regulated Health Professions Act, health professionals may be disciplined for professional misconduct. Practising while impaired by alcohol or drugs, failing to maintain the standards of the profession, and engaging in conduct unbecoming a member constitute professional misconduct. Regulatory colleges such as the College of Registered Psychotherapists of Ontario (CRPO), the College of Psychologists of Ontario (CPO), and the Ontario College of Social Workers and Social Service Workers (OCSWSSW) prohibit practising while impaired.
+  - domain: "Ontario psychotherapy"
+    source: "CRPO Professional Misconduct Regulation, O. Reg. 317/12"
+    title: "Professional Misconduct - Impaired Practice"
+    article: null
+    keywords: [therapist, psychotherapist, beer, alcohol, drink, impaired, review, session, treatment, misconduct, CRPO]
+    rule_text: |
+      The College of Registered Psychotherapists of Ontario defines professional misconduct to include practising the profession while under the influence of any substance, or while impaired, if it could affect the member's ability to practise safely and competently. This applies during any professional activity, including reviews or sessions with clients.

@@ -1,0 +1,9 @@
+source_name: Loi sur les normes du travail
+citation: CQLR c N-1.1
+domain: limitation
+rules:
+  - id: A122
+    article: "122"
+    regulation: ""
+    official_text: "Le salarié qui croit avoir été victime d'une pratique interdite par la présente loi peut déposer une plainte auprès de la Commission des normes, de l'équité, de la santé et de la sécurité du travail dans les 45 jours de la connaissance de la pratique."
+    sha256: ""

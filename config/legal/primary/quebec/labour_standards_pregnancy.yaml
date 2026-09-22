@@ -1,0 +1,34 @@
+source_type: statute
+jurisdiction: quebec
+source_name: Act respecting labour standards
+citation: CQLR c N-1.1
+domain: employment
+topic:
+- pregnancy
+- prohibited_practice
+- maternity
+effective_date: '2026-04-07'
+official_url: https://www.legisquebec.gouv.qc.ca/en/showdoc/cs/n-1.1
+rules:
+- id: A1
+  article: 122(4)
+  title: Prohibited practice - pregnancy dismissal
+  official_text: The employer may not dismiss, suspend, transfer, discriminate against,
+    take reprisals against, or impose any other sanction on an employee because the
+    employee is pregnant.
+  sha256: 34f869aefc5ca2c66ed1968705bf9b08b2df3139613a872c3c2e049743f9de2b
+- id: A2
+  article: '81.4'
+  title: Maternity leave
+  official_text: A pregnant employee is entitled to maternity leave. The employment
+    relationship is protected during maternity leave. The employer may not dismiss,
+    suspend, or transfer the employee solely because she takes maternity leave.
+  sha256: d18a400e952a1b4b823adce5a422703cdecb8a6b7c2588e1be5bd5e479221c73
+- id: A3
+  article: 81.5.1
+  title: Special pregnancy leave for danger to health
+  official_text: A pregnant employee may be absent from work if her working conditions
+    pose a danger to her health or that of her unborn child, as certified by a physician.
+    The employer may not penalize her for this absence. This article does NOT prohibit
+    dismissal because of pregnancy; that prohibition is in section 122(4).
+  sha256: b0f918b7d2f6f189e277ec54dc49c7fe2a3c099237d9bfd41b11b52db14a62fd

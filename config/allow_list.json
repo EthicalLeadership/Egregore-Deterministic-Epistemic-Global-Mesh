@@ -1,0 +1,1 @@
+{"defaults":["read","chat"],"rules":{"by_role":{"admin":{"allow":["read","write","execute","chat"]},"node":{"allow":["read","chat"]}},"by_node":{}}}

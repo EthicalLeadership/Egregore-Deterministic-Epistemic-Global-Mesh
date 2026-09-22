@@ -1,0 +1,32 @@
+# /home/kark/.config/systemd/user/egregore-cline.service
+# Cline sovereign local agent — hub daemon mode, EMS-backed (no Ollama).
+# Installed by deploy/scripts/cline_sovereign_deploy.sh
+
+[Unit]
+Description=Egregore Cline Local Agent (hub daemon, EMS-backed)
+# Wait for the EMS API to be reachable; the ExecStartPre readiness probe
+# is bounded so a slow EMS boot does not permanently fail this unit.
+After=network.target egregore-core-api.service
+Wants=egregore-core-api.service
+RequiresMountsFor=/mnt/blackstar/vol-hdd-a
+
+[Service]
+Type=simple
+WorkingDirectory=%h/egregore
+EnvironmentFile=-%h/egregore/.env
+Environment=CLINE_CONFIG_DIR=%h/egregore/cline-config
+Environment=EGREGORE_EMS_URL=http://127.0.0.1:8001/v1
+# Bounded readiness wait: up to ~90s for EMS, then proceed anyway.
+# Cline retries upstream requests internally; we do not hard-fail on boot races.
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do curl -sf -m 2 http://127.0.0.1:8001/v1/models >/dev/null 2>&1 && exit 0; sleep 3; done; echo "EMS not ready after 90s; starting anyway (Cline will retry)"'
+ExecStart=%h/egregore/bin/cline hub
+Restart=on-failure
+RestartSec=10
+# Restart-storm guard: give up after 5 failures within 60s.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+StandardOutput=append:%h/egregore/logs/cline-agent.log
+StandardError=append:%h/egregore/logs/cline-agent.log
+
+[Install]
+WantedBy=default.target

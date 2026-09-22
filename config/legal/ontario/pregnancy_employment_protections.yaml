@@ -1,0 +1,12 @@
+source_type: statute
+jurisdiction: ontario
+domain: employment
+source: "Employment Standards Act, 2000, S.O. 2000, c. 41"
+effective_date: "2026-01-01"
+official_url: "https://www.ontario.ca/laws/statute/00e41"
+rules:
+  - article: "53"
+    title: "Pregnancy leave"
+    keywords: [pregnancy, pregnant, maternity, leave, dismissal, penalize, employer, employee, protected]
+    rule_text: |
+      A pregnant employee is entitled to pregnancy leave of up to 17 weeks. The employer may not dismiss, suspend, or penalize an employee because they take pregnancy leave.

@@ -1,0 +1,11 @@
+rules:
+  - domain: "Ontario tort law"
+    source: "Common law of negligence in Canada"
+    title: "Negligence Standard of Care"
+    rule_text: |
+      In Ontario, a health professional owes a duty of care to clients. Breach of the standard of care occurs when the professional fails to act as a reasonably competent practitioner would. Impairment from alcohol during a professional review could constitute evidence of breach if it affects the quality of care and causes harm. The client must prove duty, breach, causation, and damages.
+  - domain: "Ontario civil procedure"
+    source: "Limitations Act, 2002, S.O. 2002, c. 24, Sched. B"
+    title: "Limitation Periods"
+    rule_text: |
+      In Ontario, a civil claim for negligence must generally be commenced within two years from the date the claim was discovered. For claims against health professionals, the discovery date is when the plaintiff knew or ought to have known that the injury occurred and that it was caused by the defendant's act or omission.

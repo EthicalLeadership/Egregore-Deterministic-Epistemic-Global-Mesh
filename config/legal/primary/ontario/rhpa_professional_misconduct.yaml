@@ -1,0 +1,35 @@
+source_type: statute
+jurisdiction: ontario
+source_name: Regulated Health Professions Act, 1991
+citation: S.O. 1991, c. 18
+domain: professional
+topic:
+- professional misconduct
+- impaired practice
+- therapist
+effective_date: '2026-01-01'
+official_url: https://www.ontario.ca/laws/statute/91r18
+rules:
+- id: O5
+  article: 51(1)(a)
+  title: Professional misconduct - offence relevant to suitability
+  official_text: A panel shall find that a member has committed an act of professional
+    misconduct if the member has been guilty of an offence that is relevant to his
+    or her suitability to practise.
+  sha256: 1a3235b048da1fa9f0f3b18da895caffd326e4f325c9e796fa6fe3078b8a9f15
+- id: O6
+  article: 51(1)(c)
+  title: Professional misconduct - as defined in regulations
+  official_text: A panel shall find that a member has committed an act of professional
+    misconduct if the member has committed an act of professional misconduct as defined
+    in the regulations.
+  sha256: 3dda75a4117279f614ddc5b6ec28a4b698f7c7f2af0d8d361c40262d12c02af5
+- id: O7
+  regulation: Ontario Regulation 317/12, s. 2(1)1
+  title: Professional misconduct - impaired practice
+  official_text: 'For the purposes of the Act, the following are acts of professional
+    misconduct for the purposes of clause 51(1)(c) of the Act:
+
+    1. Practising the profession while the member''s ability to practise is impaired
+    by any substance.'
+  sha256: dc0365e0c402acf6801aee5c1aca244cd2dd2ea05f4a863a4b769ffa16c914ba

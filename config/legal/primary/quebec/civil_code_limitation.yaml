@@ -1,0 +1,14 @@
+source_name: Code civil du Québec
+citation: CQLR c CCQ-1991
+domain: limitation
+rules:
+  - id: A2925
+    article: "2925"
+    regulation: ""
+    official_text: "L'action personnelle se prescrit par trois ans, à compter du jour où le titulaire du droit a connu ou aurait dû connaître les faits qui lui permettent de l'exercer."
+    sha256: ""
+  - id: A2926
+    article: "2926"
+    regulation: ""
+    official_text: "L'action fondée sur un préjudice corporel se prescrit par trois ans, à compter du jour où la victime a eu connaissance de son préjudice et de la personne responsable."
+    sha256: ""

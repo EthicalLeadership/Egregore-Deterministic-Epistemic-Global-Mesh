@@ -1,0 +1,40 @@
+rules:
+  - domain: "Quebec contract law"
+    source: "Civil Code of Québec, CQLR c CCQ-1991"
+    title: "Good Faith"
+    article: 1375
+    keywords: [software, contractor, client, terminate, termination, resiliate, resiliation, early, without cause, contract, good faith]
+    rule_text: |
+      The parties must conduct themselves in good faith both at the time the obligation arises and at the time it is performed or extinguished.
+
+  - domain: "Quebec contract law"
+    source: "Civil Code of Québec, CQLR c CCQ-1991"
+    title: "Contract of Enterprise or for Services"
+    article: 2098
+    keywords: [software, contractor, client, provider, services, enterprise, contract, development]
+    rule_text: |
+      A contract of enterprise or for services is a contract by which a person, the contractor or the provider of services, undertakes to carry out physical or intellectual work for another person, the client, in return for a price the client binds himself to pay.
+
+  - domain: "Quebec contract law"
+    source: "Civil Code of Québec, CQLR c CCQ-1991"
+    title: "Unilateral Resiliation by Client"
+    article: 2125
+    keywords: [software, contractor, client, terminate, termination, resiliate, resiliation, early, without cause, project, contract]
+    rule_text: |
+      The client may unilaterally resiliate the contract even though the work or service is already in progress.
+
+  - domain: "Quebec contract law"
+    source: "Civil Code of Québec, CQLR c CCQ-1991"
+    title: "Resiliation by Contractor"
+    article: 2126
+    keywords: [software, contractor, client, terminate, termination, resiliate, resiliation, serious reason, contract]
+    rule_text: |
+      The contractor may not resiliate the contract except for a serious reason and only at a time that does not cause serious prejudice to the client.
+
+  - domain: "Quebec contract law"
+    source: "Civil Code of Québec, CQLR c CCQ-1991"
+    title: "Financial Consequences of Resiliation"
+    article: 2129
+    keywords: [software, contractor, client, terminate, termination, resiliate, resiliation, payment, costs, damages, contract]
+    rule_text: |
+      Upon resiliation of the contract, the client is bound to pay to the contractor or provider of services, in proportion to the agreed price, the actual costs and expenses incurred, the value of the work performed before the resiliation, and the value of any goods supplied. The client is also bound to pay for any other injury suffered by the contractor or provider of services as a result of the resiliation.

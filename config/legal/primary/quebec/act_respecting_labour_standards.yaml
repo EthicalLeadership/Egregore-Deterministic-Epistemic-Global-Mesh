@@ -1,0 +1,16 @@
+source_type: statute
+jurisdiction: quebec
+source_name: Act respecting labour standards
+citation: PLACEHOLDER_CITATION
+domain: general
+topic: []
+effective_date: '2026-08-28'
+official_url: PLACEHOLDER_URL
+rules:
+- id: TBD
+  article: PLACEHOLDER_ARTICLE
+  title: PLACEHOLDER_TITLE
+  official_text: The employer may not dismiss, suspend, transfer, discriminate against,
+    take reprisals against, or impose any other sanction on an employee because the
+    employee is pregnant.
+  sha256: 34f869aefc5ca2c66ed1968705bf9b08b2df3139613a872c3c2e049743f9de2b

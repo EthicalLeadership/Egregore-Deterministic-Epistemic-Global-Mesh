@@ -1,0 +1,12 @@
+source_type: statute
+jurisdiction: alberta
+domain: human_rights
+source: "Alberta Human Rights Act, RSA 2000, c A-25.5"
+effective_date: "2026-01-01"
+official_url: "https://www.qp.alberta.ca/1266.cfm?page=A25P5.cfm"
+rules:
+  - article: "7"
+    title: "Discrimination in employment"
+    keywords: [pregnancy, pregnant, discrimination, employer, employee, dismissal, penalty]
+    rule_text: |
+      No employer shall refuse to employ or refuse to continue to employ any person, or discriminate against any person as to employment or any term or condition of employment, because of gender, which includes pregnancy.

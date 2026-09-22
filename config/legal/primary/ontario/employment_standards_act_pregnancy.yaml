@@ -1,0 +1,27 @@
+source_type: statute
+jurisdiction: ontario
+source_name: Employment Standards Act, 2000
+citation: S.O. 2000, c. 41
+domain: employment
+topic:
+- pregnancy
+- leave
+- reprisal
+effective_date: '2026-01-01'
+official_url: https://www.ontario.ca/laws/statute/00e41
+rules:
+- id: O3
+  article: '46'
+  title: Pregnancy leave entitlement
+  official_text: A pregnant employee is entitled to a leave of absence without pay
+    unless the employee is entitled to paid leave under a contract of employment.
+    An employee who has taken pregnancy leave shall be reinstated to her former position
+    or, if that position no longer exists, to a comparable position.
+  sha256: d918b9a5f17ba06851e77024b67577b19674c1be887bc389bcff6fa274ca890f
+- id: O4
+  article: '74'
+  title: Reprisal prohibited
+  official_text: No employer or person acting on behalf of an employer shall intimidate,
+    dismiss or otherwise penalize an employee or threaten to do so because the employee
+    has taken or may take a leave under this Part.
+  sha256: 24b639242b8dfd3d40ff64043195404ca3726deda1ce196c4c16936aad16c478

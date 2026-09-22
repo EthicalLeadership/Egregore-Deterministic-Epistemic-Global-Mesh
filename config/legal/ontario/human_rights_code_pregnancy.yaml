@@ -1,0 +1,12 @@
+source_type: statute
+jurisdiction: ontario
+domain: human_rights
+source: "Human Rights Code, R.S.O. 1990, c. H.19"
+effective_date: "2026-01-01"
+official_url: "https://www.ontario.ca/laws/statute/90h19"
+rules:
+  - article: "10"
+    title: "Pregnancy discrimination prohibited"
+    keywords: [pregnancy, pregnant, discrimination, employer, employee, dismissal, penalty, human rights]
+    rule_text: |
+      The right to equal treatment without discrimination because of sex includes the right to equal treatment without discrimination because a woman is or may become pregnant.

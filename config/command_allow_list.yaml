@@ -1,0 +1,13 @@
+actions:
+  intent.submit:
+    roles: [node, operator, admin]
+    nodes: []
+  intent.confirm:
+    roles: [operator, admin]
+    nodes: []
+  dispatch:
+    roles: [admin]
+    nodes: []
+  telemetry.send:
+    roles: [node, operator]
+    nodes: []

@@ -1,0 +1,12 @@
+source_type: statute
+jurisdiction: british_columbia
+domain: employment
+source: "Human Rights Code, R.S.B.C. 1996, c. 210"
+effective_date: "2026-01-01"
+official_url: "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96210_01"
+rules:
+  - article: "13"
+    title: "Discrimination in employment"
+    keywords: [pregnancy, pregnant, discrimination, employer, employee, dismissal, penalty]
+    rule_text: |
+      A person must not refuse to employ or refuse to continue to employ a person, or discriminate against a person regarding employment or any term or condition of employment, because of sex, which includes pregnancy.
