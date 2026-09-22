@@ -198,3 +198,8 @@ rag/cases/chroma.sqlite3-journal
 .env
 *.txt
 .env
+
+# Aider Studio (auto-added)
+REPO_MAP.md
+argparse
+json
