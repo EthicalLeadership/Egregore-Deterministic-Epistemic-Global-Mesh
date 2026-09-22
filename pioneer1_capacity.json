@@ -1,7 +1,7 @@
 {
-  "dt_total": 24.0,
-  "tu_total": 16,
+  "dt_total": 12.0,
+  "tu_total": 8,
   "scl_total": 1000.0,
-  "ml_total_bytes": 33557577728,
+  "ml_total_bytes": 33556529152,
   "gpu_vram_bytes": 12884901888
 }
