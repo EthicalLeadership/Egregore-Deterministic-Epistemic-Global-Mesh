@@ -207,3 +207,4 @@ json
 # Generated case reports (kept on disk, not tracked)
 MOLSON-*-report*.json
 MOLSON-*timeline*.json
+.venv-local/
