@@ -14,7 +14,7 @@ import json
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
-from typing import Any
+from typing import Any, Callable
 
 from ui_text import install_context_menu, make_readonly_copyable, set_text
 
@@ -38,7 +38,7 @@ def _short(rid: str | None) -> str:
 class FactoryTab(ttk.Frame):
     """Six-surface factory interface (read-only)."""
 
-    def __init__(self, parent: ttk.Notebook, status_setter) -> None:
+    def __init__(self, parent: ttk.Notebook, status_setter: Callable[[str], None]) -> None:
         super().__init__(parent, padding=6)
         self._set_status = status_setter
         self._offsets: dict[Path, int] = {}
@@ -58,7 +58,9 @@ class FactoryTab(ttk.Frame):
         nb.add(self._build_decision(nb), text="Decision")
         nb.add(self._build_residency(nb), text="Residency")
 
-    def _tree(self, parent, cols, height=10) -> ttk.Treeview:
+    def _tree(
+        self, parent: tk.Misc, cols: tuple[str, ...], height: int = 10
+    ) -> ttk.Treeview:
         tree = ttk.Treeview(parent, columns=cols, show="headings", height=height)
         for c in cols:
             tree.heading(c, text=c)
@@ -292,13 +294,13 @@ class FactoryTab(ttk.Frame):
                 return events
         return []
 
-    def _on_run_select(self, _e) -> None:
+    def _on_run_select(self, _e: Any) -> None:
         events = self._selected_run_events()
         self.events_tree.delete(*self.events_tree.get_children())
         for i, ev in enumerate(events):
             self.events_tree.insert("", tk.END, iid=str(i), values=self._event_row(ev))
 
-    def _on_event_select(self, _e) -> None:
+    def _on_event_select(self, _: Any) -> None:
         sel = self.events_tree.selection()
         if not sel:
             return
@@ -307,7 +309,7 @@ class FactoryTab(ttk.Frame):
         if 0 <= idx < len(events):
             self._set_text(self.raw_txt, json.dumps(events[idx], indent=2, default=str))
 
-    def _on_qc_select(self, _e) -> None:
+    def _on_qc_select(self, _e: Any) -> None:
         sel = self.qc_tree.selection()
         if not sel:
             return
@@ -317,7 +319,7 @@ class FactoryTab(ttk.Frame):
         if 0 <= idx < len(shown):
             self._set_text(self.qc_raw, json.dumps(shown[idx], indent=2, default=str))
 
-    def _on_res_select(self, _e) -> None:
+    def _on_res_select(self, _e: Any) -> None:
         sel = self.res_tree.selection()
         if not sel:
             return
@@ -331,7 +333,7 @@ class FactoryTab(ttk.Frame):
             self._set_text(self.res_raw, json.dumps(shown[idx], indent=2, default=str))
 
     @staticmethod
-    def _ro_text(parent: ttk.Frame, **kwargs: Any) -> tk.Text:
+    def _ro_text(parent: tk.Widget, **kwargs: Any) -> tk.Text:
         txt = make_readonly_copyable(tk.Text(parent, **kwargs))
         install_context_menu(txt)
         txt.pack(fill=tk.BOTH, expand=True)
