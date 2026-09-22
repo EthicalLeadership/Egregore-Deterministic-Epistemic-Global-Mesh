@@ -30,16 +30,22 @@ class Kimik2LoaderAdapter(IKimik2Loader):
             raise Kimik2LoaderError(f"Model/tokenizer load failed: {exc}") from exc
 
     def _has_nonempty_shards(self) -> bool:
-        shards = [f"model-{i + 1}-of-61.safetensors" for i in range(61)]
-        for shard in shards:
-            shard_path = os.path.join(self.model_dir, shard)
+        """Return True only if every shard exists and is nonempty.
+
+        Any zero-byte shard means the model directory is in dummy mode
+        (CI fixtures) or the download is incomplete. Both cases must
+        skip the heavy load; only the fully-populated case proceeds.
+        """
+        for i in range(61):
+            shard_path = os.path.join(
+                self.model_dir, f"model-{i + 1}-of-61.safetensors"
+            )
             try:
-                if os.path.getsize(shard_path) > 0:
-                    return True
+                if os.path.getsize(shard_path) == 0:
+                    return False
             except OSError:
                 return False
-        return False
-
+        return True
     def _validate_artifacts(self):
         index_path = os.path.join(self.model_dir, "model.safetensors.index.json")
         if not os.path.isfile(index_path):
