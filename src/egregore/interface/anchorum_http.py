@@ -25,8 +25,12 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from egregore.http_api.http.middleware.api_key_middleware import ApiKeyMiddleware
+try:
+    from egregore.http_api.http.middleware.api_key_middleware import APIKeyMiddleware
+except ImportError:  # pragma: no cover
+    from egregore.http_api.http.middleware.api_key_middleware import ApiKeyMiddleware as APIKeyMiddleware
 from egregore.interface.anchorum_router import router as anchorum_router
+from egregore.application.agents.orchestrator import AgentOrchestrator
 from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
 from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
@@ -36,10 +40,7 @@ logger = logging.getLogger("egregore.anchorum_http")
 
 CORE_API_URL = os.environ.get("EGREGORE_CORE_API_URL", "http://127.0.0.1:8002")
 EMS_URL = os.environ.get("EGREGORE_EMS_URL", "http://127.0.0.1:8001")
-CHAT_MODEL = os.environ.get(
-    "ANCHORUM_CHAT_MODEL",
-    os.environ.get("EGREGORE_CHAT_MODEL", "kimi-k2-base"),
-)
+CHAT_MODEL = os.environ.get("EGREGORE_CHAT_MODEL", "my-coder-ft")
 
 _IDENTITY = (
     "You run 100% locally on the user's own machine (Egregore node pioneer1) "
@@ -97,7 +98,7 @@ _ASK_SYSTEM = (
 
 _LEGAL_KB_DIR = Path(
     os.environ.get("EGREGORE_LEGAL_KB_DIR")
-    or (repo_root() / "config" / "legal")
+    or (repo_root() / "config" / "legal" / "quebec")
 )
 _LEGAL_KB_BUDGET = int(os.environ.get("EGREGORE_LEGAL_KB_BUDGET", "6000"))
 _LEGAL_KB_RULE_CAP = 400  # chars per rule excerpt
@@ -181,6 +182,36 @@ class ChatIn(BaseModel):
     message: str
     mode: str = "legal"
     case_id: str | None = None
+
+
+_NO_CASE_GREETING_RESPONSES = {
+    "hi": "Hello. I am ANCHORUM. Select a case or ask a legal question when you are ready.",
+    "hello": "Hello. I am ANCHORUM. Select a case or ask a legal question when you are ready.",
+    "hey": "Hello. I am ANCHORUM. Select a case or ask a legal question when you are ready.",
+    "ok": "Understood. Select a case or ask a legal question when you are ready.",
+    "okay": "Understood. Select a case or ask a legal question when you are ready.",
+    "thanks": "You are welcome. Select a case or ask a legal question when you are ready.",
+    "thank you": "You are welcome. Select a case or ask a legal question when you are ready.",
+}
+
+
+def _no_case_conversation_response(message: str, mode: str, case_id: str | None) -> str | None:
+    if mode != "legal" or case_id:
+        return None
+    normalized = " ".join(message.casefold().split()).strip(" .,!?;:")
+    return _NO_CASE_GREETING_RESPONSES.get(normalized)
+
+
+def _assistant_content(data: dict[str, Any]) -> str:
+    choices = data.get("choices")
+    if isinstance(choices, list) and choices:
+        message = choices[0].get("message", {})
+        if isinstance(message, dict):
+            return str(message.get("content", ""))
+    message = data.get("message", {})
+    if isinstance(message, dict):
+        return str(message.get("content", ""))
+    return ""
 
 
 def _case_context(case_id: str) -> str:  # noqa: C901
@@ -342,38 +373,40 @@ def _truncate_evidence(retrieved: str, budget_chars: int) -> str:
     return truncated.rstrip() + "\n\n... [additional evidence truncated for context budget]"
 
 
-async def _chat_with_retries(messages: list[dict[str, str]], mode: str = "general") -> dict[str, Any]:
-    """Route ANCHORUM requests through the configured local sovereign model."""
+async def _chat_with_retries(messages: list[dict[str, str]]) -> dict[str, Any]:
+    """Call the Core API chat endpoint with retries and honest error logging."""
     import asyncio
-
-    if mode == "code":
-        endpoint = "http://127.0.0.1:8003/v1/chat/completions"
-        model_id = "/mnt/blackstar/vol-hdd-a/models/gguf/specialized/deepseek-coder-6.7b-instruct.Q4_K_M.gguf"
-    else:
-        endpoint = "http://127.0.0.1:8002/v1/chat/completions"
-        model_id = CHAT_MODEL
 
     last_error: Exception | None = None
     for attempt in range(1, _CHAT_RETRIES + 1):
         try:
             async with httpx.AsyncClient(timeout=180.0) as client:
                 resp = await client.post(
-                    endpoint,
+                    f"{CORE_API_URL}/v1/chat/completions",
+                    headers={"X-API-Key": _service_api_key()},
                     json={
-                        "model": model_id,
+                        "model": CHAT_MODEL,
                         "messages": messages,
                         "max_tokens": 1024,
                         "temperature": 0.0,
                         "stream": False,
                     },
                 )
+                if resp.status_code >= 500:
+                    body = resp.text[:800]
+                    logger.error(
+                        "Core API returned %s on attempt %s: %s",
+                        resp.status_code,
+                        attempt,
+                        body,
+                    )
                 resp.raise_for_status()
                 return cast(dict[str, Any], resp.json())
         except httpx.HTTPError as exc:
             last_error = exc
             if attempt < _CHAT_RETRIES:
                 await asyncio.sleep(_CHAT_BACKOFF_SECONDS * (2 ** (attempt - 1)))
-    raise last_error or RuntimeError("Local model chat failed after retries")
+    raise last_error or RuntimeError("Core API chat failed after retries")
 
 
 def _service_api_key() -> str:
@@ -525,9 +558,9 @@ def create_app() -> FastAPI:  # noqa: C901
     )
     DashboardServiceProvider.set(dashboard_service)
 
-    # Order matters: ApiKeyMiddleware is added first so it runs INNERMOST.
+    # Order matters: APIKeyMiddleware is added first so it runs INNERMOST.
     # HtmlAuthRedirectMiddleware wraps it and can intercept 401s for HTML requests.
-    app.add_middleware(ApiKeyMiddleware)
+    app.add_middleware(APIKeyMiddleware)
     app.add_middleware(HtmlAuthRedirectMiddleware)
     app.add_middleware(FreezeGateMiddleware)
     app.mount("/static", StaticFiles(directory=str(static_dir), html=True), name="static")
@@ -542,9 +575,40 @@ def create_app() -> FastAPI:  # noqa: C901
     async def health_ready() -> JSONResponse:
         return JSONResponse({"status": "ready", "plane": "anchorum", "timestamp": time.time_ns() / 1e9})
 
+    @app.post("/api/v1/anchorum/agent")
+    async def anchorum_agent(payload: ChatIn) -> Any:
+        """Use the conversational agent orchestration.
+
+        Egregore owns inference and tool selection; ANCHORUM remains the
+        deterministic system of record. The orchestrator receives the optional
+        case_id so it can invoke ANCHORUM tools directly.
+        """
+        from egregore.application.agents.orchestrator import AgentOrchestrator
+        orchestrator = AgentOrchestrator()
+        response = orchestrator.run(payload.message, case_id=payload.case_id)
+        return {"response": response}
+
     @app.post("/api/v1/anchorum/chat")
     async def anchorum_chat(payload: ChatIn) -> Any:
         """Proxy chat to the Egregore Core API (plain HTTP, no WebSocket)."""
+        quick_response = _no_case_conversation_response(
+            payload.message, payload.mode, payload.case_id
+        )
+        if quick_response is not None:
+            return {
+                "ok": True,
+                "content": quick_response,
+                "usage": {},
+                "governance": {},
+                "sources": [],
+                "model": "deterministic-greeting",
+                "rag_telemetry": {
+                    "retrieved_chunks": 0,
+                    "distances": [],
+                    "refusal_retry": False,
+                    "citation_missing": False,
+                },
+            }
         messages: list[dict[str, str]] = []
         sources: list[dict[str, Any]] = []
         user_content = payload.message
@@ -603,7 +667,7 @@ def create_app() -> FastAPI:  # noqa: C901
         messages.append({"role": "user", "content": user_content})
 
         try:
-            data = await _chat_with_retries(messages, payload.mode)
+            data = await _chat_with_retries(messages)
         except httpx.HTTPError as exc:
             logger.error("Core API chat failed after retries: %s", exc)
             return JSONResponse(
@@ -611,7 +675,7 @@ def create_app() -> FastAPI:  # noqa: C901
                 content={"detail": f"Egregore core unreachable: {exc}"},
             )
 
-        content = data.get("message", {}).get("content", "")
+        content = _assistant_content(data)
         refusal_retry = False
         citation_missing = False
 
@@ -626,8 +690,8 @@ def create_app() -> FastAPI:  # noqa: C901
             messages.append({"role": "assistant", "content": content})
             messages.append({"role": "user", "content": _REFUSAL_RECOVERY_NOTE})
             try:
-                data = await _chat_with_retries(messages, payload.mode)
-                content = data.get("message", {}).get("content", "")
+                data = await _chat_with_retries(messages)
+                content = _assistant_content(data)
             except httpx.HTTPError as exc:
                 logger.error("Refusal-recovery chat failed: %s", exc)
                 # Fall back to the original content rather than failing the request.
@@ -668,7 +732,14 @@ def create_app() -> FastAPI:  # noqa: C901
                 resp.raise_for_status()
                 result["models"] = resp.json().get("data", [])
         except httpx.HTTPError as exc:
-            result["error"] = f"EMS unreachable: {exc}"
+            # Fallback: list models from the built inference service (if available)
+            try:
+                from egregore.application.inference_service import build_inference_service_from_env
+                service = build_inference_service_from_env()
+                result["models"] = service.list_models()
+                result["error"] = f"EMS unreachable, falling back to inference service: {exc}"
+            except Exception as fallback_exc:
+                result["error"] = f"EMS unreachable: {exc}; fallback failed: {fallback_exc}"
         return result
 
     @app.get("/api/v1/anchorum/cases/{case_id}/index")

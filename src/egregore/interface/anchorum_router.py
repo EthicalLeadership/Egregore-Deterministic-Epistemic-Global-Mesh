@@ -363,6 +363,54 @@ def _now_iso() -> str:
     return datetime.fromtimestamp(time.time_ns() / 1e9, tz=UTC).isoformat()
 
 
+def _audit_dir() -> Path:
+    path = _report_dir() / "audit"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _audit_record(
+    request: Request | None,
+    tool: str,
+    *,
+    case_id: str | None = None,
+    outcome: str,
+    error_code: str | None = None,
+) -> None:
+    """Append an attribution record for Egregore adapter calls.
+
+    Never raises: an audit-write failure must not break the API call.
+    """
+    try:
+        rid = ""
+        principal = "unknown"
+        if request is not None:
+            rid = request.headers.get("X-Request-ID") or ""
+            principal = (
+                request.headers.get("X-Egregore-Principal")
+                or getattr(request.state, "user_id", "unknown")
+                or "unknown"
+            )
+        if not rid:
+            rid = str(uuid.uuid4())
+        record = {
+            "timestamp": _now_iso(),
+            "request_id": rid,
+            "principal": principal,
+            "tool": tool,
+            "case_id": case_id,
+            "outcome": outcome,
+            "error_code": error_code,
+            "user_id": getattr(request.state, "user_id", None) if request else None,
+            "roles": (getattr(request.state, "roles", None) or []) if request else [],
+        }
+        audit_file = _audit_dir() / "egregore_adapter.jsonl"
+        with open(audit_file, "a", encoding="utf-8") as f:
+            f.write(canonical_dumps(record) + "\n")
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to write ANCHORUM adapter audit record")
+
+
 # ---------------------------------------------------------------------------
 # In-memory job registry
 #
@@ -543,16 +591,21 @@ def trigger_batch_sync(request: BatchRequest) -> dict[str, Any]:
 
 
 @router.get("/jobs")
-def list_jobs() -> dict[str, Any]:
+def list_jobs(request: Request) -> dict[str, Any]:
     """List all tracked jobs, newest first."""
+    _audit_record(request, "anchorum.list_jobs", outcome="success")
     return {"jobs": [_job_response(job["job_id"]) for job in _jobs.list()]}
 
 
 @router.get("/jobs/{job_id}")
-def get_job(job_id: str) -> dict[str, Any]:
+def get_job(job_id: str, request: Request) -> dict[str, Any]:
     """Return the detail record for a single job."""
     if _jobs.get(job_id) is None:
+        _audit_record(
+            request, "anchorum.job_status", outcome="error", error_code="not_found"
+        )
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    _audit_record(request, "anchorum.job_status", outcome="success")
     return _job_response(job_id)
 
 
@@ -585,7 +638,7 @@ def delete_job(job_id: str) -> dict[str, Any]:
 
 
 @router.get("/cases")
-def list_cases() -> list[str]:
+def list_cases(request: Request) -> list[str]:
     """List all case IDs with generated reports or summaries."""
     cases: set[str] = set()
     for root in _all_report_roots():
@@ -596,6 +649,7 @@ def list_cases() -> list[str]:
         summary = root / "self_rep_summary.json"
         if summary.exists():
             cases.add("self_rep")
+    _audit_record(request, "anchorum.list_cases", outcome="success")
     return sorted(cases)
 
 
@@ -730,29 +784,73 @@ def query_case_rag(case_id: str, request: RagQueryRequest) -> dict[str, Any]:
 
 
 @router.get("/cases/{case_id}")
-def get_case(case_id: str) -> dict[str, Any]:
+def get_case(case_id: str, request: Request) -> dict[str, Any]:
     """Get the full investigation report for a case."""
-    return _load_report(case_id)
+    try:
+        report = _load_report(case_id)
+        _audit_record(
+            request, "anchorum.get_case_report", case_id=case_id, outcome="success"
+        )
+        return report
+    except HTTPException as exc:
+        code = "case_not_found" if exc.status_code == 404 else "error"
+        _audit_record(
+            request,
+            "anchorum.get_case_report",
+            case_id=case_id,
+            outcome="error",
+            error_code=code,
+        )
+        raise
 
 
 @router.get("/cases/{case_id}/anomalies")
-def get_anomalies(case_id: str) -> dict[str, Any]:
+def get_anomalies(case_id: str, request: Request) -> dict[str, Any]:
     """Get only anomaly findings for a case."""
-    report = _load_report(case_id)
-    return {
-        "critical": report.get("critical_findings", []),
-        "high": report.get("high_findings", []),
-        "medium": report.get("medium_findings", []),
-        "low": report.get("low_findings", []),
-        "info": report.get("info_findings", []),
-    }
+    try:
+        report = _load_report(case_id)
+        result = {
+            "critical": report.get("critical_findings", []),
+            "high": report.get("high_findings", []),
+            "medium": report.get("medium_findings", []),
+            "low": report.get("low_findings", []),
+            "info": report.get("info_findings", []),
+        }
+        _audit_record(
+            request, "anchorum.get_anomalies", case_id=case_id, outcome="success"
+        )
+        return result
+    except HTTPException as exc:
+        code = "case_not_found" if exc.status_code == 404 else "error"
+        _audit_record(
+            request,
+            "anchorum.get_anomalies",
+            case_id=case_id,
+            outcome="error",
+            error_code=code,
+        )
+        raise
 
 
 @router.get("/cases/{case_id}/timeline")
-def get_timeline(case_id: str) -> dict[str, Any]:
+def get_timeline(case_id: str, request: Request) -> dict[str, Any]:
     """Get the master timeline for a case."""
-    report = _load_report(case_id)
-    return {"timeline": report.get("master_timeline", [])}
+    try:
+        report = _load_report(case_id)
+        _audit_record(
+            request, "anchorum.get_timeline", case_id=case_id, outcome="success"
+        )
+        return {"timeline": report.get("master_timeline", [])}
+    except HTTPException as exc:
+        code = "case_not_found" if exc.status_code == 404 else "error"
+        _audit_record(
+            request,
+            "anchorum.get_timeline",
+            case_id=case_id,
+            outcome="error",
+            error_code=code,
+        )
+        raise
 
 
 @router.get("/tools")
@@ -762,21 +860,36 @@ def list_tools() -> dict[str, Any]:
 
 
 @router.get("/cases/{case_id}/summary")
-def get_summary(case_id: str) -> dict[str, Any]:
+def get_summary(case_id: str, request: Request) -> dict[str, Any]:
     """Get a compact case summary."""
-    report = _load_report(case_id)
-    return {
-        "case_id": report.get("case_id", case_id),
-        "report_id": report.get("report_id"),
-        "generated_at": report.get("generated_at"),
-        "artifact_count": report.get("artifact_count", 0),
-        "entity_count": report.get("entity_count", 0),
-        "anomaly_count": report.get("anomaly_count", 0),
-        "critical_count": len(report.get("critical_findings", [])),
-        "high_count": len(report.get("high_findings", [])),
-        "medium_count": len(report.get("medium_findings", [])),
-        "low_count": len(report.get("low_findings", [])),
-    }
+    try:
+        report = _load_report(case_id)
+        result = {
+            "case_id": report.get("case_id", case_id),
+            "report_id": report.get("report_id"),
+            "generated_at": report.get("generated_at"),
+            "artifact_count": report.get("artifact_count", 0),
+            "entity_count": report.get("entity_count", 0),
+            "anomaly_count": report.get("anomaly_count", 0),
+            "critical_count": len(report.get("critical_findings", [])),
+            "high_count": len(report.get("high_findings", [])),
+            "medium_count": len(report.get("medium_findings", [])),
+            "low_count": len(report.get("low_findings", [])),
+        }
+        _audit_record(
+            request, "anchorum.get_case_summary", case_id=case_id, outcome="success"
+        )
+        return result
+    except HTTPException as exc:
+        code = "case_not_found" if exc.status_code == 404 else "error"
+        _audit_record(
+            request,
+            "anchorum.get_case_summary",
+            case_id=case_id,
+            outcome="error",
+            error_code=code,
+        )
+        raise
 
 
 class AttachSourcesRequest(BaseModel):
