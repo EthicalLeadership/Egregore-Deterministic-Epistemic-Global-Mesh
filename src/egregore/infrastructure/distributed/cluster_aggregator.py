@@ -1,4 +1,4 @@
-"""EGREGORE LAW: Cluster Aggregator. Pioneer 1 + Pioneer 2."""
+"""EGREGORE LAW: Cluster Aggregator. Kuebak + Pioneer 2."""
 
 from __future__ import annotations
 

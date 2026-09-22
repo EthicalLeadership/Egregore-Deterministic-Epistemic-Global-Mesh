@@ -1,6 +1,6 @@
 """
 Default demand profiles for all registered Work Unit types.
-Calibrated for Pioneer 1: Intel i5, 32GB DDR4, RTX 3060
+Calibrated for Kuebak: Intel i5, 32GB DDR4, RTX 3060
 """
 
 from egregore.domain.units import DT, TU
