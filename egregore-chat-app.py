@@ -151,7 +151,7 @@ APP_TITLE = "Egregore IDE"
 APP_WIDTH = 1400
 APP_HEIGHT = 950
 SERVER_HOST = os.environ.get("EGREGORE_HOST", "127.0.0.1")
-SERVER_PORT = int(os.environ.get("EGREGORE_PORT", "8443"))
+SERVER_PORT = int(os.environ.get("EGREGORE_PORT", "8446"))
 CHAT_URL = f"https://{SERVER_HOST}:{SERVER_PORT}/static/fpi/"
 
 EMS_PROXY_URL = os.environ.get("EGREGORE_EMS_PROXY_URL", "http://127.0.0.1:8001")
@@ -503,6 +503,7 @@ class EgregoreChatApp(Gtk.Application):
         self.window = Gtk.ApplicationWindow(application=self)
         self.window.set_title(APP_TITLE)
         self.window.set_default_size(APP_WIDTH, APP_HEIGHT)
+        self.window.maximize()
         self.window.set_position(Gtk.WindowPosition.CENTER)
         if ICON_FILE.exists():
             self.window.set_icon_from_file(str(ICON_FILE))
