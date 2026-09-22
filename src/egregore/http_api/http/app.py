@@ -50,7 +50,7 @@ def create_app(build_container: bool = True) -> Any:
     from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
     from egregore.interface.anchorum_router import ingest_router
     from egregore.interface.anchorum_router import router as anchorum_router
-    from modules.anchorum.interface.routes import router as anchorum_module_router
+    from asds.anchorum.interface.routes import router as anchorum_module_router
     from egregore.interface.factory_router import router as factory_router
     from egregore.interface.ombudsman_router import router as ombudsman_router
     from egregore.interface.rag_api import router as rag_router

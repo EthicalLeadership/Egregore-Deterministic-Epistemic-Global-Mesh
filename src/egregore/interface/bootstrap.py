@@ -35,6 +35,7 @@ from egregore.http_api.http.v1.ws_chat import router as ws_chat_router
 from egregore.interface.anchorum_router import ingest_router
 from egregore.interface.anchorum_router import router as anchorum_router
 from egregore.interface.control_router import router as control_router
+from egregore.interface.compat_router import router as compat_router
 from egregore.interface.dashboard import DashboardService, DashboardServiceProvider
 from egregore.interface.dashboard import router as dashboard_router
 from egregore.interface.dashboard.freeze_middleware import FreezeGateMiddleware
@@ -442,6 +443,7 @@ def create_app(freeze_controller: Any | None = None) -> FastAPI:  # noqa: C901
     app.include_router(chat_router)
     app.include_router(embeddings_router)
     app.include_router(control_router)
+    app.include_router(compat_router)
     app.include_router(factory_router, prefix=f"{API_PREFIX}/factory")
     app.include_router(ombudsman_router)
     app.include_router(rag_router)
