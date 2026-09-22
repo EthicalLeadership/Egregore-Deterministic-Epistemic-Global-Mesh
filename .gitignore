@@ -208,3 +208,24 @@ json
 MOLSON-*-report*.json
 MOLSON-*timeline*.json
 .venv-local/
+
+# Backup / editor / swap patterns
+*.bak
+*.bak.*
+*.bak-*
+*.bak_*
+*.original
+*.save
+*.swp
+*.swo
+*~
+
+# Generated / runtime junk
+_quarantine/
+rag/cases/
+tools/sixth_output/
+_legacy_archive/
+agent_audit.jsonl
+*.db-shm
+*.db-wal
+.nail.db*
