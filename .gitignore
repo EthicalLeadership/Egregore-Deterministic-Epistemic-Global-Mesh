@@ -229,3 +229,12 @@ agent_audit.jsonl
 *.db-shm
 *.db-wal
 .nail.db*
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
