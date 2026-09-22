@@ -203,3 +203,7 @@ rag/cases/chroma.sqlite3-journal
 REPO_MAP.md
 argparse
 json
+
+# Generated case reports (kept on disk, not tracked)
+MOLSON-*-report*.json
+MOLSON-*timeline*.json
